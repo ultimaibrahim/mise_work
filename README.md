@@ -17,8 +17,12 @@ El proyecto está organizado de la siguiente manera:
 │   ├── prd_simplificado.md     # Resumen ejecutivo de requerimientos de negocio
 │   ├── presentacion_deck.md    # Transcripción del Slide Deck de presentación
 │   └── ruta_aprendizaje.md     # Cursos y material para el aprendizaje de las tecnologías
-├── manual_interactivo.html     # Manual de usuario interactivo (HTML autocontenido)
-├── presentacion_deck.html      # Diapositivas de presentación de producto (HTML)
+├── index.html                  # Manual de usuario interactivo (Entry Point para GitHub Pages)
+├── index.css                   # Hoja de estilos del manual (diseño alineado con Reviews LCP GDL)
+├── index.js                    # Lógica interactiva y motor del Walkthrough de Onboarding
+├── presentacion_deck.html      # Estructura de diapositivas de presentación de producto
+├── presentacion_deck.css       # Hoja de estilos del Slide Deck (diseño alineado con Reviews LCP GDL)
+├── presentacion_deck.js        # Lógica de navegación y temas para las diapositivas
 ├── miseAuthBDG.gs              # Código Apps Script para el libro "Bodegas"
 ├── miseAuthPDA.gs              # Código Apps Script para "Pedidos Andares"
 ├── miseAuthPDM.gs              # Código Apps Script para "Pedidos Mercado"
@@ -50,17 +54,18 @@ Para instalar y habilitar las automatizaciones de la Suite MISE en sus respectiv
 
 ## 📖 Documentación y Diapositivas
 
-El repositorio cuenta con dos herramientas web autocontenidas y portables para la capacitación del personal:
+El repositorio cuenta con dos herramientas web modularizadas para la capacitación del personal y el despliegue automático:
 
-- **Manual Interactivo (`manual_interactivo.html`)**: Manual dinámico con simuladores visuales de Sheets, tutoriales responsivos paso a paso para dispositivos móviles y una sección de diagnóstico avanzado.
-- **Presentación de Producto (`presentacion_deck.html`)**: Diapositivas dinámicas e interactivas diseñadas para explicar la evolución operativa "Antes de MISE" vs "Después de MISE" a supervisores y gerencia regional.
+- **Manual Interactivo (`index.html`, `index.css`, `index.js`)**: Manual dinámico con simuladores visuales de Sheets, walkthrough de onboarding paso a paso por roles y diagnóstico avanzado. Al estar nombrado como `index.html` en la raíz, sirve automáticamente de entry-point para el despliegue en **GitHub Pages**.
+- **Presentación de Producto (`presentacion_deck.html`, `presentacion_deck.css`, `presentacion_deck.js`)**: Diapositivas dinámicas diseñadas para explicar la evolución operativa "Antes de MISE" vs "Después de MISE" a supervisores y gerencia.
 
-Para visualizarlos localmente, simplemente haga doble clic en el archivo HTML correspondiente o sírvalos utilizando cualquier servidor local de desarrollo (por ejemplo, la extensión *Live Server* en VS Code o ejecutando `npx serve .` en la terminal).
+Para visualizarlos localmente, simplemente abra `index.html` o `presentacion_deck.html` en su navegador o sírvalos utilizando cualquier servidor local de desarrollo (`npx serve .` o *Live Server* en VS Code).
 
 ---
 
 ## 🚀 Tecnologías Utilizadas
 
-- **Google Apps Script (V8 Engine)**: Automatización nativa en la nube, manipulación en lote (Batch 2D) de datos y triggers horarios.
-- **HTML5, Vanilla CSS3 y Javascript Moderno**: Estructuras limpias y estilos premium (temas oscuro y claro integrados, animaciones sutiles y adaptabilidad responsive).
+- **Google Apps Script (V8 Engine)**: Automatización nativa en la nube, manipulación en lote (Batch 2D) de datos y triggers.
+- **HTML5, Vanilla CSS3 y Javascript Moderno**: Estructuras limpias y estilos premium (diseño alineado con la guía visual oficial de *Reviews LCP GDL*).
 - **Lucide Icons**: Biblioteca de iconos SVG ligeros y consistentes.
+
