@@ -16,3 +16,7 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+
+# Product Presentation Deck (Ignored by User Request)
+presentacion_deck/
+
