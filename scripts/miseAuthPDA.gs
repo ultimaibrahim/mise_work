@@ -143,13 +143,13 @@ function _actualizarAvisoPedido() {
     const bg = i % 2 === 0 ? COLORS.neutral_a : COLORS.neutral_b;
 
     colA.push([i + 1]);
-    colC.push(['=' + sRef + '!B' + sr]);
-    colD.push(['=' + sRef + '!C' + sr]);
-    colE.push(['=' + sRef + '!D' + sr]);
+    colB.push(['=' + sRef + '!B' + sr]);
+    colC.push(['=' + sRef + '!C' + sr]);
+    colD.push(['=' + sRef + '!D' + sr]);
+    colE.push(['=' + sRef + '!E' + sr]);
     colH.push(['=IF(F' + r + '=""; ""; G' + r + '-F' + r + ')']);
-    colI.push(['=IF(' + sRef + '!H' + sr + '="NO"; "🚫 INACTIVO"; IF(F' + r + '="";"—";IF(G' + r + '=0;"⏳ PENDIENTE";IF(G' + r + '>=F' + r + ';"✅ COMPLETO";"⚠️ PARCIAL"))))']);
+    colI.push(['=IF(' + sRef + '!I' + sr + '="NO"; "🚫 INACTIVO"; IF(F' + r + '="";"—";IF(G' + r + '=0;"⏳ PENDIENTE";IF(G' + r + '>=F' + r + ';"✅ COMPLETO";"⚠️ PARCIAL"))))']);
     colJ.push(['=IF(F' + r + '=""; ""; IF(G' + r + '<F' + r + '; "⚠️ INCOMPLETO"; ""))']);
-    colB.push([_obtenerCategoria(i + 1)]);
 
     const rowBg = Array(NUM_COLS).fill(bg);
     rowBg[COL_CANT_PEDIR - 1] = COLORS.yellow;
@@ -163,7 +163,7 @@ function _actualizarAvisoPedido() {
   pedido.getRange(DR, 1, count, NUM_COLS).setBackgrounds(bgs);
 
   // Escribir valores y fórmulas por columnas separadas para evitar sobreescritura accidental
-  pedido.getRange(DR, 2, count, 1).setValues(colB);
+  pedido.getRange(DR, 2, count, 1).setFormulas(colB);
   pedido.getRange(DR, 1, count, 1).setValues(colA);
   pedido.getRange(DR, 3, count, 1).setFormulas(colC);
   pedido.getRange(DR, 4, count, 1).setFormulas(colD);
@@ -315,11 +315,11 @@ function sincronizarEstados() {
       const prodNo = currentCount + i + 1;
 
       newFormulasA.push([prodNo]);
-      newFormulasC.push(['=' + sRef + '!B' + sr]);
-      newFormulasD.push(['=' + sRef + '!C' + sr]);
-      newFormulasE.push(['=' + sRef + '!D' + sr]);
+      newFormulasC.push(['=' + sRef + '!C' + sr]);
+      newFormulasD.push(['=' + sRef + '!D' + sr]);
+      newFormulasE.push(['=' + sRef + '!E' + sr]);
       newFormulasH.push(['=IF(F' + r + '=""; ""; G' + r + '-F' + r + ')']);
-      newFormulasI.push(['=IF(' + sRef + '!H' + sr + '="NO"; "🚫 INACTIVO"; IF(F' + r + '="";"—";IF(G' + r + '=0;"⏳ PENDIENTE";IF(G' + r + '>=F' + r + ';"✅ COMPLETO";"⚠️ PARCIAL"))))']);
+      newFormulasI.push(['=IF(' + sRef + '!I' + sr + '="NO"; "🚫 INACTIVO"; IF(F' + r + '="";"—";IF(G' + r + '=0;"⏳ PENDIENTE";IF(G' + r + '>=F' + r + ';"✅ COMPLETO";"⚠️ PARCIAL"))))']);
       newFormulasJ.push(['=IF(F' + r + '=""; ""; IF(G' + r + '<F' + r + '; "⚠️ INCOMPLETO"; ""))']);
 
       const rowBg = Array(NUM_COLS).fill(highlightColor);
@@ -328,13 +328,13 @@ function sincronizarEstados() {
       rowBg[4]                  = COLORS.blue;
       newBgs.push(rowBg);
 
-      newCats.push([_obtenerCategoria(prodNo)]);
+      newCats.push(['=' + sRef + '!B' + sr]);
     }
 
     // Escribir en bloque
     sheet.getRange(insertStartRow, 1, diff, NUM_COLS).setBackgrounds(newBgs);
     sheet.getRange(insertStartRow, 1, diff, 1).setValues(newFormulasA);
-    sheet.getRange(insertStartRow, 2, diff, 1).setValues(newCats);
+    sheet.getRange(insertStartRow, 2, diff, 1).setFormulas(newCats);
     sheet.getRange(insertStartRow, 3, diff, 1).setFormulas(newFormulasC);
     sheet.getRange(insertStartRow, 4, diff, 1).setFormulas(newFormulasD);
     sheet.getRange(insertStartRow, 5, diff, 1).setFormulas(newFormulasE);
@@ -439,23 +439,23 @@ function ordenarPedido() {
     cleanFonts.push(rowFont);
 
     // Separar datos
-    colB.push([items[i].vals[1]]);
+    colB.push(['=' + sRef + '!B' + sr]);
     colF.push([items[i].vals[5]]);
     colG.push([items[i].vals[6]]);
 
     // Generar fórmulas limpias
     colA.push([prodNo]);
-    colC.push(['=' + sRef + '!B' + sr]);
-    colD.push(['=' + sRef + '!C' + sr]);
-    colE.push(['=' + sRef + '!D' + sr]);
+    colC.push(['=' + sRef + '!C' + sr]);
+    colD.push(['=' + sRef + '!D' + sr]);
+    colE.push(['=' + sRef + '!E' + sr]);
     colH.push(['=IF(F' + r + '=""; ""; G' + r + '-F' + r + ')']);
-    colI.push(['=IF(' + sRef + '!H' + sr + '="NO"; "🚫 INACTIVO"; IF(F' + r + '="";"—";IF(G' + r + '=0;"⏳ PENDIENTE";IF(G' + r + '>=F' + r + ';"✅ COMPLETO";"⚠️ PARCIAL"))))']);
+    colI.push(['=IF(' + sRef + '!I' + sr + '="NO"; "🚫 INACTIVO"; IF(F' + r + '="";"—";IF(G' + r + '=0;"⏳ PENDIENTE";IF(G' + r + '>=F' + r + ';"✅ COMPLETO";"⚠️ PARCIAL"))))']);
     colJ.push(['=IF(F' + r + '=""; ""; IF(G' + r + '<F' + r + '; "⚠️ INCOMPLETO"; ""))']);
   }
 
   // 1. Escribir los valores de las columnas editables (B, F, G) y estática A
   sheet.getRange(DATA_START_ROW, 1, count, 1).setValues(colA);
-  sheet.getRange(DATA_START_ROW, 2, count, 1).setValues(colB);
+  sheet.getRange(DATA_START_ROW, 2, count, 1).setFormulas(colB);
   sheet.getRange(DATA_START_ROW, 6, count, 1).setValues(colF);
   sheet.getRange(DATA_START_ROW, 7, count, 1).setValues(colG);
 
@@ -509,11 +509,11 @@ function _setupSync(bodegaUrl) {
     syncSheet = ss.insertSheet(SHEET_SYNC);
     syncSheet.hideSheet();
     syncSheet.getRange(1, 1).setValue(`⚙️ SINCRONIZACIÓN ${BODEGA_NOMBRE} — NO EDITAR`);
-    syncSheet.getRange(3, 1, 1, 8).setValues([["No","PRODUCTO","UNIDAD","SALDO","🚦","ENT_HOY","SAL_HOY","ACTIVO"]]);
+    syncSheet.getRange(3, 1, 1, 9).setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO","🚦","ENT_HOY","SAL_HOY","ACTIVO"]]);
   }
   const lastRow = Math.max(syncSheet.getLastRow(), 4);
-  if (lastRow >= 4) syncSheet.getRange(4, 1, lastRow - 3, 8).clearContent();
-  const formula = '=IMPORTRANGE("' + url + '";"'  + VISTA_MOVIL + '!A4:H")';
+  if (lastRow >= 4) syncSheet.getRange(4, 1, lastRow - 3, 9).clearContent();
+  const formula = '=IMPORTRANGE("' + url + '";"'  + VISTA_MOVIL + '!A4:I")';
   syncSheet.getRange(4, 1).setFormula(formula);
   SpreadsheetApp.flush();
 }
@@ -718,19 +718,6 @@ function acercaDe() {
   SpreadsheetApp.getUi().alert(`⚙️ Mise v5.0 — Pedidos ${BODEGA_NOMBRE}`, "Diseño con botones alineados a columnas visibles C-H y alertas de última hora inteligentes.");
 }
 
-// Helper para categorización
-function _obtenerCategoria(no) {
-  const n = parseInt(no);
-  if (!n) return "";
-  if (n >= 1 && n <= 18) return "1. REFRIGERADOS";
-  if (n >= 19 && n <= 28) return "2. FRUTAS Y VERDURAS";
-  if (n >= 29 && n <= 34) return "3. LÁCTEOS";
-  if (n >= 35 && n <= 85) return "4. ABARROTES";
-  if (n >= 86 && n <= 94) return "5. BEBIDAS";
-  if (n >= 95 && n <= 124) return "6. DESECHABLES";
-  if (n >= 125) return "7. JARCERÍA";
-  return "";
-}
 
 function _actualizarVisibilidadInactivos(sheet) {
   const count = _getProductCount();

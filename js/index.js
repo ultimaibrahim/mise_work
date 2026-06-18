@@ -212,7 +212,7 @@ const OB_CONTENT = {
   bodega: [
     {
       title: "Catálogo MAESTRO (Configuración)",
-      render: (viewMode) => `
+      render: () => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
           En el libro de <strong>Bodegas</strong>, la pestaña <strong>MAESTRO</strong> administra las altas, bajas y estados de todos los insumos que pueden ordenar las tiendas.
         </p>
@@ -220,13 +220,8 @@ const OB_CONTENT = {
         <div class="preview-container">
           <div class="preview-header">
             <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-            <div class="preview-tabs">
-              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
-              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
-            </div>
           </div>
           <div class="preview-content">
-            ${viewMode === 'pc' ? `
               <div class="mock-desktop">
                 <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; display:flex; gap:0.4rem; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Bodegas &gt; MAESTRO</div>
                 <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.75rem;">
@@ -242,14 +237,6 @@ const OB_CONTENT = {
                   </tr>
                 </table>
               </div>
-            ` : `
-              <div class="mock-phone">
-                <p style="text-align:center; color:var(--rojo-soft); font-weight:700; margin-top:2rem; font-size:0.9rem;"><i data-lucide="alert-triangle" style="width:20px; vertical-align:middle; margin-right:4px;"></i> No Recomendado</p>
-                <p style="text-align:center; font-size:0.78rem; color:var(--text-muted); padding:0 1rem; line-height:1.5; margin-top:0.5rem;">
-                  El catálogo maestro requiere una pantalla amplia (PC o Tablet). <strong>Evita dar de alta o desactivar productos desde el celular</strong>, ya que el espacio no permite operar cómodamente las casillas en bloque.
-                </p>
-              </div>
-            `}
           </div>
         </div>
         
@@ -273,7 +260,7 @@ const OB_CONTENT = {
     },
     {
       title: "Kardex de Entradas y Salidas",
-      render: (viewMode) => `
+      render: () => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
           En las pestañas <strong>KARDEX_BA</strong> (Andares) y <strong>KARDEX_BM</strong> (Mercado), el bodeguero registra entradas (compras) y salidas (entregas) diarias. El stock neto se calcula automáticamente.
         </p>
@@ -281,13 +268,8 @@ const OB_CONTENT = {
         <div class="preview-container">
           <div class="preview-header">
             <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-            <div class="preview-tabs">
-              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
-              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
-            </div>
           </div>
           <div class="preview-content">
-            ${viewMode === 'pc' ? `
               <div class="mock-desktop">
                 <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Bodegas &gt; KARDEX_BA</div>
                 <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
@@ -305,23 +287,6 @@ const OB_CONTENT = {
                   </tr>
                 </table>
               </div>
-            ` : `
-              <div class="mock-phone">
-                <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem;">
-                  Existencias en Bodega
-                </div>
-                <div style="padding:0.8rem; background:var(--surface-2); border-radius:var(--radius-md); margin-top:0.8rem; display:flex; flex-direction:column; gap:0.4rem;">
-                  <div style="font-weight:bold;">Queso Mozzarella</div>
-                  <div style="display:flex; justify-content:space-between; color:var(--text-muted);">
-                    <span>Stock Disponible:</span>
-                    <strong style="color:var(--oro);">7 kg</strong>
-                  </div>
-                </div>
-                <p style="font-size:0.72rem; text-align:center; color:var(--text-muted); margin-top:1.5rem; line-height:1.4;">
-                  Ideal para consultas rápidas en el celular mientras el surtidor acomoda existencias físicamente.
-                </p>
-              </div>
-            `}
           </div>
         </div>
         
@@ -345,7 +310,7 @@ const OB_CONTENT = {
     },
     {
       title: "Semáforo de Caducidades",
-      render: (viewMode) => `
+      render: () => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
           La pestaña <strong>CADUCIDADES</strong> compara las fechas ingresadas en ambos Kardex y colorea alertas automáticas para dar rotación prioritaria.
         </p>
@@ -353,13 +318,8 @@ const OB_CONTENT = {
         <div class="preview-container">
           <div class="preview-header">
             <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-            <div class="preview-tabs">
-              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
-              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
-            </div>
           </div>
           <div class="preview-content">
-            ${viewMode === 'pc' ? `
               <div class="mock-desktop">
                 <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Bodegas &gt; CADUCIDADES</div>
                 <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
@@ -375,19 +335,6 @@ const OB_CONTENT = {
                   </tr>
                 </table>
               </div>
-            ` : `
-              <div class="mock-phone">
-                <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem;">
-                  Alerta de Caducidad
-                </div>
-                <div style="border-left:4px solid var(--rojo-soft); padding:0.8rem; background:rgba(198, 40, 40, 0.08); margin-top:0.8rem; border-radius:0 var(--radius-sm) var(--radius-sm) 0;">
-                  <strong style="color:var(--rojo-soft);">Vence 25/Jun en Andares</strong>
-                  <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.2rem; line-height:1.3;">
-                    El lote de Andares expira antes. Despachar este lote primero.
-                  </p>
-                </div>
-              </div>
-            `}
           </div>
         </div>
         

@@ -30,10 +30,24 @@ const SHEET_MAESTRO  = "MAESTRO";
 const SHEET_LOG      = "🗒 LOG";
 const MAESTRO_START  = 4;   // fila donde empiezan datos en MAESTRO
 const KARDEX_START   = 7;   // fila donde empiezan datos en KARDEX
-const KARDEX_SLD_ANT = 8;   // col H — SALDO ANTERIOR
-const KARDEX_SLD_FIN = 29;  // col AC — SLD domingo
+const KARDEX_SLD_ANT = 9;   // col I — SALDO ANTERIOR
+const KARDEX_SLD_FIN = 30;  // col AD — SLD domingo
 const KARDEX_DAYS    = 7;
 const DIAS           = ["LUN","MAR","MIE","JUE","VIE","SAB","DOM"];
+const MAESTRO_COLS   = 10;  // A-J en MAESTRO
+const KARDEX_TOTAL_COLS = 30; // A-AD en KARDEX
+
+// Mapa ID_FAMILIA → CATEGORÍA
+const CATEGORIAS_MAP = {
+  'REF': '1. REFRIGERADOS',
+  'FYV': '2. FRUTAS Y VERDURAS',
+  'LEC': '3. LÁCTEOS',
+  'ABR': '4. ABARROTES',
+  'BEB': '5. BEBIDAS',
+  'DES': '6. DESECHABLES',
+  'JAR': '7. JARCERÍA'
+};
+const CATEGORIAS_LISTA = Object.values(CATEGORIAS_MAP);
 
 // Paleta extraída del xlsx real
 const C = {
@@ -70,6 +84,7 @@ function onOpen() {
     .addItem("🆕 Agregar producto al catálogo",           "agregarProducto")
     .addItem("➕ Carga masiva de productos",             "crearHojaCargaMasiva")
     .addItem("📝 Editar productos seleccionados",         "crearHojaEdicionMasiva")
+    .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
     .addItem("🔧 Restaurar validaciones de MAESTRO",     "restaurarValidacionesMaestro")
     .addSeparator()
     .addItem("🧪 Correr tests",                           "runTests")
@@ -100,7 +115,12 @@ function onEdit(e) {
           e.range.setValue(false);
           activarSeleccionadosMaestro();
         }
-      } else if (col === 8) { // H2 - Limpiar Selección
+      } else if (col === 8) { // H2 - Eliminar Seleccionados
+        if (e.range.getValue() === true) {
+          e.range.setValue(false);
+          eliminarSeleccionadosMaestro();
+        }
+      } else if (col === 10) { // J2 - Limpiar Selección
         if (e.range.getValue() === true) {
           e.range.setValue(false);
           limpiarSeleccionMaestro();
@@ -109,7 +129,7 @@ function onEdit(e) {
       return;
     }
 
-    if (col === 6 && row >= MAESTRO_START) {
+    if (col === 7 && row >= MAESTRO_START) {
       const val = e.range.getValue();
       const lock = LockService.getScriptLock();
       if (!lock.tryLock(15000)) return;
@@ -164,23 +184,23 @@ function onEdit(e) {
 
   // 2. Manejo de Checkboxes Interactivos (Fila 4 en KARDEX)
   if (row === 4) {
-    if (col === 11) { // K4 - Avanzar Semana
+    if (col === 14) { // N4 - Avanzar Semana
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         _avanzarSemana(bodegaKey);
       }
-    } else if (col === 14) { // N4 - Recrear Vista Móvil
+    } else if (col === 17) { // Q4 - Recrear Vista Móvil
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         _buildVista(bodegaKey);
         SpreadsheetApp.getActive().toast(`VISTA_MOVIL_${bodegaKey} recreada`, "⚙️ Mise", 4);
       }
-    } else if (col === 17) { // Q4 - Agregar Producto
+    } else if (col === 20) { // T4 - Agregar Producto
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         agregarProducto();
       }
-    } else if (col === 20) { // T4 - Anular Producto
+    } else if (col === 23) { // W4 - Anular Producto
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         anularProducto();
@@ -194,8 +214,8 @@ function onEdit(e) {
   // 3. Solo reaccionar a columnas ENT o SAL para validación rápida
   let tipo = null;
   for (let d = 0; d < KARDEX_DAYS; d++) {
-    if (col === 9 + d * 3)     { tipo = "ENT"; break; }
-    if (col === 9 + d * 3 + 1) { tipo = "SAL"; break; }
+    if (col === 10 + d * 3)     { tipo = "ENT"; break; }
+    if (col === 10 + d * 3 + 1) { tipo = "SAL"; break; }
   }
   if (!tipo) return;
 
@@ -263,14 +283,14 @@ function setupCompleto() {
 
 // ── CONSTRUCCIÓN: MAESTRO ─────────────────────────────────────────────────────
 function _buildMaestro(sheet) {
-  sheet.getRange(1, 1, 1, 9).merge()
+  sheet.getRange(1, 1, 1, 10).merge()
     .setValue("MISE — MAESTRO DE PRODUCTOS   |   La Crêpe Parisienne · Grupo MYT")
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center");
   sheet.setRowHeight(1, 32);
 
   // Fila 2: Acciones por Lote
-  sheet.getRange(2, 1, 1, 9).setBackground(C.cream);
+  sheet.getRange(2, 1, 1, 10).setBackground(C.cream);
   sheet.getRange("A2:B2").merge()
     .setValue("⚠️ Acciones por lote:").setFontWeight("bold").setFontColor(C.dark)
     .setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
@@ -278,13 +298,14 @@ function _buildMaestro(sheet) {
   sheet.getRange("D2").insertCheckboxes().setValue(false).setBackground(C.yellow);
   sheet.getRange("E2").setValue("Activar").setFontWeight("bold").setFontColor(C.dark).setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("F2").insertCheckboxes().setValue(false).setBackground(C.yellow);
-  sheet.getRange("G2").setValue("Limpiar Sel.").setFontWeight("bold").setFontColor(C.dark).setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("G2").setValue("Eliminar Sel.").setFontWeight("bold").setFontColor(C.dark).setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("H2").insertCheckboxes().setValue(false).setBackground(C.yellow);
-  sheet.getRange("I2").setValue("").setBackground(C.cream);
+  sheet.getRange("I2").setValue("Limpiar Sel.").setFontWeight("bold").setFontColor(C.dark).setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("J2").insertCheckboxes().setValue(false).setBackground(C.yellow);
   sheet.setRowHeight(2, 24);
 
-  sheet.getRange(3, 1, 1, 9)
-    .setValues([["No","ID_FAMILIA","PRODUCTO","PRESENTACION","UNIDAD","ACTIVO","MÍN","MÁX","SELECCIONAR"]])
+  sheet.getRange(3, 1, 1, 10)
+    .setValues([["No","ID_FAMILIA","CATEGORÍA","PRODUCTO","PRESENTACION","UNIDAD","ACTIVO","MÍN","MÁX","SELECCIONAR"]])
     .setBackground(C.sage).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(10).setHorizontalAlignment("center");
   sheet.setRowHeight(3, 26);
@@ -292,43 +313,52 @@ function _buildMaestro(sheet) {
 
   sheet.setColumnWidth(1, 32);
   sheet.setColumnWidth(2, 110);
-  sheet.setColumnWidth(3, 210);
-  sheet.setColumnWidth(4, 140);
-  sheet.setColumnWidth(5, 70);
-  sheet.setColumnWidth(6, 60);
-  sheet.setColumnWidth(7, 55);
+  sheet.setColumnWidth(3, 140);
+  sheet.setColumnWidth(4, 210);
+  sheet.setColumnWidth(5, 140);
+  sheet.setColumnWidth(6, 70);
+  sheet.setColumnWidth(7, 60);
   sheet.setColumnWidth(8, 55);
-  sheet.setColumnWidth(9, 85);
+  sheet.setColumnWidth(9, 55);
+  sheet.setColumnWidth(10, 85);
 
   const datos = _catalogo();
-  // Poblar datos con la columna extra SELECCIONAR en falso
-  const maestroDatos = datos.map(r => [r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], false]);
-  sheet.getRange(MAESTRO_START, 1, datos.length, 9).setValues(maestroDatos);
-  const bgs = datos.map((_, i) => Array(9).fill(i % 2 === 0 ? C.rowA : C.rowB));
-  sheet.getRange(MAESTRO_START, 1, datos.length, 9).setBackgrounds(bgs);
+  // Poblar datos con CATEGORÍA inferida y SELECCIONAR en falso
+  const maestroDatos = datos.map(r => [r[0], r[1], CATEGORIAS_MAP[r[1].split('-')[0]] || '', r[2], r[3], r[4], r[5], r[6], r[7], false]);
+  sheet.getRange(MAESTRO_START, 1, datos.length, 10).setValues(maestroDatos);
+  const bgs = datos.map((_, i) => Array(10).fill(i % 2 === 0 ? C.rowA : C.rowB));
+  sheet.getRange(MAESTRO_START, 1, datos.length, 10).setBackgrounds(bgs);
   
-  // Añadir validación dropdown (SÍ/NO) en columna F (col 6)
+  // Añadir validación dropdown (SÍ/NO) en columna G (col 7)
   const validationRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(["SÍ", "NO"], true)
     .setAllowInvalid(false)
     .setHelpText("Selecciona SÍ o NO para activar/desactivar el producto.")
     .build();
-  sheet.getRange(MAESTRO_START, 6, datos.length, 1).setDataValidation(validationRule);
+  sheet.getRange(MAESTRO_START, 7, datos.length, 1).setDataValidation(validationRule);
 
-  // Añadir checkboxes en columna I (col 9)
-  sheet.getRange(MAESTRO_START, 9, datos.length, 1).insertCheckboxes().setValue(false);
+  // Añadir dropdown CATEGORÍA en columna C (col 3)
+  const catValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(CATEGORIAS_LISTA, true)
+    .setAllowInvalid(false)
+    .setHelpText("Selecciona la categoría del producto.")
+    .build();
+  sheet.getRange(MAESTRO_START, 3, datos.length, 1).setDataValidation(catValidation);
+
+  // Añadir checkboxes en columna J (col 10)
+  sheet.getRange(MAESTRO_START, 10, datos.length, 1).insertCheckboxes().setValue(false);
 
   // Formato condicional de seleccion e inactivos
   sheet.clearConditionalFormatRules();
-  const cfRange = sheet.getRange(MAESTRO_START, 1, datos.length, 9);
+  const cfRange = sheet.getRange(MAESTRO_START, 1, datos.length, 10);
   const selectionRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=$I' + MAESTRO_START + '=TRUE')
+    .whenFormulaSatisfied('=$J' + MAESTRO_START + '=TRUE')
     .setBackground("#E3F2FD")
     .setRanges([cfRange])
     .build();
     
   const inactiveRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=$F' + MAESTRO_START + '="NO"')
+    .whenFormulaSatisfied('=$G' + MAESTRO_START + '="NO"')
     .setBackground("#EEEEEE")
     .setFontColor("#9E9E9E")
     .setRanges([cfRange])
@@ -339,8 +369,8 @@ function _buildMaestro(sheet) {
 
 // ── CONSTRUCCIÓN: KARDEX COMPLETAMENTE LIMPIO Y SIMÉTRICO ──────────────────
 function _buildKardex(sheet, nombre) {
-  // Asegurar columnas suficientes (necesita hasta col 29)
-  const needed = 29;
+  // Asegurar columnas suficientes (necesita hasta col 30)
+  const needed = 30;
   if (sheet.getMaxColumns() < needed) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), Math.max(1, needed - sheet.getMaxColumns()));
   }
@@ -353,18 +383,19 @@ function _buildKardex(sheet, nombre) {
   sheet.setRowHeight(1, 18);
 
   // Fila 2: título
-  sheet.getRange(2, 1, 1, 29).merge()
+  sheet.getRange(2, 1, 1, 3).setBackground(C.dark);
+  sheet.getRange(2, 4, 1, 27).merge()
     .setValue(`MISE — KARDEX ${nombre}   |   La Crêpe Parisienne`)
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center");
   sheet.setRowHeight(2, 30);
 
-  // Filas 3-4: semana (FIX VISUAL: Combinación horizontal y alineación intermedia)
+  // Filas 3-4: semana
   const headersSemana = [
-    { rangeHeader: "A3:B3", rangeData: "B4", label: "SEMANA" },
-    { rangeHeader: "C3:D3", rangeData: "D4", label: "FECHA INI" },
-    { rangeHeader: "E3:F3", rangeData: "F4", label: "FECHA FIN" },
-    { rangeHeader: "G3:H3", rangeData: "H4", label: "SUCURSAL" }
+    { rangeHeader: "D3:E3", label: "SEMANA" },
+    { rangeHeader: "F3:G3", label: "FECHA INI" },
+    { rangeHeader: "H3:I3", label: "FECHA FIN" },
+    { rangeHeader: "J3:K3", label: "SUCURSAL" }
   ];
 
   headersSemana.forEach(h => {
@@ -379,47 +410,51 @@ function _buildKardex(sheet, nombre) {
   });
 
   // Forzar que los datos de la fila 4 compartan alineación vertical intermedia simétrica
-  sheet.getRange("B4:H4")
+  sheet.getRange("D4:K4")
     .setFontFamily("Calibri")
     .setFontSize(10)
     .setVerticalAlignment("middle");
 
-  sheet.getRange('B4').setFormula('=IFERROR(ISOWEEKNUM(D4);"")')
+  sheet.getRange('E4').setFormula('=IFERROR(ISOWEEKNUM(G4);"")')
     .setBackground(C.yellow).setHorizontalAlignment("center");
-  sheet.getRange("D4").setBackground(C.yellow).setNumberFormat("DD/MMM/YYYY")
+  sheet.getRange("G4").setBackground(C.yellow).setNumberFormat("DD/MMM/YYYY")
     .setHorizontalAlignment("center");
-  sheet.getRange('F4').setFormula('=IFERROR(D4+6;"")')
+  sheet.getRange('I4').setFormula('=IFERROR(G4+6;"")')
     .setBackground(C.yellow).setNumberFormat("DD/MMM/YYYY").setHorizontalAlignment("center");
-  sheet.getRange("H4").setValue(nombre).setBackground(C.yellow).setHorizontalAlignment("center");
+  sheet.getRange("K4").setValue(nombre).setBackground(C.yellow).setHorizontalAlignment("center");
   
-  sheet.getRange("D4").setDataValidation(
+  sheet.getRange("G4").setDataValidation(
     SpreadsheetApp.newDataValidation().requireDate()
       .setHelpText("LUNES de la semana. Usar ⚙️ Mise → Configurar semana.").build()
   );
 
   // Botones interactivos (casillas de verificación para UX móvil)
-  sheet.getRange("J4").setValue("⚙️ Avanzar Sem.").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
-  sheet.getRange("K4").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
-
-  sheet.getRange("M4").setValue("🔄 Recrear Vista").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
+  sheet.getRange("M4").setValue("⚙️ Avanzar Sem.").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
   sheet.getRange("N4").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
 
-  sheet.getRange("P4").setValue("🆕 Nuevo Prod.").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
+  sheet.getRange("P4").setValue("🔄 Recrear Vista").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
   sheet.getRange("Q4").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
 
-  sheet.getRange("S4").setValue("🚫 Anular Prod.").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
+  sheet.getRange("S4").setValue("🆕 Nuevo Prod.").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
   sheet.getRange("T4").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
+
+  sheet.getRange("V4").setValue("🚫 Anular Prod.").setHorizontalAlignment("right").setFontWeight("bold").setFontSize(8).setFontColor("#FFFFFF").setBackground(C.dark);
+  sheet.getRange("W4").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
 
   sheet.setRowHeight(3, 22);
   sheet.setRowHeight(4, 22);
 
   // Fila 5: sección datos + días
-  sheet.getRange(5, 1, 1, 8).merge()
+  sheet.getRange(5, 1, 1, 3).merge()
+    .setValue("DATOS DEL PRODUCTO")
+    .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center");
+  sheet.getRange(5, 4, 1, 6).merge()
     .setValue("DATOS DEL PRODUCTO")
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(9).setHorizontalAlignment("center");
   DIAS.forEach((dia, idx) => {
-    const sc = 9 + idx * 3;
+    const sc = 10 + idx * 3;
     sheet.getRange(5, sc, 1, 3).merge().setValue(dia)
       .setBackground(idx % 2 === 0 ? C.mdGreen : C.ltGreen)
       .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center");
@@ -427,12 +462,12 @@ function _buildKardex(sheet, nombre) {
   sheet.setRowHeight(5, 22);
 
   // Fila 6: headers de columna
-  sheet.getRange(6, 1, 1, 8)
-    .setValues([["No","PRODUCTO","PRESENTACIÓN","UNIDAD","CADUCIDAD","LOTE","🚦","SALDO\nANT"]])
+  sheet.getRange(6, 1, 1, 9)
+    .setValues([["No","CATEGORÍA","PRODUCTO","PRESENTACIÓN","UNIDAD","CADUCIDAD","LOTE","🚦","SALDO\nANT"]])
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
   DIAS.forEach((_, idx) => {
-    const sc = 9 + idx * 3;
+    const sc = 10 + idx * 3;
     sheet.getRange(6, sc).setValue("ENT").setBackground(C.entBg)
       .setFontColor(C.dkGreen).setFontWeight("bold").setFontSize(8).setHorizontalAlignment("center");
     sheet.getRange(6, sc + 1).setValue("SAL").setBackground(C.salBg)
@@ -445,29 +480,30 @@ function _buildKardex(sheet, nombre) {
 
   // FIX DE ANCHOS: Columnas de cabecera perfectamente equilibradas y holgadas
   sheet.setColumnWidth(1, 45);   // A — No
-  sheet.setColumnWidth(2, 185);  // B — PRODUCTO
-  sheet.setColumnWidth(3, 115);  // C — PRESENTACIÓN
-  sheet.setColumnWidth(4, 115);  // D — UNIDAD (Fecha Ini Input)
-  sheet.setColumnWidth(5, 115);  // E — CADUCIDAD
-  sheet.setColumnWidth(6, 115);  // F — LOTE
-  sheet.setColumnWidth(7, 65);   // G — 🚦
-  sheet.setColumnWidth(8, 110);  // H — SALDO ANT (Nombre de sucursal completo)
+  sheet.setColumnWidth(2, 140);  // B — CATEGORÍA
+  sheet.setColumnWidth(3, 185);  // C — PRODUCTO
+  sheet.setColumnWidth(4, 115);  // D — PRESENTACIÓN
+  sheet.setColumnWidth(5, 115);  // E — UNIDAD
+  sheet.setColumnWidth(6, 115);  // F — CADUCIDAD
+  sheet.setColumnWidth(7, 115);  // G — LOTE
+  sheet.setColumnWidth(8, 65);   // H — 🚦
+  sheet.setColumnWidth(9, 110);  // I — SALDO ANT
   
   for (let d = 0; d < 7; d++) {
-    sheet.setColumnWidth(9 + d * 3, 52);
     sheet.setColumnWidth(10 + d * 3, 52);
-    sheet.setColumnWidth(11 + d * 3, 62);
+    sheet.setColumnWidth(11 + d * 3, 52);
+    sheet.setColumnWidth(12 + d * 3, 62);
   }
 
-  // Formato fecha col E y validación de fecha
-  sheet.getRange(KARDEX_START, 5, 200, 1).setNumberFormat("DD/MMM/YY");
-  sheet.getRange(KARDEX_START, 5, 200, 1).setDataValidation(
+  // Formato fecha col F y validación de fecha
+  sheet.getRange(KARDEX_START, 6, 200, 1).setNumberFormat("DD/MMM/YY");
+  sheet.getRange(KARDEX_START, 6, 200, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireDate()
       .setHelpText("Fecha de caducidad del lote").build()
   );
 
-  // Semáforo col G: formato condicional por texto (8 niveles)
-  const cfR = sheet.getRange(KARDEX_START, 7, 200, 1);
+  // Semáforo col H: formato condicional por texto (8 niveles)
+  const cfR = sheet.getRange(KARDEX_START, 8, 200, 1);
   sheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🔴 CAD")
       .setBackground("#FFCDD2").setFontColor("#B71C1C").setBold(true).setRanges([cfR]).build(),
@@ -486,6 +522,8 @@ function _buildKardex(sheet, nombre) {
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("⚪ S/F")
       .setBackground(C.yellow).setFontColor("#555555").setRanges([cfR]).build(),
   ]);
+
+  sheet.setFrozenColumns(3);
 }
 
 // ── POBLAR KARDEX DESDE MAESTRO ───────────────────────────────────────────────
@@ -497,41 +535,41 @@ function _poblarKardex(sheet) {
   const lr   = maestro.getLastRow();
   if (lr < MAESTRO_START) return;
 
-  const data = maestro.getRange(MAESTRO_START, 1, lr - MAESTRO_START + 1, 8).getValues();
+  const data = maestro.getRange(MAESTRO_START, 1, lr - MAESTRO_START + 1, 9).getValues();
   const prods = data.filter(r => r[0] !== "" && r[0] !== null);
   if (prods.length === 0) return;
 
   const count = prods.length;
 
-  // Cols A-D: No, PRODUCTO, PRESENTACIÓN, UNIDAD
-  sheet.getRange(KARDEX_START, 1, count, 4)
-    .setValues(prods.map(p => [p[0], p[2], p[3], p[4]]));
+  // Cols A-E: No, CATEGORÍA, PRODUCTO, PRESENTACIÓN, UNIDAD
+  sheet.getRange(KARDEX_START, 1, count, 5)
+    .setValues(prods.map(p => [p[0], CATEGORIAS_MAP[p[1].split('-')[0]] || '', p[3], p[4], p[5]]));
 
   // 🔥 FIX SEMÁFORO DINÁMICO: Inyectar fórmula de Sheets para calcular caducidad en tiempo real
   const formulasSemaforo = [];
   for (let r = 0; r < count; r++) {
     const rn = KARDEX_START + r; // Fila actual en el Kardex
     
-    // Fórmula regionalizada que evalúa la diferencia de días entre la Col E (Caducidad) y HOY()
-    const formulaCad = '=IF(ISBLANK(E' + rn + '); "⚪ S/F"; ' +
-                       'IF(E' + rn + '-TODAY()<=0; "🔴 CAD"; ' +
-                       'IF(E' + rn + '-TODAY()<=2; "🔴 ≤2d"; ' +
-                       'IF(E' + rn + '-TODAY()<=7; "🟠 ≤7d"; ' +
-                       'IF(E' + rn + '-TODAY()<=14; "🟡 ≤14d"; ' +
-                       'IF(E' + rn + '-TODAY()<=28; "🟤 ≤28d"; ' +
-                       'IF(E' + rn + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
+    // Fórmula regionalizada que evalúa la diferencia de días entre la Col F (Caducidad) y HOY()
+    const formulaCad = '=IF(ISBLANK(F' + rn + '); "⚪ S/F"; ' +
+                       'IF(F' + rn + '-TODAY()<=0; "🔴 CAD"; ' +
+                       'IF(F' + rn + '-TODAY()<=2; "🔴 ≤2d"; ' +
+                       'IF(F' + rn + '-TODAY()<=7; "🟠 ≤7d"; ' +
+                       'IF(F' + rn + '-TODAY()<=14; "🟡 ≤14d"; ' +
+                       'IF(F' + rn + '-TODAY()<=28; "🟤 ≤28d"; ' +
+                       'IF(F' + rn + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
     formulasSemaforo.push([formulaCad]);
   }
   
-  // Asignar las fórmulas en masa a la columna 7 (Col G - 🚦)
-  sheet.getRange(KARDEX_START, 7, count, 1).setFormulas(formulasSemaforo);
+  // Asignar las fórmulas en masa a la columna 8 (Col H - 🚦)
+  sheet.getRange(KARDEX_START, 8, count, 1).setFormulas(formulasSemaforo);
 
   // Fórmulas SLD para cada día: SLD = SLDprev + ENT - SAL
   for (let d = 0; d < KARDEX_DAYS; d++) {
-    const sldCol  = 11 + d * 3;
-    const prevCol = 8  + d * 3;
-    const entCol  = 9  + d * 3;
-    const salCol  = 10 + d * 3;
+    const sldCol  = 12 + d * 3;
+    const prevCol = 9  + d * 3;
+    const entCol  = 10 + d * 3;
+    const salCol  = 11 + d * 3;
     const formulas = [];
     for (let r = 0; r < count; r++) {
       const rn = KARDEX_START + r;
@@ -541,15 +579,18 @@ function _poblarKardex(sheet) {
   }
 
   // Formato visual filas alternas
-  const bgs = prods.map((_, i) => Array(29).fill(i % 2 === 0 ? C.rowA : C.rowB));
-  sheet.getRange(KARDEX_START, 1, count, 29).setBackgrounds(bgs);
-  sheet.getRange(KARDEX_START, 8, count, 1).setBackgrounds(Array(count).fill([C.iceBlue]));
+  const bgs = prods.map((_, i) => Array(30).fill(i % 2 === 0 ? C.rowA : C.rowB));
+  sheet.getRange(KARDEX_START, 1, count, 30).setBackgrounds(bgs);
+  sheet.getRange(KARDEX_START, 9, count, 1).setBackgrounds(Array(count).fill([C.iceBlue]));
   // ENT verde, SAL rosa, SLD azul hielo por día
   for (let d = 0; d < KARDEX_DAYS; d++) {
-    sheet.getRange(KARDEX_START, 9  + d * 3, count, 1).setBackgrounds(Array(count).fill([C.entBg]));
-    sheet.getRange(KARDEX_START, 10 + d * 3, count, 1).setBackgrounds(Array(count).fill([C.salBg]));
-    sheet.getRange(KARDEX_START, 11 + d * 3, count, 1).setBackgrounds(Array(count).fill([C.iceBlue]));
+    sheet.getRange(KARDEX_START, 10 + d * 3, count, 1).setBackgrounds(Array(count).fill([C.entBg]));
+    sheet.getRange(KARDEX_START, 11 + d * 3, count, 1).setBackgrounds(Array(count).fill([C.salBg]));
+    sheet.getRange(KARDEX_START, 12 + d * 3, count, 1).setBackgrounds(Array(count).fill([C.iceBlue]));
   }
+
+  // Formato numérico para datos diarios
+  sheet.getRange(KARDEX_START, 10, count, 21).setNumberFormat("0.##");
 }
 
 // ── CONSTRUCCIÓN: VISTA MÓVIL ─────────────────────────────────────────────────
@@ -564,20 +605,20 @@ function _buildVista(key) {
   if (sheet) ss.deleteSheet(sheet);
   sheet = ss.insertSheet(bodega.vista);
 
-  // Header — 8 cols (incluye ACTIVO)
-  sheet.getRange(1, 1, 1, 8).merge()
+  // Header — 9 cols (incluye CATEGORÍA y ACTIVO)
+  sheet.getRange(1, 1, 1, 9).merge()
     .setValue(`MISE — VISTA MÓVIL · ${bodega.nombre}   |   La Crêpe Parisienne`)
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center");
   sheet.setRowHeight(1, 30);
 
-  sheet.getRange(2, 1, 1, 8).merge()
+  sheet.getRange(2, 1, 1, 9).merge()
     .setValue("Solo lectura. Fuente del IMPORTRANGE para Pedidos Andares / Pedidos Mercado.")
     .setBackground(C.cream).setFontColor(C.dark).setFontSize(9).setHorizontalAlignment("center");
   sheet.setRowHeight(2, 20);
 
-  sheet.getRange(3, 1, 1, 8)
-    .setValues([["No","PRODUCTO","UNIDAD","SALDO ACTUAL","🚦 STOCK","ENT HOY","SAL HOY","ACTIVO"]])
+  sheet.getRange(3, 1, 1, 9)
+    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO ACTUAL","🚦 STOCK","ENT HOY","SAL HOY","ACTIVO"]])
     .setBackground(C.sage).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(10).setHorizontalAlignment("center");
   sheet.setRowHeight(3, 26);
@@ -590,8 +631,8 @@ function _buildVista(key) {
   const lr = kardex.getLastRow();
   if (lr < KARDEX_START) return;
 
-  const data  = kardex.getRange(KARDEX_START, 1, lr - KARDEX_START + 1, 4).getValues();
-  const prods = data.map((r, i) => ({ no: r[0], nombre: String(r[1]).trim(), unidad: r[3], srcRow: KARDEX_START + i }))
+  const data  = kardex.getRange(KARDEX_START, 1, lr - KARDEX_START + 1, 5).getValues();
+  const prods = data.map((r, i) => ({ no: r[0], cat: String(r[1]).trim(), nombre: String(r[2]).trim(), unidad: r[4], srcRow: KARDEX_START + i }))
     .filter(p => p.nombre && p.no);
   const count = prods.length;
   if (count === 0) return;
@@ -600,33 +641,34 @@ function _buildVista(key) {
   const ref = _quoteName(bodega.kardex);
 
   sheet.getRange(DR, 1, count, 1).setValues(prods.map(p => [p.no]));
-  sheet.getRange(DR, 2, count, 1).setValues(prods.map(p => [p.nombre]));
-  sheet.getRange(DR, 3, count, 1).setValues(prods.map(p => [p.unidad]));
+  sheet.getRange(DR, 2, count, 1).setValues(prods.map(p => [p.cat]));
+  sheet.getRange(DR, 3, count, 1).setValues(prods.map(p => [p.nombre]));
+  sheet.getRange(DR, 4, count, 1).setValues(prods.map(p => [p.unidad]));
 
-  // Col D: saldo actual = SLD domingo (col AC = 29)
-  sheet.getRange(DR, 4, count, 1)
-    .setFormulas(prods.map(p => ['=IFERROR(' + ref + '!AC' + p.srcRow + '*1;0)']))
+  // Col E: saldo actual = SLD domingo (col AD = 30)
+  sheet.getRange(DR, 5, count, 1)
+    .setFormulas(prods.map(p => ['=IFERROR(' + ref + '!AD' + p.srcRow + '*1;0)']))
     .setNumberFormat("0.##");
 
-  // Col E: semáforo de stock
+  // Col F: semáforo de stock
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
   const mlr     = maestro.getLastRow();
-  const mData   = maestro.getRange(MAESTRO_START, 1, mlr - MAESTRO_START + 1, 7).getValues()
+  const mData   = maestro.getRange(MAESTRO_START, 1, mlr - MAESTRO_START + 1, 8).getValues()
     .filter(r => r[0] !== "");
 
   const semaforos = prods.map((p, i) => {
-    const saldo = sheet.getRange(DR + i, 4).getValue() || 0;
-    const min   = (mData[i] && mData[i][6]) ? mData[i][6] : 0;
+    const saldo = sheet.getRange(DR + i, 5).getValue() || 0;
+    const min   = (mData[i] && mData[i][7]) ? mData[i][7] : 0;
     if (min === 0) return ["⚪"];
     if (saldo < min)       return ["🔴"];
     if (saldo < min * 1.5) return ["🟡"];
     return ["🟢"];
   });
-  sheet.getRange(DR, 5, count, 1).setValues(semaforos);
+  sheet.getRange(DR, 6, count, 1).setValues(semaforos);
 
-  // Cols F y G: ENT HOY y SAL HOY dinámicos con WEEKDAY(TODAY())
-  const entCols = ["I","L","O","R","U","X","AA"];
-  const salCols = ["J","M","P","S","V","Y","AB"];
+  // Cols G y H: ENT HOY y SAL HOY dinámicos con WEEKDAY(TODAY())
+  const entCols = ["J","M","P","S","V","Y","AB"];
+  const salCols = ["K","N","Q","T","W","Z","AC"];
 
   const entFormulas = prods.map(p => {
     const kr = p.srcRow;
@@ -640,36 +682,39 @@ function _buildVista(key) {
     return ['=IFERROR(CHOOSE(WEEKDAY(TODAY();2);' + salRefs + ');0)'];
   });
 
-  sheet.getRange(DR, 6, count, 1).setFormulas(entFormulas).setNumberFormat("0.##");
-  sheet.getRange(DR, 7, count, 1).setFormulas(salFormulas).setNumberFormat("0.##");
+  sheet.getRange(DR, 7, count, 1).setFormulas(entFormulas).setNumberFormat("0.##");
+  sheet.getRange(DR, 8, count, 1).setFormulas(salFormulas).setNumberFormat("0.##");
 
-  // Col H: ACTIVO (Col F en MAESTRO)
+  // Col I: ACTIVO (Col G en MAESTRO)
   const refMaestro = _quoteName(SHEET_MAESTRO);
-  sheet.getRange(DR, 8, count, 1)
-    .setFormulas(prods.map(p => ['=' + refMaestro + '!F' + (p.srcRow - KARDEX_START + MAESTRO_START)]));
+  sheet.getRange(DR, 9, count, 1)
+    .setFormulas(prods.map(p => ['=' + refMaestro + '!G' + (p.srcRow - KARDEX_START + MAESTRO_START)]));
 
   // Formato
-  const bgs = prods.map((_, i) => Array(8).fill(i % 2 === 0 ? C.rowA : C.rowB));
-  sheet.getRange(DR, 1, count, 8).setBackgrounds(bgs);
-  sheet.getRange(DR, 4, count, 1).setBackgrounds(Array(count).fill([C.iceBlue]));
-  sheet.getRange(DR, 6, count, 1).setBackgrounds(Array(count).fill([C.entBg]));
-  sheet.getRange(DR, 7, count, 1).setBackgrounds(Array(count).fill([C.salBg]));
-  sheet.getRange(DR, 5, count, 1).setHorizontalAlignment("center").setFontWeight("bold");
-  sheet.getRange(DR, 2, count, 1).setHorizontalAlignment("left");
-  sheet.getRange(DR, 1, count, 8)
+  const bgs = prods.map((_, i) => Array(9).fill(i % 2 === 0 ? C.rowA : C.rowB));
+  sheet.getRange(DR, 1, count, 9).setBackgrounds(bgs);
+  sheet.getRange(DR, 5, count, 1).setBackgrounds(Array(count).fill([C.iceBlue]));
+  sheet.getRange(DR, 7, count, 1).setBackgrounds(Array(count).fill([C.entBg]));
+  sheet.getRange(DR, 8, count, 1).setBackgrounds(Array(count).fill([C.salBg]));
+  sheet.getRange(DR, 6, count, 1).setHorizontalAlignment("center").setFontWeight("bold");
+  sheet.getRange(DR, 3, count, 1).setHorizontalAlignment("left");
+  sheet.getRange(DR, 1, count, 9)
     .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle").setHorizontalAlignment("center");
 
   // CF: SALDO < 1 = fondo rojo
   sheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule().whenNumberLessThan(1)
       .setBackground("#FFCDD2").setFontColor("#B71C1C")
-      .setRanges([sheet.getRange(DR, 4, count, 1)]).build()
+      .setRanges([sheet.getRange(DR, 5, count, 1)]).build()
   ]);
 
-  sheet.setColumnWidth(1, 40);  sheet.setColumnWidth(2, 210);
-  sheet.setColumnWidth(3, 75);  sheet.setColumnWidth(4, 105);
-  sheet.setColumnWidth(5, 65);  sheet.setColumnWidth(6, 80);
-  sheet.setColumnWidth(7, 80);  sheet.setColumnWidth(8, 70);
+  sheet.setColumnWidth(1, 40);  sheet.setColumnWidth(2, 140);
+  sheet.setColumnWidth(3, 210); sheet.setColumnWidth(4, 75);
+  sheet.setColumnWidth(5, 105); sheet.setColumnWidth(6, 65);
+  sheet.setColumnWidth(7, 80);  sheet.setColumnWidth(8, 80);
+  sheet.setColumnWidth(9, 70);
+
+  sheet.hideSheet();
 
   _log("_buildVista", `${bodega.nombre}: ${count} productos`);
 }
@@ -760,9 +805,9 @@ function crearCaducidades() {
     if (!ks) return;
     const lr = ks.getLastRow();
     if (lr < KARDEX_START) return;
-    const rows = ks.getRange(KARDEX_START, 1, lr - KARDEX_START + 1, 2).getValues();
+    const rows = ks.getRange(KARDEX_START, 1, lr - KARDEX_START + 1, 3).getValues();
     rows.forEach((row, i) => {
-      const nombre = String(row[1]).trim();
+      const nombre = String(row[2]).trim();
       if (nombre) maps[key][nombre] = KARDEX_START + i;
     });
   });
@@ -770,7 +815,7 @@ function crearCaducidades() {
   // Datos desde MAESTRO
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
   const lr2     = maestro.getLastRow();
-  const mData   = maestro.getRange(MAESTRO_START, 1, lr2 - MAESTRO_START + 1, 5).getValues()
+  const mData   = maestro.getRange(MAESTRO_START, 1, lr2 - MAESTRO_START + 1, 6).getValues()
     .filter(r => r[0] !== "");
 
   const DR    = 4;
@@ -780,23 +825,23 @@ function crearCaducidades() {
 
   mData.forEach((p, i) => {
     const r      = DR + i;
-    const nombre = String(p[2]).trim();
+    const nombre = String(p[3]).trim();
     const bg     = i % 2 === 0 ? C.rowA : C.rowB;
-    const cat    = p[1] ? p[1].split("-")[0] : "";
+    const cat    = String(p[2] || '').trim();
 
     // Cols A-D: info del producto
     sheet.getRange(r, 1).setValue(p[0]).setBackground(bg).setHorizontalAlignment("center");
     sheet.getRange(r, 2).setValue(nombre).setBackground(bg).setHorizontalAlignment("left");
     sheet.getRange(r, 3).setValue(cat).setBackground(bg).setHorizontalAlignment("center");
-    sheet.getRange(r, 4).setValue(p[4]).setBackground(bg).setHorizontalAlignment("center");
+    sheet.getRange(r, 4).setValue(p[5]).setBackground(bg).setHorizontalAlignment("center");
 
     // Cols E-G: B-Andares
     const krBA = mapBA[nombre];
     if (krBA) {
-      sheet.getRange(r, 5).setFormula('=IFERROR(' + refBA + '!E' + krBA + ';"")')
+      sheet.getRange(r, 5).setFormula('=IFERROR(' + refBA + '!F' + krBA + ';"")')
         .setNumberFormat("DD/MMM/YY").setBackground(bg);
-      sheet.getRange(r, 6).setFormula('=' + refBA + '!F' + krBA).setBackground(bg);
-      sheet.getRange(r, 7).setFormula('=' + refBA + '!G' + krBA).setBackground(C.yellow);
+      sheet.getRange(r, 6).setFormula('=' + refBA + '!G' + krBA).setBackground(bg);
+      sheet.getRange(r, 7).setFormula('=' + refBA + '!H' + krBA).setBackground(C.yellow);
     } else {
       sheet.getRange(r, 5).setValue("").setBackground(bg);
       sheet.getRange(r, 6).setValue("").setBackground(bg);
@@ -809,10 +854,10 @@ function crearCaducidades() {
     // Cols I-K: B-Mercado
     const krBM = mapBM[nombre];
     if (krBM) {
-      sheet.getRange(r, 9).setFormula('=IFERROR(' + refBM + '!E' + krBM + ';"")')
+      sheet.getRange(r, 9).setFormula('=IFERROR(' + refBM + '!F' + krBM + ';"")')
         .setNumberFormat("DD/MMM/YY").setBackground(bg);
-      sheet.getRange(r, 10).setFormula('=' + refBM + '!F' + krBM).setBackground(bg);
-      sheet.getRange(r, 11).setFormula('=' + refBM + '!G' + krBM).setBackground(C.yellow);
+      sheet.getRange(r, 10).setFormula('=' + refBM + '!G' + krBM).setBackground(bg);
+      sheet.getRange(r, 11).setFormula('=' + refBM + '!H' + krBM).setBackground(C.yellow);
     } else {
       sheet.getRange(r, 9).setValue("").setBackground(bg);
       sheet.getRange(r, 10).setValue("").setBackground(bg);
@@ -911,10 +956,10 @@ function _configurarSemana(key) {
     monday.setDate(date.getDate() - dow + 1);
   }
 
-  sheet.getRange("D4").setValue(monday).setNumberFormat("DD/MMM/YYYY");
+  sheet.getRange("G4").setValue(monday).setNumberFormat("DD/MMM/YYYY");
   SpreadsheetApp.flush();
-  const sem = sheet.getRange("B4").getValue();
-  const sun = sheet.getRange("F4").getValue();
+  const sem = sheet.getRange("E4").getValue();
+  const sun = sheet.getRange("I4").getValue();
   ui.alert(`✅ Semana ${sem} configurada\n${_fmt(monday)} → ${sun instanceof Date ? _fmt(sun) : sun}`);
   _log("configurarSemana", `${bodega.nombre} | Sem ${sem} | ${_fmt(monday)}`);
 }
@@ -930,14 +975,14 @@ function _avanzarSemana(key) {
   const sheet  = ss.getSheetByName(bodega.kardex);
   if (!sheet) { ui.alert(`No existe ${bodega.kardex}.`); return; }
 
-  const d4 = sheet.getRange("D4").getValue();
+  const d4 = sheet.getRange("G4").getValue();
   if (!(d4 instanceof Date) || isNaN(d4.getTime())) {
-    ui.alert("La fecha de inicio (D4) no es válida. Por favor configúrala primero.");
+    ui.alert("La fecha de inicio (G4) no es válida. Por favor configúrala primero.");
     return;
   }
 
-  const sem = sheet.getRange("B4").getValue() || 0;
-  const sun = sheet.getRange("F4").getValue();
+  const sem = sheet.getRange("E4").getValue() || 0;
+  const sun = sheet.getRange("I4").getValue();
   const resp = ui.alert(
     `📅 Avanzar semana — ${bodega.nombre}`,
     `• Semana ${sem} (${_fmt(d4)} → ${sun instanceof Date ? _fmt(sun) : sun})\n` +
@@ -957,26 +1002,26 @@ function _avanzarSemana(key) {
     const numRows = lr - KARDEX_START + 1;
     if (numRows < 1) return;
 
-    // 1. Leer saldos finales (col AC = 29)
+    // 1. Leer saldos finales (col AD = 30)
     const saldosFin = sheet.getRange(KARDEX_START, KARDEX_SLD_FIN, numRows, 1).getValues();
     const saldosAnt = saldosFin.map(r => [typeof r[0] === "number" ? r[0] : 0]);
 
     // 2. Guardar en HISTORIAL horizontal
     _guardarHistHorizontal(key, sheet, numRows, d4, sem);
 
-    // 3. Escribir saldos finales en SALDO ANT (col H = 8)
+    // 3. Escribir saldos finales en SALDO ANT (col I = 9)
     sheet.getRange(KARDEX_START, KARDEX_SLD_ANT, numRows, 1).setValues(saldosAnt);
 
     // 4. Limpiar celdas de entrada/salida
     for (let d = 0; d < KARDEX_DAYS; d++) {
-      sheet.getRange(KARDEX_START, 9  + d * 3, numRows, 1).clearContent();
       sheet.getRange(KARDEX_START, 10 + d * 3, numRows, 1).clearContent();
+      sheet.getRange(KARDEX_START, 11 + d * 3, numRows, 1).clearContent();
     }
 
-    // 5. Avanzar D4 por 7 días
+    // 5. Avanzar G4 por 7 días
     const next = new Date(d4);
     next.setDate(d4.getDate() + 7);
-    sheet.getRange("D4").setValue(next).setNumberFormat("DD/MMM/YYYY");
+    sheet.getRange("G4").setValue(next).setNumberFormat("DD/MMM/YYYY");
 
     _log("avanzarSemana", `${bodega.nombre} | Semana ${sem} avanzada.`);
     ui.alert(`✅ Semana avanzada en ${bodega.nombre}.`);
@@ -1003,8 +1048,8 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
     hSheet.getRange("B2:B4").merge().setValue("PRODUCTO").setFontWeight("bold").setFontColor("#FFFFFF").setBackground(C.dark).setHorizontalAlignment("center").setVerticalAlignment("middle");
     hSheet.getRange("C2:C4").merge().setValue("UNIDAD").setFontWeight("bold").setFontColor("#FFFFFF").setBackground(C.dark).setHorizontalAlignment("center").setVerticalAlignment("middle");
     
-    const prods = sheet.getRange(KARDEX_START, 1, numRows, 4).getValues();
-    const histProds = prods.map(p => [p[0], p[1], p[3]]);
+    const prods = sheet.getRange(KARDEX_START, 1, numRows, 5).getValues();
+    const histProds = prods.map(p => [p[0], p[2], p[4]]);
     hSheet.getRange(5, 1, numRows, 3).setValues(histProds);
     
     const bgs = histProds.map((_, i) => Array(3).fill(i % 2 === 0 ? C.rowA : C.rowB));
@@ -1023,8 +1068,8 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
   if (numRowsH < numRows) {
     const diff = numRows - numRowsH;
     hSheet.insertRowsAfter(lastRowH, diff);
-    const newProds = sheet.getRange(KARDEX_START + numRowsH, 1, diff, 4).getValues();
-    const histNewProds = newProds.map(p => [p[0], p[1], p[3]]);
+    const newProds = sheet.getRange(KARDEX_START + numRowsH, 1, diff, 5).getValues();
+    const histNewProds = newProds.map(p => [p[0], p[2], p[4]]);
     hSheet.getRange(lastRowH + 1, 1, diff, 3).setValues(histNewProds);
     
     const bgs = histNewProds.map((_, i) => Array(3).fill((numRowsH + i) % 2 === 0 ? C.rowA : C.rowB));
@@ -1034,14 +1079,15 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
   }
 
   const startCol = hSheet.getLastColumn() + 1;
-  hSheet.insertColumnsAfter(startCol - 1, 15);
+  hSheet.insertColumnsAfter(startCol - 1, 16);
 
   const semStr = `SEMANA ${sem} (${monday.getFullYear()})`;
-  hSheet.getRange(2, startCol, 1, 14).merge().setValue(semStr)
+  hSheet.getRange(2, startCol, 1, 15).merge().setValue(semStr)
     .setFontWeight("bold").setFontColor("#FFFFFF").setBackground(C.dark).setHorizontalAlignment("center").setVerticalAlignment("middle");
-  hSheet.getRange(1, startCol, 1, 15).setBackground(C.dark);
+  hSheet.getRange(1, startCol, 1, 16).setBackground(C.dark);
 
-  const kardexVals = sheet.getRange(KARDEX_START, 9, numRows, 21).getValues();
+  const kardexVals = sheet.getRange(KARDEX_START, 10, numRows, 21).getValues();
+  const sldFin = sheet.getRange(KARDEX_START, KARDEX_SLD_FIN, numRows, 1).getValues();
   const histVals = [];
 
   for (let r = 0; r < numRows; r++) {
@@ -1072,7 +1118,14 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
     hSheet.setColumnWidth(colIdx + 1, 55);
   }
 
+  // SLD FIN header
+  hSheet.getRange(3, startCol + 14).setValue("SLD FIN")
+    .setFontWeight("bold").setFontColor("#333333").setBackground(C.iceBlue).setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  hSheet.getRange(4, startCol + 14).setValue("").setBackground(C.iceBlue);
+  hSheet.setColumnWidth(startCol + 14, 65);
+
   hSheet.getRange(5, startCol, numRows, 14).setValues(histVals);
+  hSheet.getRange(5, startCol + 14, numRows, 1).setValues(sldFin);
 
   const colBgs = [];
   for (let r = 0; r < numRows; r++) {
@@ -1085,9 +1138,14 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
   }
   hSheet.getRange(5, startCol, numRows, 14).setBackgrounds(colBgs)
     .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle").setHorizontalAlignment("center");
+  hSheet.getRange(5, startCol + 14, numRows, 1).setBackgrounds(Array(numRows).fill([C.iceBlue]))
+    .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle").setHorizontalAlignment("center");
 
-  // Configurar columna de separación (15ª columna = startCol + 14)
-  const sepColIdx = startCol + 14;
+  // Formato numérico para datos y SLD FIN
+  hSheet.getRange(5, startCol, numRows, 15).setNumberFormat("0.##");
+
+  // Configurar columna de separación (16ª columna = startCol + 15)
+  const sepColIdx = startCol + 15;
   hSheet.setColumnWidth(sepColIdx, 8);
   hSheet.getRange(2, sepColIdx, numRows + 3, 1).setBackground("#555555");
 }
@@ -1108,6 +1166,9 @@ function agregarProducto() {
   if (iResp.getSelectedButton() !== ui.Button.OK) return;
   const idFam = iResp.getResponseText().trim();
 
+  // Inferir categoría del prefijo
+  const categoria = CATEGORIAS_MAP[idFam.split('-')[0]] || '';
+
   const uResp = ui.prompt("🆕 Nuevo Producto", "Unidad (kg / lt / pza / paq):", ui.ButtonSet.OK_CANCEL);
   if (uResp.getSelectedButton() !== ui.Button.OK) return;
   const unidad = uResp.getResponseText().trim();
@@ -1123,10 +1184,10 @@ function agregarProducto() {
     const newRow = lr + 1;
 
     // 1. Insertar en MAESTRO
-    maestro.getRange(newRow, 1, 1, 9)
-      .setValues([[newNo, idFam, prod, "", unidad, "SÍ", 0, 0, false]]);
+    maestro.getRange(newRow, 1, 1, 10)
+      .setValues([[newNo, idFam, categoria, prod, "", unidad, "SÍ", 0, 0, false]]);
     const rowColor = (newNo % 2 === 1) ? C.rowA : C.rowB;
-    maestro.getRange(newRow, 1, 1, 9).setBackground(rowColor);
+    maestro.getRange(newRow, 1, 1, 10).setBackground(rowColor);
     
     // Configurar dropdown nativo SÍ/NO
     const validationRule = SpreadsheetApp.newDataValidation()
@@ -1134,10 +1195,18 @@ function agregarProducto() {
       .setAllowInvalid(false)
       .setHelpText("Selecciona SÍ o NO para activar/desactivar el producto.")
       .build();
-    maestro.getRange(newRow, 6).setDataValidation(validationRule);
+    maestro.getRange(newRow, 7).setDataValidation(validationRule);
+
+    // Configurar dropdown CATEGORÍA
+    const catValidation = SpreadsheetApp.newDataValidation()
+      .requireValueInList(CATEGORIAS_LISTA, true)
+      .setAllowInvalid(false)
+      .setHelpText("Selecciona la categoría del producto.")
+      .build();
+    maestro.getRange(newRow, 3).setDataValidation(catValidation);
 
     // Configurar checkbox de seleccion
-    maestro.getRange(newRow, 9).insertCheckboxes().setValue(false);
+    maestro.getRange(newRow, 10).insertCheckboxes().setValue(false);
 
     // 2. Insertar en KARDEX_BA y KARDEX_BM
     Object.values(BODEGAS).forEach(b => {
@@ -1146,27 +1215,27 @@ function agregarProducto() {
         const lastRowK = kSheet.getLastRow();
         const nextRowK = lastRowK + 1;
         
-        kSheet.getRange(nextRowK, 1, 1, 4).setValues([[newNo, prod, "", unidad]]);
-        kSheet.getRange(nextRowK, 5).setDataValidation(
+        kSheet.getRange(nextRowK, 1, 1, 5).setValues([[newNo, categoria, prod, "", unidad]]);
+        kSheet.getRange(nextRowK, 6).setDataValidation(
           SpreadsheetApp.newDataValidation().requireDate()
             .setHelpText("Fecha de caducidad del lote").build()
         ).setNumberFormat("DD/MMM/YY");
         
-        const formulaCad = '=IF(ISBLANK(E' + nextRowK + '); "⚪ S/F"; ' +
-                           'IF(E' + nextRowK + '-TODAY()<=0; "🔴 CAD"; ' +
-                           'IF(E' + nextRowK + '-TODAY()<=2; "🔴 ≤2d"; ' +
-                           'IF(E' + nextRowK + '-TODAY()<=7; "🟠 ≤7d"; ' +
-                           'IF(E' + nextRowK + '-TODAY()<=14; "🟡 ≤14d"; ' +
-                           'IF(E' + nextRowK + '-TODAY()<=28; "🟤 ≤28d"; ' +
-                           'IF(E' + nextRowK + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
-        kSheet.getRange(nextRowK, 7).setFormula(formulaCad);
-        kSheet.getRange(nextRowK, 8).setValue(0);
+        const formulaCad = '=IF(ISBLANK(F' + nextRowK + '); "⚪ S/F"; ' +
+                           'IF(F' + nextRowK + '-TODAY()<=0; "🔴 CAD"; ' +
+                           'IF(F' + nextRowK + '-TODAY()<=2; "🔴 ≤2d"; ' +
+                           'IF(F' + nextRowK + '-TODAY()<=7; "🟠 ≤7d"; ' +
+                           'IF(F' + nextRowK + '-TODAY()<=14; "🟡 ≤14d"; ' +
+                           'IF(F' + nextRowK + '-TODAY()<=28; "🟤 ≤28d"; ' +
+                           'IF(F' + nextRowK + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
+        kSheet.getRange(nextRowK, 8).setFormula(formulaCad);
+        kSheet.getRange(nextRowK, 9).setValue(0);
         
         for (let d = 0; d < KARDEX_DAYS; d++) {
-          const sldCol  = 11 + d * 3;
-          const prevCol = 8  + d * 3;
-          const entCol  = 9  + d * 3;
-          const salCol  = 10 + d * 3;
+          const sldCol  = 12 + d * 3;
+          const prevCol = 9  + d * 3;
+          const entCol  = 10 + d * 3;
+          const salCol  = 11 + d * 3;
           
           kSheet.getRange(nextRowK, entCol).setValue("");
           kSheet.getRange(nextRowK, salCol).setValue("");
@@ -1174,12 +1243,12 @@ function agregarProducto() {
           kSheet.getRange(nextRowK, sldCol).setFormula(fSld);
         }
         
-        kSheet.getRange(nextRowK, 1, 1, 29).setBackgrounds([Array(29).fill(rowColor)]);
-        kSheet.getRange(nextRowK, 8).setBackground(C.iceBlue);
+        kSheet.getRange(nextRowK, 1, 1, 30).setBackgrounds([Array(30).fill(rowColor)]);
+        kSheet.getRange(nextRowK, 9).setBackground(C.iceBlue);
         for (let d = 0; d < KARDEX_DAYS; d++) {
-          kSheet.getRange(nextRowK, 9  + d * 3).setBackground(C.entBg);
-          kSheet.getRange(nextRowK, 10 + d * 3).setBackground(C.salBg);
-          kSheet.getRange(nextRowK, 11 + d * 3).setBackground(C.iceBlue);
+          kSheet.getRange(nextRowK, 10 + d * 3).setBackground(C.entBg);
+          kSheet.getRange(nextRowK, 11 + d * 3).setBackground(C.salBg);
+          kSheet.getRange(nextRowK, 12 + d * 3).setBackground(C.iceBlue);
         }
       }
     });
@@ -1231,10 +1300,10 @@ function anularProducto() {
 
   try {
     const lr = maestro.getLastRow();
-    const data = maestro.getRange(MAESTRO_START, 1, lr - MAESTRO_START + 1, 3).getValues(); // No, ID, PRODUCTO
+    const data = maestro.getRange(MAESTRO_START, 1, lr - MAESTRO_START + 1, 4).getValues(); // No, ID, CAT, PRODUCTO
     let foundRow = -1;
     for (let i = 0; i < data.length; i++) {
-      if (String(data[i][0]) === input || String(data[i][2]).toLowerCase() === input.toLowerCase()) {
+      if (String(data[i][0]) === input || String(data[i][3]).toLowerCase() === input.toLowerCase()) {
         foundRow = MAESTRO_START + i;
         break;
       }
@@ -1245,8 +1314,8 @@ function anularProducto() {
       return;
     }
 
-    // Cambiar columna ACTIVO (col 6) a NO
-    maestro.getRange(foundRow, 6).setValue("NO");
+    // Cambiar columna ACTIVO (col 7) a NO
+    maestro.getRange(foundRow, 7).setValue("NO");
     
     // Ocultar en Kardex
     const kardexRow = foundRow - MAESTRO_START + KARDEX_START;
@@ -1561,7 +1630,7 @@ function _catalogo() {
 
 function acercaDe() {
   SpreadsheetApp.getUi().alert(
-    "⚙️ Mise v5.0",
+    "⚙️ Mise v5.1",
     "Suite Atelier · La Crêpe Parisienne · Grupo MYT\n\n" +
     "Sistema de inventario operativo para bodega.\n" +
     "131 productos · 2 bodegas · historial semanal · semáforo de caducidad",
@@ -1577,7 +1646,7 @@ function desactivarSeleccionadosMaestro() {
   const lr = maestro.getLastRow();
   if (lr < MAESTRO_START) return;
   const count = lr - MAESTRO_START + 1;
-  const rangeMaestro = maestro.getRange(MAESTRO_START, 1, count, 9);
+  const rangeMaestro = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS);
   const valuesMaestro = rangeMaestro.getValues();
   
   const lock = LockService.getScriptLock();
@@ -1589,9 +1658,9 @@ function desactivarSeleccionadosMaestro() {
   try {
     let affected = 0;
     for (let i = 0; i < count; i++) {
-      if (valuesMaestro[i][8] === true) {
-        valuesMaestro[i][5] = "NO";
-        valuesMaestro[i][8] = false;
+      if (valuesMaestro[i][9] === true) {
+        valuesMaestro[i][6] = "NO";
+        valuesMaestro[i][9] = false;
         const kardexRow = KARDEX_START + i;
         Object.values(BODEGAS).forEach(b => {
           const kSheet = ss.getSheetByName(b.kardex);
@@ -1619,7 +1688,7 @@ function activarSeleccionadosMaestro() {
   const lr = maestro.getLastRow();
   if (lr < MAESTRO_START) return;
   const count = lr - MAESTRO_START + 1;
-  const rangeMaestro = maestro.getRange(MAESTRO_START, 1, count, 9);
+  const rangeMaestro = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS);
   const valuesMaestro = rangeMaestro.getValues();
   
   const lock = LockService.getScriptLock();
@@ -1631,9 +1700,9 @@ function activarSeleccionadosMaestro() {
   try {
     let affected = 0;
     for (let i = 0; i < count; i++) {
-      if (valuesMaestro[i][8] === true) {
-        valuesMaestro[i][5] = "SÍ";
-        valuesMaestro[i][8] = false;
+      if (valuesMaestro[i][9] === true) {
+        valuesMaestro[i][6] = "SÍ";
+        valuesMaestro[i][9] = false;
         const kardexRow = KARDEX_START + i;
         Object.values(BODEGAS).forEach(b => {
           const kSheet = ss.getSheetByName(b.kardex);
@@ -1661,8 +1730,228 @@ function limpiarSeleccionMaestro() {
   const lr = maestro.getLastRow();
   if (lr < MAESTRO_START) return;
   const count = lr - MAESTRO_START + 1;
-  maestro.getRange(MAESTRO_START, 9, count, 1).setValue(false);
+  maestro.getRange(MAESTRO_START, 10, count, 1).setValue(false);
   SpreadsheetApp.getActive().toast("Selección limpiada ✓", "⚙️ Mise", 3);
+}
+
+function eliminarSeleccionadosMaestro() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  if (!maestro) return;
+  const lr = maestro.getLastRow();
+  if (lr < MAESTRO_START) return;
+  const count = lr - MAESTRO_START + 1;
+  const data = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS).getValues();
+  
+  // Encontrar filas seleccionadas (col J = index 9)
+  const selectedRows = [];
+  for (let i = 0; i < count; i++) {
+    if (data[i][9] === true) {
+      selectedRows.push(i);
+    }
+  }
+  
+  if (selectedRows.length === 0) {
+    ui.alert("No hay productos seleccionados para eliminar.");
+    return;
+  }
+  
+  const nombres = selectedRows.map(i => data[i][3]).join(", ");
+  const resp = ui.alert(
+    "🗑 Eliminar Productos Definitivamente",
+    `Se eliminarán ${selectedRows.length} producto(s) de TODAS las hojas (MAESTRO, KARDEX, HISTORIAL, CADUCIDADES):\n\n${nombres}\n\nEsta acción NO se puede deshacer. ¿Continuar?`,
+    ui.ButtonSet.YES_NO
+  );
+  if (resp !== ui.Button.YES) return;
+  
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) { ui.alert("El archivo está ocupado."); return; }
+  
+  try {
+    // Eliminar de abajo hacia arriba para no desplazar índices
+    for (let i = selectedRows.length - 1; i >= 0; i--) {
+      const rowIdx = selectedRows[i];
+      const maestroRow = MAESTRO_START + rowIdx;
+      const kardexRow = KARDEX_START + rowIdx;
+      
+      // Eliminar de MAESTRO
+      maestro.deleteRow(maestroRow);
+      
+      // Eliminar de KARDEX
+      Object.values(BODEGAS).forEach(b => {
+        const kSheet = ss.getSheetByName(b.kardex);
+        if (kSheet && kardexRow <= kSheet.getLastRow()) {
+          kSheet.deleteRow(kardexRow);
+        }
+      });
+      
+      // Eliminar de HISTORIAL
+      Object.values(BODEGAS).forEach(b => {
+        const hSheet = ss.getSheetByName(`HISTORIAL_${b.key}`);
+        const histRow = 4 + rowIdx; // historial starts at row 5 (header rows 1-4)
+        if (hSheet && histRow <= hSheet.getLastRow()) {
+          hSheet.deleteRow(histRow + 1);
+        }
+      });
+    }
+    
+    // Re-numerar y re-formatear
+    _ordenarYRenumerarTodo();
+    
+    // Recrear vistas y caducidades
+    _buildVista("BA");
+    _buildVista("BM");
+    crearCaducidades();
+    
+    ui.alert("✅ Eliminación completada", `Se eliminaron ${selectedRows.length} producto(s) definitivamente.`, ui.ButtonSet.OK);
+    _log("eliminarSeleccionadosMaestro", `Eliminados: ${nombres}`);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function _ordenarYRenumerarTodo() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  if (!maestro) return;
+  const lr = maestro.getLastRow();
+  if (lr < MAESTRO_START) return;
+  const count = lr - MAESTRO_START + 1;
+  
+  // 1. Leer datos de MAESTRO
+  const range = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS);
+  const data = range.getValues();
+  
+  // 2. Ordenar por CATEGORÍA (col C = index 2) y luego PRODUCTO (col D = index 3)
+  data.sort((a, b) => {
+    const catA = String(a[2] || '').trim();
+    const catB = String(b[2] || '').trim();
+    if (catA !== catB) return catA.localeCompare(catB);
+    const prodA = String(a[3] || '').trim().toLowerCase();
+    const prodB = String(b[3] || '').trim().toLowerCase();
+    return prodA.localeCompare(prodB);
+  });
+  
+  // 3. Re-numerar
+  for (let i = 0; i < data.length; i++) {
+    data[i][0] = i + 1;
+    data[i][9] = false; // limpiar selección
+  }
+  
+  // 4. Escribir datos ordenados
+  range.setValues(data);
+  
+  // 5. Re-aplicar formatos visuales
+  const bgs = data.map((_, i) => Array(MAESTRO_COLS).fill(i % 2 === 0 ? C.rowA : C.rowB));
+  range.setBackgrounds(bgs);
+  
+  // 6. Reconstruir KARDEX con los datos re-ordenados
+  Object.values(BODEGAS).forEach(b => {
+    const kSheet = ss.getSheetByName(b.kardex);
+    if (!kSheet) return;
+    const klr = kSheet.getLastRow();
+    if (klr < KARDEX_START) return;
+    const kCount = klr - KARDEX_START + 1;
+    
+    // Leer datos existentes del Kardex (preservar CADUCIDAD, LOTE, ENT, SAL)
+    const kData = kSheet.getRange(KARDEX_START, 1, kCount, KARDEX_TOTAL_COLS).getValues();
+    
+    // Crear mapa por nombre de producto → datos del kardex (preservando entradas/salidas)
+    const kMap = {};
+    for (let i = 0; i < kCount; i++) {
+      const nombre = String(kData[i][2]).trim(); // col C = PRODUCTO
+      if (nombre) kMap[nombre] = kData[i];
+    }
+    
+    // Re-construir datos del kardex en el nuevo orden del MAESTRO
+    const newKData = [];
+    for (let i = 0; i < data.length; i++) {
+      const prodName = String(data[i][3]).trim(); // MAESTRO col D = PRODUCTO
+      const existing = kMap[prodName];
+      if (existing) {
+        // Actualizar No y Categoría, preservar todo lo demás
+        existing[0] = data[i][0]; // No
+        existing[1] = data[i][2]; // CATEGORÍA
+        existing[2] = data[i][3]; // PRODUCTO
+        existing[3] = data[i][4]; // PRESENTACIÓN
+        existing[4] = data[i][5]; // UNIDAD
+        newKData.push(existing);
+      } else {
+        // Producto nuevo sin datos previos
+        const row = new Array(KARDEX_TOTAL_COLS).fill('');
+        row[0] = data[i][0]; // No
+        row[1] = data[i][2]; // CATEGORÍA
+        row[2] = data[i][3]; // PRODUCTO
+        row[3] = data[i][4]; // PRESENTACIÓN
+        row[4] = data[i][5]; // UNIDAD
+        newKData.push(row);
+      }
+    }
+    
+    // Escribir datos estáticos (No, CAT, PROD, PRES, UND)
+    const staticCols = newKData.map(r => [r[0], r[1], r[2], r[3], r[4]]);
+    kSheet.getRange(KARDEX_START, 1, newKData.length, 5).setValues(staticCols);
+    
+    // Preservar CADUCIDAD y LOTE
+    const cadLote = newKData.map(r => [r[5], r[6]]);
+    kSheet.getRange(KARDEX_START, 6, newKData.length, 2).setValues(cadLote);
+    
+    // Preservar SALDO ANT
+    const sldAnt = newKData.map(r => [r[8]]);
+    kSheet.getRange(KARDEX_START, 9, newKData.length, 1).setValues(sldAnt);
+    
+    // Preservar ENT/SAL values
+    for (let d = 0; d < KARDEX_DAYS; d++) {
+      const entIdx = 9 + d * 3;  // 0-indexed in array
+      const salIdx = 10 + d * 3;
+      const entVals = newKData.map(r => [r[entIdx]]);
+      const salVals = newKData.map(r => [r[salIdx]]);
+      kSheet.getRange(KARDEX_START, 10 + d * 3, newKData.length, 1).setValues(entVals);
+      kSheet.getRange(KARDEX_START, 11 + d * 3, newKData.length, 1).setValues(salVals);
+    }
+    
+    // Re-escribir fórmulas de semáforo (col 8)
+    const formulasSemaforo = [];
+    for (let r = 0; r < newKData.length; r++) {
+      const rn = KARDEX_START + r;
+      const f = '=IF(ISBLANK(F' + rn + '); "⚪ S/F"; ' +
+                'IF(F' + rn + '-TODAY()<=0; "🔴 CAD"; ' +
+                'IF(F' + rn + '-TODAY()<=2; "🔴 ≤2d"; ' +
+                'IF(F' + rn + '-TODAY()<=7; "🟠 ≤7d"; ' +
+                'IF(F' + rn + '-TODAY()<=14; "🟡 ≤14d"; ' +
+                'IF(F' + rn + '-TODAY()<=28; "🟤 ≤28d"; ' +
+                'IF(F' + rn + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
+      formulasSemaforo.push([f]);
+    }
+    kSheet.getRange(KARDEX_START, 8, newKData.length, 1).setFormulas(formulasSemaforo);
+    
+    // Re-escribir fórmulas SLD
+    for (let d = 0; d < KARDEX_DAYS; d++) {
+      const sldCol  = 12 + d * 3;
+      const prevCol = 9  + d * 3;
+      const entCol  = 10 + d * 3;
+      const salCol  = 11 + d * 3;
+      const formulas = [];
+      for (let r = 0; r < newKData.length; r++) {
+        const rn = KARDEX_START + r;
+        formulas.push(['=' + _col(prevCol) + rn + '+IFERROR(' + _col(entCol) + rn + ';0)-IFERROR(' + _col(salCol) + rn + ';0)']);
+      }
+      kSheet.getRange(KARDEX_START, sldCol, newKData.length, 1).setFormulas(formulas);
+    }
+    
+    // Re-aplicar backgrounds
+    const kBgs = newKData.map((_, i) => Array(KARDEX_TOTAL_COLS).fill(i % 2 === 0 ? C.rowA : C.rowB));
+    kSheet.getRange(KARDEX_START, 1, newKData.length, KARDEX_TOTAL_COLS).setBackgrounds(kBgs);
+    kSheet.getRange(KARDEX_START, 9, newKData.length, 1).setBackgrounds(Array(newKData.length).fill([C.iceBlue]));
+    for (let d = 0; d < KARDEX_DAYS; d++) {
+      kSheet.getRange(KARDEX_START, 10 + d * 3, newKData.length, 1).setBackgrounds(Array(newKData.length).fill([C.entBg]));
+      kSheet.getRange(KARDEX_START, 11 + d * 3, newKData.length, 1).setBackgrounds(Array(newKData.length).fill([C.salBg]));
+      kSheet.getRange(KARDEX_START, 12 + d * 3, newKData.length, 1).setBackgrounds(Array(newKData.length).fill([C.iceBlue]));
+    }
+  });
+  
+  _log("_ordenarYRenumerarTodo", `Re-ordenado y re-numerado: ${data.length} productos`);
 }
 
 function restaurarValidacionesMaestro() {
@@ -1673,28 +1962,36 @@ function restaurarValidacionesMaestro() {
   if (lr < MAESTRO_START) return;
   const count = lr - MAESTRO_START + 1;
   
-  // 1. Restaurar Dropdown F (ACTIVO)
+  // 1. Restaurar Dropdown G (ACTIVO)
   const validationRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(["SÍ", "NO"], true)
     .setAllowInvalid(false)
     .setHelpText("Selecciona SÍ o NO para activar/desactivar el producto.")
     .build();
-  maestro.getRange(MAESTRO_START, 6, count, 1).setDataValidation(validationRule);
+  maestro.getRange(MAESTRO_START, 7, count, 1).setDataValidation(validationRule);
   
-  // 2. Restaurar Checkboxes I (SELECCIONAR)
-  maestro.getRange(MAESTRO_START, 9, count, 1).insertCheckboxes();
+  // 1.5. Restaurar Dropdown C (CATEGORÍA)
+  const catValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(CATEGORIAS_LISTA, true)
+    .setAllowInvalid(false)
+    .setHelpText("Selecciona la categoría del producto.")
+    .build();
+  maestro.getRange(MAESTRO_START, 3, count, 1).setDataValidation(catValidation);
+  
+  // 2. Restaurar Checkboxes J (SELECCIONAR)
+  maestro.getRange(MAESTRO_START, 10, count, 1).insertCheckboxes();
   
   // 3. Re-aplicar Formato Condicional
   maestro.clearConditionalFormatRules();
-  const cfRange = maestro.getRange(MAESTRO_START, 1, count, 9);
+  const cfRange = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS);
   const selectionRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=$I' + MAESTRO_START + '=TRUE')
+    .whenFormulaSatisfied('=$J' + MAESTRO_START + '=TRUE')
     .setBackground("#E3F2FD")
     .setRanges([cfRange])
     .build();
     
   const inactiveRule = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=$F' + MAESTRO_START + '="NO"')
+    .whenFormulaSatisfied('=$G' + MAESTRO_START + '="NO"')
     .setBackground("#EEEEEE")
     .setFontColor("#9E9E9E")
     .setRanges([cfRange])
@@ -1842,18 +2139,19 @@ function procesarCargaMasiva() {
     for (let i = 0; i < validRows.length; i++) {
       const item = validRows[i];
       const newNo = ++lastNo;
-      maestroRows.push([newNo, item.idFam, item.prod, item.pres, item.unit, "SÍ", 0, 0, false]);
+      const cat = CATEGORIAS_MAP[item.idFam.split('-')[0]] || '';
+      maestroRows.push([newNo, item.idFam, cat, item.prod, item.pres, item.unit, "SÍ", 0, 0, false]);
       
       const rowColor = (newNo % 2 === 1) ? C.rowA : C.rowB;
-      bgsM.push(Array(9).fill(rowColor));
+      bgsM.push(Array(MAESTRO_COLS).fill(rowColor));
       
       newProductsData.push({ newNo, item, rowColor });
     }
     
     // 1. Escribir en MAESTRO
     const startRowM = lrM + 1;
-    maestro.getRange(startRowM, 1, validRows.length, 9).setValues(maestroRows);
-    maestro.getRange(startRowM, 1, validRows.length, 9).setBackgrounds(bgsM);
+    maestro.getRange(startRowM, 1, validRows.length, MAESTRO_COLS).setValues(maestroRows);
+    maestro.getRange(startRowM, 1, validRows.length, MAESTRO_COLS).setBackgrounds(bgsM);
     
     // Agregar validación y checkboxes en MAESTRO
     const validationRule = SpreadsheetApp.newDataValidation()
@@ -1861,8 +2159,14 @@ function procesarCargaMasiva() {
       .setAllowInvalid(false)
       .setHelpText("Selecciona SÍ o NO para activar/desactivar el producto.")
       .build();
-    maestro.getRange(startRowM, 6, validRows.length, 1).setDataValidation(validationRule);
-    maestro.getRange(startRowM, 9, validRows.length, 1).insertCheckboxes().setValue(false);
+    maestro.getRange(startRowM, 7, validRows.length, 1).setDataValidation(validationRule);
+    const catValidationCM = SpreadsheetApp.newDataValidation()
+      .requireValueInList(CATEGORIAS_LISTA, true)
+      .setAllowInvalid(false)
+      .setHelpText("Selecciona la categoría del producto.")
+      .build();
+    maestro.getRange(startRowM, 3, validRows.length, 1).setDataValidation(catValidationCM);
+    maestro.getRange(startRowM, 10, validRows.length, 1).insertCheckboxes().setValue(false);
     
     // 2. Insertar en KARDEX_BA y KARDEX_BM
     Object.values(BODEGAS).forEach(b => {
@@ -1879,39 +2183,40 @@ function procesarCargaMasiva() {
           const np = newProductsData[i];
           const rn = startRowK + i;
           
-          // Cols A-D: No, PRODUCTO, PRESENTACIÓN, UNIDAD
-          kardexRows.push([np.newNo, np.item.prod, np.item.pres, np.item.unit]);
+          // Cols A-E: No, CATEGORÍA, PRODUCTO, PRESENTACIÓN, UNIDAD
+          const catK = CATEGORIAS_MAP[np.item.idFam.split('-')[0]] || '';
+          kardexRows.push([np.newNo, catK, np.item.prod, np.item.pres, np.item.unit]);
           
           const rowColor = np.rowColor;
-          bgsK.push(Array(29).fill(rowColor));
+          bgsK.push(Array(KARDEX_TOTAL_COLS).fill(rowColor));
           
           // Semáforo fórmula
-          const formulaCad = '=IF(ISBLANK(E' + rn + '); "⚪ S/F"; ' +
-                             'IF(E' + rn + '-TODAY()<=0; "🔴 CAD"; ' +
-                             'IF(E' + rn + '-TODAY()<=2; "🔴 ≤2d"; ' +
-                             'IF(E' + rn + '-TODAY()<=7; "🟠 ≤7d"; ' +
-                             'IF(E' + rn + '-TODAY()<=14; "🟡 ≤14d"; ' +
-                             'IF(E' + rn + '-TODAY()<=28; "🟤 ≤28d"; ' +
-                             'IF(E' + rn + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
+          const formulaCad = '=IF(ISBLANK(F' + rn + '); "⚪ S/F"; ' +
+                             'IF(F' + rn + '-TODAY()<=0; "🔴 CAD"; ' +
+                             'IF(F' + rn + '-TODAY()<=2; "🔴 ≤2d"; ' +
+                             'IF(F' + rn + '-TODAY()<=7; "🟠 ≤7d"; ' +
+                             'IF(F' + rn + '-TODAY()<=14; "🟡 ≤14d"; ' +
+                             'IF(F' + rn + '-TODAY()<=28; "🟤 ≤28d"; ' +
+                             'IF(F' + rn + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
           formulasSemaforo.push([formulaCad]);
         }
         
         // Escribir bases en Kardex
-        kSheet.getRange(startRowK, 1, validRows.length, 4).setValues(kardexRows);
-        kSheet.getRange(startRowK, 5, validRows.length, 1).setDataValidation(
+        kSheet.getRange(startRowK, 1, validRows.length, 5).setValues(kardexRows);
+        kSheet.getRange(startRowK, 6, validRows.length, 1).setDataValidation(
           SpreadsheetApp.newDataValidation().requireDate()
             .setHelpText("Fecha de caducidad del lote").build()
         ).setNumberFormat("DD/MMM/YY");
         
-        kSheet.getRange(startRowK, 7, validRows.length, 1).setFormulas(formulasSemaforo);
-        kSheet.getRange(startRowK, 8, validRows.length, 1).setValue(0);
+        kSheet.getRange(startRowK, 8, validRows.length, 1).setFormulas(formulasSemaforo);
+        kSheet.getRange(startRowK, 9, validRows.length, 1).setValue(0);
         
         // Fórmulas SLD y campos vacíos
         for (let d = 0; d < KARDEX_DAYS; d++) {
-          const sldCol  = 11 + d * 3;
-          const prevCol = 8  + d * 3;
-          const entCol  = 9  + d * 3;
-          const salCol  = 10 + d * 3;
+          const sldCol  = 12 + d * 3;
+          const prevCol = 9  + d * 3;
+          const entCol  = 10 + d * 3;
+          const salCol  = 11 + d * 3;
           
           kSheet.getRange(startRowK, entCol, validRows.length, 1).setValue("");
           kSheet.getRange(startRowK, salCol, validRows.length, 1).setValue("");
@@ -1925,12 +2230,12 @@ function procesarCargaMasiva() {
         }
         
         // Formato de fondos
-        kSheet.getRange(startRowK, 1, validRows.length, 29).setBackgrounds(bgsK);
-        kSheet.getRange(startRowK, 8, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.iceBlue]));
+        kSheet.getRange(startRowK, 1, validRows.length, KARDEX_TOTAL_COLS).setBackgrounds(bgsK);
+        kSheet.getRange(startRowK, 9, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.iceBlue]));
         for (let d = 0; d < KARDEX_DAYS; d++) {
-          kSheet.getRange(startRowK, 9  + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.entBg]));
-          kSheet.getRange(startRowK, 10 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.salBg]));
-          kSheet.getRange(startRowK, 11 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.iceBlue]));
+          kSheet.getRange(startRowK, 10 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.entBg]));
+          kSheet.getRange(startRowK, 11 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.salBg]));
+          kSheet.getRange(startRowK, 12 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.iceBlue]));
         }
       }
     });
@@ -1990,18 +2295,19 @@ function crearHojaEdicionMasiva() {
   
   // Obtener seleccionados
   const count = lr - MAESTRO_START + 1;
-  const data = maestro.getRange(MAESTRO_START, 1, count, 9).getValues();
+  const data = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS).getValues();
   const selectedProds = [];
   for (let i = 0; i < count; i++) {
-    if (data[i][8] === true) {
+    if (data[i][9] === true) {
       selectedProds.push({
         no: data[i][0],
         idFam: data[i][1],
-        prod: data[i][2],
-        pres: data[i][3],
-        unit: data[i][4],
-        min: data[i][6],
-        max: data[i][7]
+        cat: data[i][2],
+        prod: data[i][3],
+        pres: data[i][4],
+        unit: data[i][5],
+        min: data[i][7],
+        max: data[i][8]
       });
     }
   }
@@ -2148,19 +2454,20 @@ function procesarEdicionMasiva() {
     const maestro = ss.getSheetByName(SHEET_MAESTRO);
     const lrM = maestro.getLastRow();
     if (lrM >= MAESTRO_START) {
-      const rangeM = maestro.getRange(MAESTRO_START, 1, lrM - MAESTRO_START + 1, 9);
+      const rangeM = maestro.getRange(MAESTRO_START, 1, lrM - MAESTRO_START + 1, MAESTRO_COLS);
       const dataM = rangeM.getValues();
       for (let i = 0; i < validEdits.length; i++) {
         const item = validEdits[i];
         const idx = item.no - 1;
         if (idx >= 0 && idx < dataM.length) {
           dataM[idx][1] = item.idFam;
-          dataM[idx][2] = item.prod;
-          dataM[idx][3] = item.pres;
-          dataM[idx][4] = item.unit;
-          dataM[idx][6] = item.min;
-          dataM[idx][7] = item.max;
-          dataM[idx][8] = false; // Desmarcar
+          dataM[idx][2] = CATEGORIAS_MAP[item.idFam.split('-')[0]] || '';
+          dataM[idx][3] = item.prod;
+          dataM[idx][4] = item.pres;
+          dataM[idx][5] = item.unit;
+          dataM[idx][7] = item.min;
+          dataM[idx][8] = item.max;
+          dataM[idx][9] = false; // Desmarcar
         }
       }
       rangeM.setValues(dataM);
@@ -2172,15 +2479,16 @@ function procesarEdicionMasiva() {
       if (kSheet) {
         const lrK = kSheet.getLastRow();
         if (lrK >= KARDEX_START) {
-          const rangeK = kSheet.getRange(KARDEX_START, 1, lrK - KARDEX_START + 1, 4);
+          const rangeK = kSheet.getRange(KARDEX_START, 1, lrK - KARDEX_START + 1, 5);
           const dataK = rangeK.getValues();
           for (let i = 0; i < validEdits.length; i++) {
             const item = validEdits[i];
             const idx = item.no - 1;
             if (idx >= 0 && idx < dataK.length) {
-              dataK[idx][1] = item.prod;
-              dataK[idx][2] = item.pres;
-              dataK[idx][3] = item.unit;
+              dataK[idx][1] = CATEGORIAS_MAP[item.idFam.split('-')[0]] || '';
+              dataK[idx][2] = item.prod;
+              dataK[idx][3] = item.pres;
+              dataK[idx][4] = item.unit;
             }
           }
           rangeK.setValues(dataK);
