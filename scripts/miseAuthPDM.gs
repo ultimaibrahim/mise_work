@@ -10,13 +10,13 @@
  * 2. Bypass de getUi() en resetearPedido() para compatibilidad móvil total.
  * 3. Inserción de columna J "ALERTAS SURTIDO" y aviso de conexión en J4.
  * 4. Categorización automática y ordenamiento in-situ agrupando por Categoría (B)
- *   con ítems activos prioritarios al principio de cada grupo.
+ *    con ítems activos prioritarios al principio de cada grupo.
  * 5. Sincronización robusta que añade productos nuevos al final con fondo morado.
  * 6. Detección de adiciones de última hora pintando la fila de naranja brillante (#FFD54F)
- *   mediante regla condicional ligada a "🚨 ADICIÓN" en Col J, autolimpiable al ordenar.
- *   La alerta se dispara SI Y SOLO SI el pedido ya fue ordenado previamente (flag IS_ORDER_SORTED).
+ *    mediante regla condicional ligada a "🚨 ADICIÓN" en Col J, autolimpiable al ordenar.
+ *    La alerta se dispara SI Y SOLO SI el pedido ya fue ordenado previamente (flag IS_ORDER_SORTED).
  * 7. Botones de fila 2 alineados a partir de Columna C (visible) para evitar
- *   que se oculten cuando las columnas A y B están colapsadas.
+ *    que se oculten cuando las columnas A y B están colapsadas.
  * 8. Autoconexión por defecto mediante URL de Bodega provista para evitar configuraciones manuales.
  * 9. FIX DE BUG DE BORRADO DE CANTIDADES Y BLOQUEO DE COLOR AMARILLO.
  */
@@ -398,16 +398,16 @@ function onEdit(e) {
           sheet.getRange(row, 10).setFormula('=IF(F' + row + '=""; ""; IF(G' + row + '<F' + row + '; "⚠️ INCOMPLETO"; ""))');
         }
       }
-
-      // Si existe la pestaña de Surtido Rápido, actualizarla en segundo plano silenciosamente
-      try {
-        const surtido = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("🚚 SURTIDO RÁPIDO");
-        if (surtido) {
-          generarSurtidoRapidoSilencioso();
-        }
-      } catch (err) {}
     }
   }
+
+  // Si existe la pestaña de Surtido Rápido, actualizarla en segundo plano silenciosamente
+  try {
+    const surtido = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("🚚 SURTIDO RÁPIDO");
+    if (surtido) {
+      generarSurtidoRapidoSilencioso();
+    }
+  } catch (err) {}
 }
 
 function sincronizarEstados() {

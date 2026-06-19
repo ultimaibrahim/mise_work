@@ -398,16 +398,16 @@ function onEdit(e) {
           sheet.getRange(row, 10).setFormula('=IF(F' + row + '=""; ""; IF(G' + row + '<F' + row + '; "⚠️ INCOMPLETO"; ""))');
         }
       }
-
-      // Si existe la pestaña de Surtido Rápido, actualizarla en segundo plano silenciosamente
-      try {
-        const surtido = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("🚚 SURTIDO RÁPIDO");
-        if (surtido) {
-          generarSurtidoRapidoSilencioso();
-        }
-      } catch (err) {}
     }
   }
+
+  // Si existe la pestaña de Surtido Rápido, actualizarla en segundo plano silenciosamente
+  try {
+    const surtido = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("🚚 SURTIDO RÁPIDO");
+    if (surtido) {
+      generarSurtidoRapidoSilencioso();
+    }
+  } catch (err) {}
 }
 
 function sincronizarEstados() {
