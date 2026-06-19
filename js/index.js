@@ -254,7 +254,11 @@ const OB_CONTENT = {
               <li><strong>NO</strong> renombres o borres filas del catálogo de forma manual directa. Esto corrompe la sincronización.</li>
               <li><strong>NO</strong> limpies las casillas de selección manualmente; usa la celda interactiva <strong>Limpiar Sel. (H2)</strong>.</li>
             </ul>
-        {
+          </div>
+        </div>
+      `
+    },
+    {
       title: "Kardex de Entradas y Salidas",
       render: () => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
@@ -347,7 +351,13 @@ const OB_CONTENT = {
             <ul class="rules-list">
               <li><strong>NO</strong> dejes en blanco el campo de caducidad al registrar entradas de insumos perecederos.</li>
               <li><strong>NO</strong> ignores las alertas rojas en pantalla; representan mermas inminentes.</li>
-         pedidos: [
+            </ul>
+          </div>
+        </div>
+      `
+    }
+  ],
+  pedidos: [
     {
       title: "Levantamiento de Pedidos y Filtros",
       render: (viewMode) => `
