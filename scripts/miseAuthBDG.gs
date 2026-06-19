@@ -1316,7 +1316,8 @@ function agregarProducto() {
       }
     });
 
-    // 4. Recrear Vistas Móviles
+    // 4. Re-ordenar y re-numerar todo, luego recrear vistas
+    _ordenarYRenumerarTodo();
     _buildVista("BA");
     _buildVista("BM");
 
@@ -2322,7 +2323,8 @@ function procesarCargaMasiva() {
       }
     });
     
-    // 4. Recrear Vistas Móviles
+    // 4. Re-ordenar y re-numerar todo, luego recrear vistas
+    _ordenarYRenumerarTodo();
     _buildVista("BA");
     _buildVista("BM");
     
@@ -2587,7 +2589,8 @@ function procesarEdicionMasiva() {
       }
     });
     
-    // 4. Recrear Vistas Móviles
+    // 4. Re-ordenar y re-numerar todo, luego recrear vistas
+    _ordenarYRenumerarTodo();
     _buildVista("BA");
     _buildVista("BM");
     
