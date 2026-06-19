@@ -244,9 +244,24 @@ function onEdit(e) {
   if (row < DATA_START_ROW) return;
 
   // 2. Validaciones rápidas de entrada (F y G)
-  if (col === COL_CANT_PEDIR) {
+  if (col === COL_CANT_PEDIR || col === COL_RECIBIDA) {
+    let rawVal = e.value;
+    if (rawVal !== undefined && rawVal !== null) {
+      const strVal = String(rawVal).trim();
+      const cleanVal = strVal.replace(',', '.');
+      const num = Number(cleanVal);
+      if (!isNaN(num) && num >= 0) {
+        e.range.setValue(num);
+      }
+    }
+
     let val = e.range.getValue();
     if (val !== "") {
+      if (Object.prototype.toString.call(val) === '[object Date]') {
+        e.range.clearContent();
+        try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo (no se permiten fechas).", "❌ Mise", 5); } catch(err) {}
+        return;
+      }
       if (typeof val === "string") {
         const cleanVal = val.replace(',', '.').trim();
         const num = Number(cleanVal);
@@ -261,33 +276,18 @@ function onEdit(e) {
         try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
         return;
       }
-      
-      // Si se agrega un pedido (> 0), y ya se había ordenado previamente, pintar de naranja la alerta en Col J
-      if (checkVal > 0) {
-        const isSorted = PropertiesService.getScriptProperties().getProperty("IS_ORDER_SORTED") === "true";
-        if (isSorted) {
-          sheet.getRange(row, 10).setValue("🚨 ADICIÓN");
+
+      // Si es la columna de pedir, manejar alerta de adición
+      if (col === COL_CANT_PEDIR) {
+        if (checkVal > 0) {
+          const isSorted = PropertiesService.getScriptProperties().getProperty("IS_ORDER_SORTED") === "true";
+          if (isSorted) {
+            sheet.getRange(row, 10).setValue("🚨 ADICIÓN");
+          }
+        } else {
+          // Restaurar fórmula normal si se vacía la cantidad
+          sheet.getRange(row, 10).setFormula('=IF(F' + row + '=""; ""; IF(G' + row + '<F' + row + '; "⚠️ INCOMPLETO"; ""))');
         }
-      } else {
-        // Restaurar fórmula normal si se vacía la cantidad
-        sheet.getRange(row, 10).setFormula('=IF(F' + row + '=""; ""; IF(G' + row + '<F' + row + '; "⚠️ INCOMPLETO"; ""))');
-      }
-    }
-  } else if (col === COL_RECIBIDA) {
-    let val = e.range.getValue();
-    if (val !== "") {
-      if (typeof val === "string") {
-        const cleanVal = val.replace(',', '.').trim();
-        const num = Number(cleanVal);
-        if (!isNaN(num) && num >= 0) {
-          e.range.setValue(num);
-          val = num;
-        }
-      }
-      const checkVal = Number(val);
-      if (isNaN(checkVal) || checkVal < 0) {
-        e.range.clearContent();
-        try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
       }
     }
   }

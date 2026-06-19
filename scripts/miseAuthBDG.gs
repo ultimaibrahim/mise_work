@@ -159,7 +159,7 @@ function onEdit(e) {
 
   // 1.5 Manejo de Carga Masiva (Checkbox Confirmar)
   if (name === "➕ AGREGAR_MÚLTIPLES") {
-    if (row === 3 && col === 5) {
+    if (row === 3 && col === 6) {
       if (e.range.getValue() === true) {
         procesarCargaMasiva();
       }
@@ -169,7 +169,7 @@ function onEdit(e) {
 
   // 1.6 Manejo de Edición Masiva (Checkbox Confirmar)
   if (name === "✏️ EDITAR_PRODUCTOS") {
-    if (row === 3 && col === 5) {
+    if (row === 3 && col === 6) {
       if (e.range.getValue() === true) {
         procesarEdicionMasiva();
       }
@@ -219,9 +219,24 @@ function onEdit(e) {
   }
   if (!tipo) return;
 
+  let rawVal = e.value;
+  if (rawVal !== undefined && rawVal !== null) {
+    const strVal = String(rawVal).trim();
+    const cleanVal = strVal.replace(',', '.');
+    const num = Number(cleanVal);
+    if (!isNaN(num) && num >= 0) {
+      e.range.setValue(num);
+      return;
+    }
+  }
+
   let val = e.range.getValue();
   if (val !== "") {
-    // Si es un String que contiene número con punto o coma, lo convertimos
+    if (Object.prototype.toString.call(val) === '[object Date]') {
+      e.range.clearContent();
+      SpreadsheetApp.getActive().toast(`${tipo} debe ser número ≥ 0 (no se permiten fechas)`, "⚙️ Mise", 4);
+      return;
+    }
     if (typeof val === "string") {
       const cleanVal = val.replace(',', '.').trim();
       const num = Number(cleanVal);
@@ -394,12 +409,14 @@ function _buildKardex(sheet, nombre) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), Math.max(1, needed - sheet.getMaxColumns()));
   }
 
-  // Fila 1: leyenda semáforo caducidad
+  // Fila 1: leyenda semáforo caducidad (Deshabilitada)
+  /*
   sheet.getRange(1, 1, 1, 8)
     .setValues([["🔴 CAD","🔴 ≤2d","🟠 ≤7d","🟡 ≤14d","🟤 ≤28d","🔵 ≤60d","🟢 OK","⚪ S/F"]])
     .setFontSize(8).setBackground("#F5F5F5").setFontColor("#666666")
     .setHorizontalAlignment("center");
   sheet.setRowHeight(1, 18);
+  */
 
   // Fila 2: título
   sheet.getRange(2, 1, 1, 3).setBackground(C.dark);
@@ -548,6 +565,7 @@ function _buildKardex(sheet, nombre) {
 
   sheet.setFrozenColumns(3);
   sheet.hideColumns(6, 3); // Ocultar CADUCIDAD, LOTE, 🚦
+  sheet.hideRows(1);       // Ocultar leyenda de caducidades
 }
 
 // ── POBLAR KARDEX DESDE MAESTRO ───────────────────────────────────────────────
