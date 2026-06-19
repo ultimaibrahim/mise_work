@@ -632,7 +632,7 @@ function _poblarKardex(sheet) {
   }
 
   // Formato numérico para datos diarios
-  sheet.getRange(KARDEX_START, 10, count, 21).setNumberFormat("0.##");
+  sheet.getRange(KARDEX_START, 10, count, 21).setNumberFormat("0.####");
 
   // Crear filtro automático en KARDEX
   const kRange = sheet.getRange(6, 1, count + 1, KARDEX_TOTAL_COLS);
@@ -697,7 +697,7 @@ function _buildVista(key) {
   // Col E: saldo actual = SLD domingo (col AD = 30)
   sheet.getRange(DR, 5, count, 1)
     .setFormulas(prods.map(p => ['=IFERROR(' + ref + '!AD' + p.srcRow + '*1;0)']))
-    .setNumberFormat("0.##");
+    .setNumberFormat("0.####");
 
   // Col F: semáforo de stock
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
@@ -731,8 +731,8 @@ function _buildVista(key) {
     return ['=IFERROR(CHOOSE(WEEKDAY(TODAY();2);' + salRefs + ');0)'];
   });
 
-  sheet.getRange(DR, 7, count, 1).setFormulas(entFormulas).setNumberFormat("0.##");
-  sheet.getRange(DR, 8, count, 1).setFormulas(salFormulas).setNumberFormat("0.##");
+  sheet.getRange(DR, 7, count, 1).setFormulas(entFormulas).setNumberFormat("0.####");
+  sheet.getRange(DR, 8, count, 1).setFormulas(salFormulas).setNumberFormat("0.####");
 
   // Col I: ACTIVO (Col G en MAESTRO)
   const refMaestro = _quoteName(SHEET_MAESTRO);
@@ -1191,7 +1191,7 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
     .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle").setHorizontalAlignment("center");
 
   // Formato numérico para datos y SLD FIN
-  hSheet.getRange(5, startCol, numRows, 15).setNumberFormat("0.##");
+  hSheet.getRange(5, startCol, numRows, 15).setNumberFormat("0.####");
 
   // Configurar columna de separación (16ª columna = startCol + 15)
   const sepColIdx = startCol + 15;

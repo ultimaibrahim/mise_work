@@ -440,45 +440,21 @@
             </div>
           </div>
           <div class="menu-item-doc">
-            <div class="menu-item-doc-name"><i data-lucide="refresh-cw" style="width:16px; color:var(--oro);"></i> Sincronizar estados (manual / móvil)</div>
+            <div class="menu-item-doc-name"><i data-lucide="truck" style="width:16px; color:var(--oro);"></i> Surtido Rápido (móvil)</div>
             <div class="menu-item-doc-desc">
-              Fuerza la recarga de datos de la bodega rompiendo la caché de Google Sheets (reescribe la fórmula `IMPORTRANGE` en caliente) y vuelve a evaluar los productos inactivos para <strong>ocultar físicamente</strong> sus filas de la vista operativa.
+              Genera o activa de forma manual la hoja de `"🚚 SURTIDO RÁPIDO"`, la cual cuenta con la columna de producto congelada, columnas ocultas y reglas de formato para registrar la mercancía recibida en celulares.
             </div>
           </div>
           <div class="menu-item-doc">
-            <div class="menu-item-doc-name"><i data-lucide="sort-asc" style="width:16px; color:var(--oro);"></i> Ordenar pedido por estado</div>
+            <div class="menu-item-doc-name"><i data-lucide="dices" style="width:16px; color:var(--oro);"></i> Generar datos de prueba</div>
             <div class="menu-item-doc-desc">
-              Agrupa y organiza los insumos por su recorrido físico de pasillo de bodega (del 1 al 7). Dentro de cada categoría, coloca en la parte superior los insumos activos solicitados por el encargado y agrupa los inactivos al final para mantenerlos ocultos.
+              <strong>Función de pruebas:</strong> Rellena de forma aleatoria cantidades de pedido (enteros y flotantes de hasta 4 decimales) y estados de recibo para varios productos al azar del catálogo, agilizando las pruebas del sistema.
             </div>
           </div>
           <div class="menu-item-doc">
-            <div class="menu-item-doc-name"><i data-lucide="trash" style="width:16px; color:var(--oro);"></i> Resetear pedido del día</div>
+            <div class="menu-item-doc-name"><i data-lucide="info" style="width:16px; color:var(--oro);"></i> Acerca de Mise</div>
             <div class="menu-item-doc-desc">
-              Limpia los campos editables de "CANT. A PEDIR" y "CANT. RECIBIDA" de toda la hoja, restablece los colores de fila a su estado inicial de forma rápida y muestra todos los insumos activos.
-            </div>
-          </div>
-          <div class="menu-item-doc">
-            <div class="menu-item-doc-name"><i data-lucide="alert-circle" style="width:16px; color:var(--oro);"></i> Avanzar semana (ejecutar en Bodega)</div>
-            <div class="menu-item-doc-desc">
-              Muestra un mensaje informativo recordando al supervisor que el cierre de semana y limpieza del Kardex debe ser ejecutado en el libro maestro de Bodega Central.
-            </div>
-          </div>
-          <div class="menu-item-doc">
-            <div class="menu-item-doc-name"><i data-lucide="zap" style="width:16px; color:var(--oro);"></i> Instalar trigger automático (móvil)</div>
-            <div class="menu-item-doc-desc">
-              Crea una tarea automatizada en los servidores de Google para que todos los días a las 6:00 AM se ejecute el proceso de limpieza y reseteo de pedido de forma invisible. <strong>Ideal para permitir que los encargados inicien su pedido diario en limpio directamente en sus teléfonos celulares.</strong>
-            </div>
-          </div>
-          <div class="menu-item-doc">
-            <div class="menu-item-doc-name"><i data-lucide="zap-off" style="width:16px; color:var(--oro);"></i> Desinstalar trigger automático</div>
-            <div class="menu-item-doc-desc">
-              Elimina la tarea automatizada de las 6:00 AM, cancelando los reseteos automáticos diarios.
-            </div>
-          </div>
-          <div class="menu-item-doc">
-            <div class="menu-item-doc-name"><i data-lucide="refresh-cw" style="width:16px; color:var(--oro);"></i> Invalidar caché de productos</div>
-            <div class="menu-item-doc-desc">
-              Limpia la memoria temporal del script para obligar a recalcular los índices y cantidades de productos de forma segura en caso de desfases.
+              Muestra información técnica del script, número de versión y configuración de la tienda.
             </div>
           </div>
         </div>

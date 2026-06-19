@@ -1241,7 +1241,11 @@ function generarDatosPrueba() {
       // Set random quantity to order (integers or decimals)
       const isFloat = Math.random() > 0.5;
       const base = Math.floor(Math.random() * 8) + 1; // 1 to 8
-      const val = isFloat ? base + 0.5 : base;
+      let val = base;
+      if (isFloat) {
+        const decimals = [0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+        val = base + decimals[Math.floor(Math.random() * decimals.length)];
+      }
       valuesF[idx][0] = val;
       
       // Optionally simulate some already received (50% chance of empty, 30% complete, 20% partial)

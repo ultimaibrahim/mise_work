@@ -254,15 +254,11 @@ const OB_CONTENT = {
               <li><strong>NO</strong> renombres o borres filas del catálogo de forma manual directa. Esto corrompe la sincronización.</li>
               <li><strong>NO</strong> limpies las casillas de selección manualmente; usa la celda interactiva <strong>Limpiar Sel. (H2)</strong>.</li>
             </ul>
-          </div>
-        </div>
-      `
-    },
-    {
+        {
       title: "Kardex de Entradas y Salidas",
       render: () => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          En las pestañas <strong>KARDEX_BA</strong> (Andares) y <strong>KARDEX_BM</strong> (Mercado), el bodeguero registra entradas (compras) y salidas (entregas) diarias. El stock neto se calcula automáticamente.
+          En las pestañas <strong>KARDEX_BA</strong> (Andares) y <strong>KARDEX_BM</strong> (Mercado), el bodeguero registra entradas (compras) y salidas (entregas) diarias. Soporta <strong>hasta 4 decimales</strong> (formato <code>0.####</code>) para un control de inventario exacto.
         </p>
         
         <div class="preview-container">
@@ -280,10 +276,10 @@ const OB_CONTENT = {
                     <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">SALDO ACTUAL</th>
                   </tr>
                   <tr>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Queso Mozzarella</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#eef9f0;">10</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#fdf2f2;">3</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold; color:var(--oro);">7 kg</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Fruta de temporada (Domo)</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#eef9f0;">1.5</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#fdf2f2;">0.375</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold; color:var(--oro);">1.125 kg</td>
                   </tr>
                 </table>
               </div>
@@ -294,15 +290,15 @@ const OB_CONTENT = {
           <div class="dos-box">
             <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
             <ul class="rules-list">
-              <li>Registrar las entradas físicas (compras) en cuanto ingresan al almacén.</li>
+              <li>Registrar las entradas físicas exactas (compras) en cuanto ingresan al almacén utilizando hasta 4 decimales.</li>
               <li>Ejecutar <strong>Avanzar semana</strong> los sábados al concluir el conteo final de cierre.</li>
             </ul>
           </div>
           <div class="donts-box">
             <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
             <ul class="rules-list">
-              <li><strong>NO</strong> alteres las fechas de control de la celda D4 a mitad de semana.</li>
-              <li><strong>NO</strong> borres la fila de fórmulas de saldo. El sistema calcula las sumas de forma autónoma.</li>
+              <li><strong>NO</strong> alteres las fechas de control de la celda G4 a mitad de semana.</li>
+              <li><strong>NO</strong> borres la fila de fórmulas de saldo. El sistema calcula los saldos y acumulados de forma autónoma.</li>
             </ul>
           </div>
         </div>
@@ -351,18 +347,15 @@ const OB_CONTENT = {
             <ul class="rules-list">
               <li><strong>NO</strong> dejes en blanco el campo de caducidad al registrar entradas de insumos perecederos.</li>
               <li><strong>NO</strong> ignores las alertas rojas en pantalla; representan mermas inminentes.</li>
-            </ul>
-          </div>
-        </div>
-      `
-    }
-  ],
-  pedidos: [
+         pedidos: [
     {
-      title: "Levantamiento de Pedidos",
+      title: "Levantamiento de Pedidos y Filtros",
       render: (viewMode) => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          En los libros de sucursales, el encargado de tienda captura las cantidades en la columna <strong>CANT. A PEDIR</strong>. Al escribir, la fila se colorea como pendiente.
+          En los libros de sucursales, el encargado captura cantidades en **CANT. A PEDIR (F)**. Soporta <strong>hasta 4 decimales</strong> (ej. <code>1.125</code>) para evitar redondeos.
+        </p>
+        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
+          Usa los <strong>Filtros por Categoría</strong> nativos en la cabecera (Columna B) para aislar secciones de insumos (ej. refrigerados, lácteos) y pedir de forma rápida en tu móvil o PC.
         </p>
         
         <div class="preview-container">
@@ -379,13 +372,15 @@ const OB_CONTENT = {
                 <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Pedidos Andares &gt; PEDIDO DIARIO</div>
                 <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
                   <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
+                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">CATEGORÍA</th>
                     <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PRODUCTO</th>
                     <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">PEDIR</th>
                     <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">ESTADO</th>
                   </tr>
                   <tr style="background:#fffdec;">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Harina Crepas</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold;">15</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); color:var(--oro); font-weight:bold;">1. REFRIGERADOS</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Harina Crepas (Domo)</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold;">1.125</td>
                     <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; color:#cda300; font-weight:bold;">⏳ PENDIENTE</td>
                   </tr>
                 </table>
@@ -393,13 +388,13 @@ const OB_CONTENT = {
             ` : `
               <div class="mock-phone">
                 <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem;">
-                  Nuevo Pedido Diario
+                  1. REFRIGERADOS
                 </div>
                 <div style="padding:0.8rem; display:flex; flex-direction:column; gap:0.4rem; margin-top:0.8rem;">
-                  <span style="font-weight:bold; font-size:0.8rem;">Harina Crepas</span>
+                  <span style="font-weight:bold; font-size:0.8rem;">Harina Crepas (Domo)</span>
                   <div style="display:flex; gap:0.5rem; align-items:center;">
                     <span style="color:var(--text-muted);">Pedir:</span>
-                    <input type="number" value="15" style="width:60px; text-align:center; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-sm); padding:0.2rem;" disabled>
+                    <input type="text" value="1.125" style="width:70px; text-align:center; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-sm); padding:0.2rem;" disabled>
                   </div>
                   <span style="color:#cda300; font-weight:bold; font-size:0.7rem; margin-top:0.2rem;">⏳ Estado: Pendiente</span>
                 </div>
@@ -412,15 +407,15 @@ const OB_CONTENT = {
           <div class="dos-box">
             <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
             <ul class="rules-list">
-              <li><strong>¡Usa tu celular!</strong> Puedes recorrer la cocina e ir tecleando las cantidades directo en la hoja Sheets móvil.</li>
-              <li>Limpiar la hoja diariamente antes de iniciar marcando la casilla <strong>Resetear (F2)</strong>.</li>
+              <li>Ingresar cantidades con decimales (ej. <code>1.125</code>) para que la bodega reciba el peso real solicitado.</li>
+              <li>Aislar categorías usando el filtro nativo de la celda B3 en tu celular para mayor comodidad.</li>
             </ul>
           </div>
           <div class="donts-box">
             <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
             <ul class="rules-list">
-              <li><strong>NO</strong> escribas textos en la columna de pedidos; solo valores numéricos mayores a cero.</li>
-              <li><strong>NO</strong> borres celdas de fórmulas completas. Solo limpia las columnas de cantidades.</li>
+              <li><strong>NO</strong> escribas texto o letras en la columna de pedidos.</li>
+              <li><strong>NO</strong> uses comas si tu hoja usa puntos decimales. Sé consistente con la configuración de tu región.</li>
             </ul>
           </div>
         </div>
@@ -430,7 +425,7 @@ const OB_CONTENT = {
       title: "Ordenar Pedido",
       render: (viewMode) => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          Una vez ingresados tus insumos, el botón **Ordenar** los organiza y los acomoda según la disposición física de los pasillos de bodega central.
+          Una vez ingresados tus insumos, marca el checkbox de <strong>⚙️ Ordenar (Celda D2)</strong>. El pedido se organizará automáticamente agrupando todos los insumos por su categoría de almacenamiento y subirá los productos pedidos al principio de cada grupo.
         </p>
         
         <div class="preview-container">
@@ -452,7 +447,7 @@ const OB_CONTENT = {
                     <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">PEDIDO</th>
                   </tr>
                   <tr style="background:rgba(61, 90, 71, 0.03);">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:bold; color:var(--verde);">REFRIGERADOS</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:bold; color:var(--verde);">1. REFRIGERADOS</td>
                     <td style="padding:0.45rem 0.6rem; border:1px solid var(--border);">Queso Mozzarella</td>
                     <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold;">10</td>
                   </tr>
@@ -487,10 +482,13 @@ const OB_CONTENT = {
       `
     },
     {
-      title: "Conciliación y Adiciones",
+      title: "Surtido Rápido Móvil",
       render: (viewMode) => `
         <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          Al recibir el surtido, el bodeguero anota lo entregado en **CANT. RECIBIDA**. Si agregas un producto posterior al ordenamiento, se marcará de color naranja intenso como una adición prioritaria.
+          Al marcar <strong>🚚 Surtido (L2)</strong> se genera la hoja operativa <strong>🚚 SURTIDO RÁPIDO</strong>. Diseñada para su uso en celulares, cuenta con **Columnas Ocultas** para ahorrar espacio y la **Inmovilización de Producto**.
+        </p>
+        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
+          La columna <strong>PRODUCTO</strong> queda fija a la izquierda: al desplazarte horizontalmente en tu móvil para registrar las cantidades recibidas, el nombre de los productos permanecerá fijo en pantalla.
         </p>
         
         <div class="preview-container">
@@ -504,28 +502,33 @@ const OB_CONTENT = {
           <div class="preview-content">
             ${viewMode === 'pc' ? `
               <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Control de Tránsito</div>
+                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Surtido Rápido &gt; Columnas Inmovilizadas</div>
                 <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
                   <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PRODUCTO</th>
+                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); background:var(--surface-3); position:sticky; left:0; z-index:1;">[PRODUCTO] (Congelada)</th>
                     <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">PEDIDO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">RECIBIDO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">ALERTA</th>
+                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">COMPLETO</th>
+                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">INEXISTENTE</th>
                   </tr>
-                  <tr style="background:rgba(255, 167, 38, 0.1);">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Nutella (Extra)</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">1</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;"></td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#FFA726; color:#000; font-weight:bold;">🚨 ADICIÓN</td>
+                  <tr>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600; background:var(--surface-1); position:sticky; left:0; border-right:2px solid var(--border); z-index:1;">Queso Mozzarella</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">1.125</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;"><input type="checkbox" disabled></td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;"><input type="checkbox" disabled></td>
                   </tr>
                 </table>
               </div>
             ` : `
               <div class="mock-phone">
-                <div style="background:#FFA726; color:#000; padding:0.8rem; border-radius:var(--radius-sm); margin-top:1.5rem; font-weight:bold; text-align:center; font-size:0.75rem;">
-                  🚨 ADICIÓN DETECTADA
-                  <div style="font-weight:normal; font-size:0.68rem; margin-top:0.2rem; color:#111;">
-                    Se agregó un producto posterior a cerrar el pedido del día.
+                <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem;">
+                  Surtido Rápido Móvil
+                </div>
+                <div style="padding:0.5rem; display:flex; flex-direction:column; gap:0.2rem; margin-top:0.4rem;">
+                  <span style="font-weight:bold; font-size:0.8rem; color:var(--oro);">Queso Mozzarella</span>
+                  <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-2); padding:0.4rem; border-radius:var(--radius-sm); font-size:0.75rem;">
+                    <span>Pedido: <strong>1.125</strong></span>
+                    <span>Completo: <input type="checkbox" checked disabled></span>
+                    <span>Inexistente: <input type="checkbox" disabled></span>
                   </div>
                 </div>
               </div>
@@ -537,14 +540,90 @@ const OB_CONTENT = {
           <div class="dos-box">
             <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
             <ul class="rules-list">
-              <li>Revisar que el bodeguero capture exactamente lo que descarga. Esto calculará diferencias reales.</li>
-              <li>Sincronizar (Celda H2) al final del recibimiento para limpiar cachés remotas.</li>
+              <li>Desplazarte horizontalmente en tu móvil con tranquilidad: el producto siempre permanecerá a la vista a la izquierda de la pantalla.</li>
+              <li>Marcar directamente el checkbox de la columna F para indicar que el producto llegó completo.</li>
             </ul>
           </div>
           <div class="donts-box">
             <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
             <ul class="rules-list">
-              <li><strong>NO</strong> dejes celdas vacías en la columna RECIBIDO de los productos entregados; si se recibió cero, escribe 0.</li>
+              <li><strong>NO</strong> intentes mostrar de nuevo las columnas A y B manualmente; están ocultas a propósito para optimizar el espacio horizontal en celulares.</li>
+            </ul>
+          </div>
+        </div>
+      `
+    },
+    {
+      title: "Dashboard y Colores Dinámicos",
+      render: (viewMode) => `
+        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
+          <strong>Dashboard en Tiempo Real:</strong> En la parte superior derecha de Surtido Rápido se encuentra una tarjeta de control que resume de forma automática cuántos productos de tu lista están:
+          <span style="color:var(--verde); font-weight:bold;">Completos</span>, 
+          <span style="color:#e65100; font-weight:bold;">Incompletos (Parciales)</span>, 
+          <span style="color:var(--rojo); font-weight:bold;">Inexistentes</span> o son 
+          <span style="color:#e65100; font-weight:bold;">Adiciones</span>.
+        </p>
+        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
+          <strong>Colores Dinámicos & Adiciones:</strong> Toda la fila cambia de color instantáneamente según el estado del producto. Si agregas un producto nuevo al Pedido Diario después de haber ordenado la lista, se marcará automáticamente en color naranja vibrante como <code>🚨 ADICIÓN</code>. Al surtirlo y marcar su estado, su color de alerta se sobrescribe al de su nuevo estado.
+        </p>
+        
+        <div class="preview-container">
+          <div class="preview-header">
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
+            <div class="preview-tabs">
+              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
+              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
+            </div>
+          </div>
+          <div class="preview-content">
+            ${viewMode === 'pc' ? `
+              <div class="mock-desktop">
+                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem; display:flex; justify-content:space-between;">
+                  <span>Surtido Rápido</span>
+                  <span style="background:var(--surface-3); padding:0.1rem 0.4rem; border-radius:var(--radius-sm); font-size:0.65rem; color:var(--oro);">📊 C: 5 | I: 1 | N: 0 | A: 0</span>
+                </div>
+                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
+                  <tr style="background:rgba(76, 175, 80, 0.08);">
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600; color:var(--verde);">✓ Queso Mozzarella</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold; color:var(--verde);">COMPLETO</td>
+                  </tr>
+                  <tr style="background:rgba(255, 167, 38, 0.12);">
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600; color:#e65100;">+ Nutella (Extra)</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold; background:#FFA726; color:#000;">🚨 ADICIÓN</td>
+                  </tr>
+                </table>
+              </div>
+            ` : `
+              <div class="mock-phone">
+                <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem; display:flex; justify-content:space-between; align-items:center;">
+                  <span>Vista Móvil</span>
+                  <span style="background:var(--surface-2); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.6rem; color:var(--oro);">📊 C:5 I:1 N:0</span>
+                </div>
+                <div style="padding:0.5rem; display:flex; flex-direction:column; gap:0.4rem; margin-top:0.4rem;">
+                  <div style="background:rgba(76, 175, 80, 0.08); padding:0.4rem; border-radius:var(--radius-sm); border-left:4px solid var(--verde); font-size:0.7rem;">
+                    <strong>Queso Mozzarella</strong> - Completo Green
+                  </div>
+                  <div style="background:rgba(255, 167, 38, 0.12); padding:0.4rem; border-radius:var(--radius-sm); border-left:4px solid #FFA726; font-size:0.7rem;">
+                    <strong>Nutella (Extra)</strong> - 🚨 ADICIÓN
+                  </div>
+                </div>
+              </div>
+            `}
+          </div>
+        </div>
+        
+        <div class="dos-donts-grid">
+          <div class="dos-box">
+            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
+            <ul class="rules-list">
+              <li>Monitorear la tarjeta de resumen superior en tiempo real para ver el avance del surtido sin tener que contar fila por fila.</li>
+              <li>Saber que si agregas un insumo de último minuto en Pedido Diario, aparecerá marcado como adición para que no se olvide.</li>
+            </ul>
+          </div>
+          <div class="donts-box">
+            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
+            <ul class="rules-list">
+              <li><strong>NO</strong> borres la tarjeta de resumen ni rompas sus fórmulas automáticas; se ubica en el área de columnas I y J.</li>
             </ul>
           </div>
         </div>
