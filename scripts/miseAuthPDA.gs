@@ -176,6 +176,15 @@ function _actualizarAvisoPedido() {
 
   _aplicarAnchosColumnas(pedido);
   _aplicarFormatosCondicionales(pedido);
+  
+  // Mostrar Categoría (Col B) y ocultar No (Col A) para permitir filtrado móvil
+  try {
+    pedido.hideColumns(1);
+    pedido.showColumns(2);
+    let filter = pedido.getFilter();
+    if (filter) filter.remove();
+    pedido.getRange(3, 2, count + 1, 9).createFilter(); // B3:J (Headers Row 3 to last product Row)
+  } catch(err) {}
 }
 
 function _aplicarAnchosColumnas(sheet) {
@@ -491,6 +500,15 @@ function sincronizarEstados() {
     sheet.getRange(insertStartRow, 10, diff, 1).setHorizontalAlignment("center").setFontWeight("bold").setFontColor("#C62828");
 
     _aplicarFormatosCondicionales(sheet);
+
+    // Mostrar Categoría (Col B) y ocultar No (Col A) para permitir filtrado móvil
+    try {
+      sheet.hideColumns(1);
+      sheet.showColumns(2);
+      let filter = sheet.getFilter();
+      if (filter) filter.remove();
+      sheet.getRange(3, 2, syncCount + 1, 9).createFilter();
+    } catch(err) {}
 
     // Invalidar caché local e indicar el nuevo conteo de productos
     PropertiesService.getScriptProperties().setProperty("PRODUCT_COUNT", String(syncCount));
@@ -823,7 +841,17 @@ function _buildPedidoDiario(sheet) {
   _actualizarVisibilidadInactivos(sheet);
 
   _aplicarAnchosColumnas(sheet);
-  sheet.hideColumns(1, 2); // Ocultar No y Categoría
+  sheet.hideColumns(1); // Ocultar No
+  sheet.showColumns(2); // Mostrar Categoría
+  
+  // Crear filtro
+  try {
+    let filter = sheet.getFilter();
+    if (filter) filter.remove();
+    const lastRow = Math.max(sheet.getLastRow(), DATA_START_ROW);
+    sheet.getRange(3, 2, lastRow - 2, 9).createFilter(); // Columns B to J
+  } catch(err) {}
+  
   _actualizarAvisoPedido();
 }
 
@@ -870,7 +898,7 @@ function _aplicarFormatosCondicionales(sheet) {
     .setRanges([range])
     .build();
     
-  sheet.setConditionalFormatRules([ruleAdicion, ruleInactivo, ruleCompleto, ruleParcial, rulePendiente]);
+  sheet.setConditionalFormatRules([ruleCompleto, ruleParcial, ruleAdicion, rulePendiente, ruleInactivo]);
 }
 
 function acercaDe() {
@@ -989,15 +1017,17 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     sSheet = ss.insertSheet(sheetName);
   }
 
-  // Configurar columnas de la hoja
-  sSheet.getRange("A1:G1").merge()
+  // Configurar columnas de la hoja (Split merge cells to avoid crossing frozen column boundary at Col 3)
+  sSheet.getRange("A1:C1").merge().setBackground("#3D5A47");
+  sSheet.getRange("D1:G1").merge()
     .setValue(`MISE — SURTIDO RÁPIDO (${BODEGA_NOMBRE})`)
     .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sSheet.setRowHeight(1, 30);
 
-  sSheet.getRange("A2:G2").merge()
-    .setValue("Instrucciones: Marca ✅ si llegó completo o ❌ si no hay. Escribe en 'CANT. RECIBIDA' si llegó parcial.")
+  sSheet.getRange("A2:C2").merge().setBackground("#F5EFE6");
+  sSheet.getRange("D2:G2").merge()
+    .setValue("Instrucciones: Marca ✅ si llegó completo o ❌ si no hay. Cantidad manual si llegó parcial.")
     .setBackground("#F5EFE6").setFontColor("#333333").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
   sSheet.setRowHeight(2, 20);
@@ -1009,7 +1039,10 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
   sSheet.setRowHeight(3, 28);
+  
+  // Inmovilización de columnas y filas
   sSheet.setFrozenRows(3);
+  sSheet.setFrozenColumns(3); // Congelar columna de PRODUCTO (columna C/3, A y B ocultas)
 
   sSheet.setColumnWidth(1, 40);   // No
   sSheet.setColumnWidth(2, 125);  // CATEGORÍA
@@ -1018,20 +1051,27 @@ function _generarSurtidoRapidoInternal(activateSheet) {
   sSheet.setColumnWidth(5, 110);  // CANT. RECIBIDA (Editable)
   sSheet.setColumnWidth(6, 95);   // ✅ COMPLETO
   sSheet.setColumnWidth(7, 95);   // ❌ INEXISTENTE
+  sSheet.setColumnWidth(8, 40);   // ALERTA (Hidden)
 
   sSheet.hideColumns(1, 2); // Ocultar No y Categoría
 
+  const rows = Math.max(filtered.length, 1);
+
   if (filtered.length === 0) {
-    sSheet.getRange("A4:G4").merge()
+    // Write message without merging to avoid freeze boundary error
+    sSheet.getRange("C4")
       .setValue("No hay productos ordenados para surtir hoy (CANT. A PEDIR = 0).")
-      .setFontStyle("italic").setFontColor("#C62828").setHorizontalAlignment("center").setVerticalAlignment("middle");
+      .setFontStyle("italic").setFontColor("#C62828").setHorizontalAlignment("left").setVerticalAlignment("middle");
     sSheet.setRowHeight(4, 30);
+    
+    // Clear check & alert values for empty state
+    sSheet.getRange("D4:H4").setValue("");
   } else {
-    const rows = filtered.length;
     const values = [];
     const bgs = [];
     const checkCompleto = [];
     const checkInexistente = [];
+    const alertasVal = [];
     
     for (let i = 0; i < rows; i++) {
       const item = filtered[i];
@@ -1055,6 +1095,7 @@ function _generarSurtidoRapidoInternal(activateSheet) {
       
       checkCompleto.push([item.completo]);
       checkInexistente.push([item.inexistente]);
+      alertasVal.push([item.highlightBg === "#FFD54F" ? "🚨 ADICIÓN" : ""]);
     }
 
     // Escribir datos básicos
@@ -1072,6 +1113,10 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     sSheet.getRange(4, 6, rows, 1).insertCheckboxes().setValues(checkCompleto).setHorizontalAlignment("center");
     sSheet.getRange(4, 7, rows, 1).insertCheckboxes().setValues(checkInexistente).setHorizontalAlignment("center");
 
+    // Escribir columna oculta de alerta
+    sSheet.getRange(4, 8, rows, 1).setValues(alertasVal);
+    sSheet.hideColumns(8);
+
     // Validar entrada numérica en la columna E (Cant. Recibida)
     const valRule = SpreadsheetApp.newDataValidation()
       .requireNumberGreaterThanOrEqualTo(0)
@@ -1087,7 +1132,67 @@ function _generarSurtidoRapidoInternal(activateSheet) {
       prot.removeEditors(prot.getEditors());
       if (prot.canDomainEdit()) prot.setDomainEdit(false);
     } catch(e) {}
+
+    // Aplicar Reglas de Formato Condicional para coloreado de filas
+    sSheet.clearConditionalFormatRules();
+    const rangeS = sSheet.getRange(4, 1, rows, 7); // A4:G
+    
+    const ruleSCompleto = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=$F4=TRUE')
+      .setBackground("#C8E6C9") // light green
+      .setRanges([rangeS])
+      .build();
+      
+    const ruleSInexistente = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=$G4=TRUE')
+      .setBackground("#FFCDD2") // light red
+      .setRanges([rangeS])
+      .build();
+
+    const ruleSIncompleto = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=AND($E4>0; $E4<$D4; $F4=FALSE; $G4=FALSE)')
+      .setBackground("#FFE0B2") // light orange
+      .setRanges([rangeS])
+      .build();
+
+    const ruleSAdicion = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied('=$H4="🚨 ADICIÓN"')
+      .setBackground("#FFD54F") // orange
+      .setRanges([rangeS])
+      .build();
+
+    sSheet.setConditionalFormatRules([ruleSCompleto, ruleSInexistente, ruleSIncompleto, ruleSAdicion]);
   }
+
+  // --- TABLA DE RESUMEN DE PRODUCTOS (COLUMNAS I-J) ---
+  sSheet.getRange("I3:J3").merge()
+    .setValue("RESUMEN SURTIDO")
+    .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sSheet.setRowHeight(3, 28);
+    
+  sSheet.getRange("I4").setValue("✅ Completos");
+  sSheet.getRange("J4").setFormula("=COUNTIF(F4:F" + (3 + rows) + "; TRUE)");
+  
+  sSheet.getRange("I5").setValue("⚠️ Incompletos");
+  sSheet.getRange("J5").setFormula("=COUNTIFS(D4:D" + (3 + rows) + "; \">0\"; E4:E" + (3 + rows) + "; \">0\"; F4:F" + (3 + rows) + "; FALSE; G4:G" + (3 + rows) + "; FALSE)");
+  
+  sSheet.getRange("I6").setValue("❌ Inexistentes");
+  sSheet.getRange("J6").setFormula("=COUNTIF(G4:G" + (3 + rows) + "; TRUE)");
+  
+  sSheet.getRange("I7").setValue("🚨 Adiciones");
+  sSheet.getRange("J7").setFormula("=COUNTIF(H4:H" + (3 + rows) + "; \"🚨 ADICIÓN\")");
+
+  sSheet.getRange("I4:J4").setBackground("#E8F5E9");
+  sSheet.getRange("I5:J5").setBackground("#FFF3E0");
+  sSheet.getRange("I6:J6").setBackground("#FFEBEE");
+  sSheet.getRange("I7:J7").setBackground("#FFFDE7");
+  
+  sSheet.getRange("I4:I7").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("left").setVerticalAlignment("middle");
+  sSheet.getRange("J4:J7").setFontWeight("bold").setFontSize(10).setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sSheet.getRange("I3:J7").setBorder(true, true, true, true, true, true, "#CCCCCC", SpreadsheetApp.BorderStyle.SOLID);
+  sSheet.setColumnWidth(9, 120);  // Column I width
+  sSheet.setColumnWidth(10, 60);  // Column J width
 
   if (activateSheet) {
     ss.setActiveSheet(sSheet);
