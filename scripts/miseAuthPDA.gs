@@ -65,16 +65,7 @@ function onOpen() {
     .addSeparator()
     .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
     .addSeparator()
-    .addItem("🔄 Sincronizar estados (manual / móvil)",  "sincronizarEstados")
-    .addItem("📊 Ordenar pedido por estado",             "ordenarPedido")
-    .addItem("🗑 Resetear pedido del día",               "resetearPedido")
     .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
-    .addSeparator()
-    .addItem("📅 Avanzar semana (ejecutar en Bodega)",   "avanzarSemanaInfo")
-    .addSeparator()
-    .addItem("⚡ Instalar trigger automático (móvil)",   "instalarTriggers")
-    .addItem("🗑 Desinstalar trigger automático",        "desinstalarTriggers")
-    .addItem("♻️ Invalidar caché de productos",          "invalidarCache")
     .addSeparator()
     .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
     .addToUi();
@@ -225,19 +216,7 @@ function onEdit(e) {
 
   // A. Manejo de la pestaña de Surtido Rápido
   if (name === "🚚 SURTIDO RÁPIDO") {
-    // 1. Checkbox de retorno a Pedido Diario (Fila 3, Columna D)
-    if (row === 3 && col === 4) {
-      if (e.range.getValue() === true) {
-        e.range.setValue(false);
-        const pSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_PEDIDO);
-        if (pSheet) {
-          SpreadsheetApp.getActiveSpreadsheet().setActiveSheet(pSheet);
-        }
-      }
-      return;
-    }
-
-    if (row < 5) return;
+    if (row < 4) return;
 
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const pSheet = ss.getSheetByName(SHEET_PEDIDO);
@@ -348,16 +327,20 @@ function onEdit(e) {
         e.range.setValue(false);
         ordenarPedido();
       }
-    } else if (col === 6) { // F2 - Resetear Pedido
+    } else if (col === 6) { // F2 - Resetear Pedido (Deshabilitado)
+      /*
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         resetearPedido();
       }
-    } else if (col === 8) { // H2 - Sincronizar Estados
+      */
+    } else if (col === 8) { // H2 - Sincronizar Estados (Deshabilitado)
+      /*
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         sincronizarEstados();
       }
+      */
     } else if (col === 12) { // L2 - Surtido Rápido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
@@ -415,6 +398,14 @@ function onEdit(e) {
           sheet.getRange(row, 10).setFormula('=IF(F' + row + '=""; ""; IF(G' + row + '<F' + row + '; "⚠️ INCOMPLETO"; ""))');
         }
       }
+
+      // Si existe la pestaña de Surtido Rápido, actualizarla en segundo plano silenciosamente
+      try {
+        const surtido = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("🚚 SURTIDO RÁPIDO");
+        if (surtido) {
+          generarSurtidoRapidoSilencioso();
+        }
+      } catch (err) {}
     }
   }
 }
@@ -513,6 +504,14 @@ function sincronizarEstados() {
     } catch(e) {}
   }
   _actualizarVisibilidadInactivos(sheet);
+  
+  // Actualizar Surtido Rápido silenciosamente si existe
+  try {
+    const surtido = ss.getSheetByName("🚚 SURTIDO RÁPIDO");
+    if (surtido) {
+      generarSurtidoRapidoSilencioso();
+    }
+  } catch (err) {}
 }
 
 function ordenarPedido() {
@@ -626,6 +625,14 @@ function ordenarPedido() {
   // Marcar que el pedido ya fue ordenado
   PropertiesService.getScriptProperties().setProperty("IS_ORDER_SORTED", "true");
   SpreadsheetApp.getActive().toast("Pedido ordenado por categorías ✓", "⚙️ Ordenar", 3);
+
+  // Actualizar Surtido Rápido silenciosamente si existe
+  try {
+    const surtido = ss.getSheetByName("🚚 SURTIDO RÁPIDO");
+    if (surtido) {
+      generarSurtidoRapidoSilencioso();
+    }
+  } catch (err) {}
 }
 
 function configurarBodega() {
@@ -782,15 +789,16 @@ function _buildPedidoDiario(sheet) {
   // Limpiar A2 y B2 ya que se ocultarán
   sheet.getRange("A2:B2").clearContent();
 
-  // Botones interactivos (casillas de verificación en columnas C-H)
+  // Botones interactivos (casillas de verificación en columnas C-H) (Reset y Sync deshabilitados)
   sheet.getRange("C2").setValue("⚙️ Ordenar").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("D2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
   
-  sheet.getRange("E2").setValue("🗑 Resetear").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("F2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
+  // sheet.getRange("E2").setValue("🗑 Resetear")... (Deshabilitado)
+  // sheet.getRange("F2").insertCheckboxes()... (Deshabilitado)
   
-  sheet.getRange("G2").setValue("🔄 Sincronizar").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("H2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
+  // sheet.getRange("G2").setValue("🔄 Sincronizar")... (Deshabilitado)
+  // sheet.getRange("H2").insertCheckboxes()... (Deshabilitado)
+  sheet.getRange("E2:H2").clearContent();
 
   sheet.getRange("I2").setValue("FECHA:").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("J2").setFormula('=TODAY()').setBackground("#FFFCD0").setFontColor("#333333").setNumberFormat("DD/MMM/YYYY").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
@@ -910,7 +918,7 @@ function _actualizarVisibilidadInactivos(sheet) {
 }
 
 // ── SURTIDO RÁPIDO (MOBILE-FIRST RECEPCIÓN) ───────────────────────────────────
-function generarSurtidoRapido() {
+function _generarSurtidoRapidoInternal(activateSheet) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const pSheet = ss.getSheetByName(SHEET_PEDIDO);
   if (!pSheet) return;
@@ -921,23 +929,24 @@ function generarSurtidoRapido() {
     return;
   }
 
-  // Leer todos los datos del pedido (No, CATEGORÍA, PRODUCTO, UNIDAD, SALDO, CANT. PEDIR, CANT. RECIBIDA)
-  const data = pSheet.getRange(DATA_START_ROW, 1, lr - DATA_START_ROW + 1, 7).getValues();
+  // Leer todos los datos del pedido (No, CATEGORÍA, PRODUCTO, UNIDAD, SALDO, CANT. PEDIR, CANT. RECIBIDA, DIFERENCIA, ESTADO, ALERTAS SURTIDO)
+  const dataRange = pSheet.getRange(DATA_START_ROW, 1, lr - DATA_START_ROW + 1, NUM_COLS);
+  const data = dataRange.getValues();
+  const backgrounds = pSheet.getRange(DATA_START_ROW, 3, lr - DATA_START_ROW + 1, 1).getBackgrounds(); // Col C background
+
   const filtered = [];
   for (let i = 0; i < data.length; i++) {
-    const no = data[i][0];
-    const cat = data[i][1];
-    const prod = data[i][2];
-    const unit = data[i][3];
-    const sld = data[i][4];
     const cantPedir = parseFloat(data[i][5]);
-    const cantRecibida = data[i][6]; // Puede ser número o estar vacío
-
     if (!isNaN(cantPedir) && cantPedir > 0) {
-      // Determinar estado de los checkboxes
+      const no = data[i][0];
+      const cat = data[i][1];
+      const prod = data[i][2];
+      const cantRecibida = data[i][6];
+      const alerta = String(data[i][9] || "").trim();
+      const bgColC = String(backgrounds[i][0] || "").toLowerCase();
+
       let completo = false;
       let inexistente = false;
-      
       const numRecibida = parseFloat(cantRecibida);
       if (!isNaN(numRecibida)) {
         if (numRecibida === cantPedir) {
@@ -946,7 +955,15 @@ function generarSurtidoRapido() {
           inexistente = true;
         }
       }
-      
+
+      // Detect highlight color
+      let highlightBg = null;
+      if (bgColC === "#e8eaf6" || bgColC === "rgb(232, 234, 246)") {
+        highlightBg = "#E8EAF6"; // Lavender
+      } else if (alerta === "🚨 ADICIÓN" || bgColC === "#ffd54f" || bgColC === "rgb(255, 213, 79)") {
+        highlightBg = "#FFD54F"; // Orange addition alert
+      }
+
       filtered.push({
         rowIdxInPedido: DATA_START_ROW + i,
         no,
@@ -955,7 +972,8 @@ function generarSurtidoRapido() {
         cantPedir,
         cantRecibida,
         completo,
-        inexistente
+        inexistente,
+        highlightBg
       });
     }
   }
@@ -964,9 +982,7 @@ function generarSurtidoRapido() {
   const sheetName = "🚚 SURTIDO RÁPIDO";
   let sSheet = ss.getSheetByName(sheetName);
   if (sSheet) {
-    // Si existe, limpiar todo
     sSheet.clear();
-    // Eliminar protecciones previas
     const protections = sSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
     protections.forEach(p => { if (p.canEdit()) p.remove(); });
   } else {
@@ -986,22 +1002,14 @@ function generarSurtidoRapido() {
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
   sSheet.setRowHeight(2, 20);
 
-  // Volver al Pedido (Botón interactivo de retorno)
-  sSheet.getRange("A3:C3").merge()
-    .setValue("📋 Volver al Pedido Diario:").setFontWeight("bold").setFontSize(9)
-    .setHorizontalAlignment("right").setVerticalAlignment("middle").setBackground("#7A9E8A").setFontColor("#FFFFFF");
-  sSheet.getRange("D3").insertCheckboxes().setValue(false).setBackground("#FFFCD0").setHorizontalAlignment("center");
-  sSheet.getRange("E3:G3").merge().setValue("").setBackground("#F5EFE6");
-  sSheet.setRowHeight(3, 24);
-
-  // Headers de columnas
+  // Headers de columnas (Fila 3)
   const headers = ["No", "CATEGORÍA", "PRODUCTO", "CANT. PEDIDA", "CANT. RECIBIDA", "✅ COMPLETO", "❌ INEXISTENTE"];
-  sSheet.getRange(4, 1, 1, 7)
+  sSheet.getRange(3, 1, 1, 7)
     .setValues([headers])
     .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
-  sSheet.setRowHeight(4, 28);
-  sSheet.setFrozenRows(4);
+  sSheet.setRowHeight(3, 28);
+  sSheet.setFrozenRows(3);
 
   sSheet.setColumnWidth(1, 40);   // No
   sSheet.setColumnWidth(2, 125);  // CATEGORÍA
@@ -1011,11 +1019,13 @@ function generarSurtidoRapido() {
   sSheet.setColumnWidth(6, 95);   // ✅ COMPLETO
   sSheet.setColumnWidth(7, 95);   // ❌ INEXISTENTE
 
+  sSheet.hideColumns(1, 2); // Ocultar No y Categoría
+
   if (filtered.length === 0) {
-    sSheet.getRange("A5:G5").merge()
+    sSheet.getRange("A4:G4").merge()
       .setValue("No hay productos ordenados para surtir hoy (CANT. A PEDIR = 0).")
       .setFontStyle("italic").setFontColor("#C62828").setHorizontalAlignment("center").setVerticalAlignment("middle");
-    sSheet.setRowHeight(5, 30);
+    sSheet.setRowHeight(4, 30);
   } else {
     const rows = filtered.length;
     const values = [];
@@ -1035,10 +1045,12 @@ function generarSurtidoRapido() {
         item.cantRecibida
       ]);
       
-      const rowBg = Array(7).fill(bg);
-      rowBg[4] = COLORS.blue; // Resaltar CANT. RECIBIDA en azul
-      rowBg[5] = "#E8F5E9";  // Resaltar COMPLETO en verde claro
-      rowBg[6] = "#FFEBEE";  // Resaltar INEXISTENTE en rojo claro
+      const rowBg = Array(7).fill(item.highlightBg || bg);
+      if (!item.highlightBg) {
+        rowBg[4] = COLORS.blue; // Resaltar CANT. RECIBIDA en azul
+        rowBg[5] = "#E8F5E9";  // Resaltar COMPLETO en verde claro
+        rowBg[6] = "#FFEBEE";  // Resaltar INEXISTENTE en rojo claro
+      }
       bgs.push(rowBg);
       
       checkCompleto.push([item.completo]);
@@ -1046,19 +1058,19 @@ function generarSurtidoRapido() {
     }
 
     // Escribir datos básicos
-    sSheet.getRange(5, 1, rows, 5).setValues(values);
-    sSheet.getRange(5, 1, rows, 7).setBackgrounds(bgs)
+    sSheet.getRange(4, 1, rows, 5).setValues(values);
+    sSheet.getRange(4, 1, rows, 7).setBackgrounds(bgs)
       .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle");
     
-    sSheet.getRange(5, 1, rows, 1).setHorizontalAlignment("center").setFontWeight("bold");
-    sSheet.getRange(5, 2, rows, 1).setHorizontalAlignment("center");
-    sSheet.getRange(5, 3, rows, 1).setHorizontalAlignment("left");
-    sSheet.getRange(5, 4, rows, 1).setHorizontalAlignment("right");
-    sSheet.getRange(5, 5, rows, 1).setHorizontalAlignment("right");
+    sSheet.getRange(4, 1, rows, 1).setHorizontalAlignment("center").setFontWeight("bold");
+    sSheet.getRange(4, 2, rows, 1).setHorizontalAlignment("center");
+    sSheet.getRange(4, 3, rows, 1).setHorizontalAlignment("left");
+    sSheet.getRange(4, 4, rows, 1).setHorizontalAlignment("right");
+    sSheet.getRange(4, 5, rows, 1).setHorizontalAlignment("right");
 
     // Escribir checkboxes
-    sSheet.getRange(5, 6, rows, 1).insertCheckboxes().setValues(checkCompleto).setHorizontalAlignment("center");
-    sSheet.getRange(5, 7, rows, 1).insertCheckboxes().setValues(checkInexistente).setHorizontalAlignment("center");
+    sSheet.getRange(4, 6, rows, 1).insertCheckboxes().setValues(checkCompleto).setHorizontalAlignment("center");
+    sSheet.getRange(4, 7, rows, 1).insertCheckboxes().setValues(checkInexistente).setHorizontalAlignment("center");
 
     // Validar entrada numérica en la columna E (Cant. Recibida)
     const valRule = SpreadsheetApp.newDataValidation()
@@ -1066,17 +1078,26 @@ function generarSurtidoRapido() {
       .setAllowInvalid(false)
       .setHelpText("Ingresa una cantidad mayor o igual a 0.")
       .build();
-    sSheet.getRange(5, 5, rows, 1).setDataValidation(valRule);
+    sSheet.getRange(4, 5, rows, 1).setDataValidation(valRule);
 
-    // Proteger columnas A, B, C y D para evitar modificaciones accidentales
+    // Proteger columnas A, B, C y D
     try {
-      const prot = sSheet.getRange(5, 1, rows, 4).protect()
+      const prot = sSheet.getRange(4, 1, rows, 4).protect()
         .setDescription("No modificar datos base del producto.");
       prot.removeEditors(prot.getEditors());
       if (prot.canDomainEdit()) prot.setDomainEdit(false);
     } catch(e) {}
   }
 
-  // Activar la hoja
-  ss.setActiveSheet(sSheet);
+  if (activateSheet) {
+    ss.setActiveSheet(sSheet);
+  }
+}
+
+function generarSurtidoRapido() {
+  _generarSurtidoRapidoInternal(true);
+}
+
+function generarSurtidoRapidoSilencioso() {
+  _generarSurtidoRapidoInternal(false);
 }
