@@ -67,6 +67,8 @@ function onOpen() {
     .addSeparator()
     .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
     .addSeparator()
+    .addItem("🎲 Generar datos de prueba",               "generarDatosPrueba")
+    .addSeparator()
     .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
     .addToUi();
 }
@@ -398,8 +400,10 @@ function onEdit(e) {
       // Si es la columna de pedir, manejar alerta de adición
       if (col === COL_CANT_PEDIR) {
         if (checkVal > 0) {
-          const isSorted = PropertiesService.getScriptProperties().getProperty("IS_ORDER_SORTED") === "true";
-          if (isSorted) {
+          const props = PropertiesService.getScriptProperties();
+          const isSorted = props.getProperty("IS_ORDER_SORTED") === "true";
+          const isSurtidoActive = props.getProperty("IS_SURTIDO_ACTIVE") === "true";
+          if (isSorted || isSurtidoActive) {
             sheet.getRange(row, 10).setValue("🚨 ADICIÓN");
           }
         } else {
@@ -750,8 +754,9 @@ function _resetearPedidoSilencioso() {
   _aplicarFormatosCondicionales(sheet);
   _actualizarVisibilidadInactivos(sheet);
 
-  // Resetear el flag de ordenamiento
+  // Resetear los flags de ordenamiento y surtido activo
   PropertiesService.getScriptProperties().setProperty("IS_ORDER_SORTED", "false");
+  PropertiesService.getScriptProperties().setProperty("IS_SURTIDO_ACTIVE", "false");
 }
 
 function _checkAutoResetNuevoDia() {
@@ -1200,9 +1205,62 @@ function _generarSurtidoRapidoInternal(activateSheet) {
 }
 
 function generarSurtidoRapido() {
+  PropertiesService.getScriptProperties().setProperty("IS_SURTIDO_ACTIVE", "true");
   _generarSurtidoRapidoInternal(true);
 }
 
 function generarSurtidoRapidoSilencioso() {
   _generarSurtidoRapidoInternal(false);
+}
+
+function generarDatosPrueba() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_PEDIDO);
+  if (!sheet) return;
+  
+  const count = _getProductCount();
+  if (count < 1) return;
+  
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return;
+  
+  try {
+    const rangeF = sheet.getRange(DATA_START_ROW, COL_CANT_PEDIR, count, 1);
+    const rangeG = sheet.getRange(DATA_START_ROW, COL_RECIBIDA, count, 1);
+    const valuesF = rangeF.getValues();
+    const valuesG = rangeG.getValues();
+    
+    // Choose 15-25 random products to order
+    const numToOrder = Math.floor(Math.random() * 11) + 15; // 15 to 25
+    const selectedIndices = new Set();
+    while (selectedIndices.size < numToOrder) {
+      selectedIndices.add(Math.floor(Math.random() * count));
+    }
+    
+    selectedIndices.forEach(idx => {
+      // Set random quantity to order (integers or decimals)
+      const isFloat = Math.random() > 0.5;
+      const base = Math.floor(Math.random() * 8) + 1; // 1 to 8
+      const val = isFloat ? base + 0.5 : base;
+      valuesF[idx][0] = val;
+      
+      // Optionally simulate some already received (50% chance of empty, 30% complete, 20% partial)
+      const rand = Math.random();
+      if (rand > 0.7) {
+        valuesG[idx][0] = val; // Complete
+      } else if (rand > 0.5) {
+        valuesG[idx][0] = Math.max(0.5, val - 1); // Partial
+      } else {
+        valuesG[idx][0] = ""; // Empty/pending
+      }
+    });
+    
+    rangeF.setValues(valuesF);
+    rangeG.setValues(valuesG);
+    
+    SpreadsheetApp.flush();
+    SpreadsheetApp.getActive().toast(`Se generaron datos de prueba para ${numToOrder} productos ✓`, "🎲 Prueba", 4);
+  } finally {
+    lock.releaseLock();
+  }
 }
