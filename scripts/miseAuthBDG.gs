@@ -39,13 +39,13 @@ const KARDEX_TOTAL_COLS = 30; // A-AD en KARDEX
 
 // Mapa ID_FAMILIA → CATEGORÍA
 const CATEGORIAS_MAP = {
-  'REF': '1. REFRIGERADOS',
-  'FYV': '2. FRUTAS Y VERDURAS',
-  'LEC': '3. LÁCTEOS',
-  'ABR': '4. ABARROTES',
-  'BEB': '5. BEBIDAS',
-  'DES': '6. DESECHABLES',
-  'JAR': '7. JARCERÍA'
+  'REF': 'REFRIGERADOS',
+  'FYV': 'FRUTAS Y VERDURAS',
+  'LEC': 'LÁCTEOS',
+  'ABR': 'ABARROTES',
+  'BEB': 'BEBIDAS',
+  'DES': 'DESECHABLES',
+  'JAR': 'JARCERÍA'
 };
 const CATEGORIAS_LISTA = Object.values(CATEGORIAS_MAP);
 
@@ -79,7 +79,7 @@ function onOpen() {
     .addSeparator()
     .addItem("📊 Recrear VISTA_MOVIL_BA",                 "crearVistaMóvilBA")
     .addItem("📊 Recrear VISTA_MOVIL_BM",                 "crearVistaMóvilBM")
-    .addItem("🏷 Recrear CADUCIDADES",                    "crearCaducidades")
+    // .addItem("🏷 Recrear CADUCIDADES",                    "crearCaducidades")
     .addSeparator()
     .addItem("🆕 Agregar producto al catálogo",           "agregarProducto")
     .addItem("➕ Carga masiva de productos",             "crearHojaCargaMasiva")
@@ -149,7 +149,7 @@ function onEdit(e) {
         // Recrear vistas
         _buildVista("BA");
         _buildVista("BM");
-        crearCaducidades();
+        // crearCaducidades(); // Feature deshabilitada
       } finally {
         lock.releaseLock();
       }
@@ -219,10 +219,22 @@ function onEdit(e) {
   }
   if (!tipo) return;
 
-  const val = e.range.getValue();
-  if (val !== "" && (typeof val !== "number" || val < 0)) {
-    e.range.clearContent();
-    SpreadsheetApp.getActive().toast(`${tipo} debe ser número ≥ 0`, "⚙️ Mise", 4);
+  let val = e.range.getValue();
+  if (val !== "") {
+    // Si es un String que contiene número con punto o coma, lo convertimos
+    if (typeof val === "string") {
+      const cleanVal = val.replace(',', '.').trim();
+      const num = Number(cleanVal);
+      if (!isNaN(num) && num >= 0) {
+        e.range.setValue(num);
+        return;
+      }
+    }
+    const checkVal = Number(val);
+    if (isNaN(checkVal) || checkVal < 0) {
+      e.range.clearContent();
+      SpreadsheetApp.getActive().toast(`${tipo} debe ser número ≥ 0`, "⚙️ Mise", 4);
+    }
   }
 }
 
@@ -269,9 +281,9 @@ function setupCompleto() {
   SpreadsheetApp.getActive().toast("Creando VISTAS MÓVIL...", "⚙️ Mise", 3);
   Object.keys(BODEGAS).forEach(key => _buildVista(key));
   
-  // 5. CADUCIDADES
-  SpreadsheetApp.getActive().toast("Creando CADUCIDADES...", "⚙️ Mise", 3);
-  crearCaducidades();
+  // 5. CADUCIDADES (Feature deshabilitada)
+  // SpreadsheetApp.getActive().toast("Creando CADUCIDADES...", "⚙️ Mise", 3);
+  // crearCaducidades();
 
   // Eliminar hoja temporal
   const t = ss.getSheetByName("__temp__");
@@ -365,6 +377,13 @@ function _buildMaestro(sheet) {
     .build();
     
   sheet.setConditionalFormatRules([selectionRule, inactiveRule]);
+
+  // Crear filtro automático en MAESTRO
+  const filterRange = sheet.getRange(3, 1, datos.length + 1, 10);
+  if (sheet.getFilter()) {
+    sheet.getFilter().remove();
+  }
+  filterRange.createFilter();
 }
 
 // ── CONSTRUCCIÓN: KARDEX COMPLETAMENTE LIMPIO Y SIMÉTRICO ──────────────────
@@ -495,14 +514,17 @@ function _buildKardex(sheet, nombre) {
     sheet.setColumnWidth(12 + d * 3, 62);
   }
 
-  // Formato fecha col F y validación de fecha
+  // Formato fecha col F y validación de fecha (Feature deshabilitada)
   sheet.getRange(KARDEX_START, 6, 200, 1).setNumberFormat("DD/MMM/YY");
+  /*
   sheet.getRange(KARDEX_START, 6, 200, 1).setDataValidation(
     SpreadsheetApp.newDataValidation().requireDate()
       .setHelpText("Fecha de caducidad del lote").build()
   );
+  */
 
-  // Semáforo col H: formato condicional por texto (8 niveles)
+  // Semáforo col H: formato condicional por texto (8 niveles) (Feature deshabilitada)
+  /*
   const cfR = sheet.getRange(KARDEX_START, 8, 200, 1);
   sheet.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🔴 CAD")
@@ -522,8 +544,10 @@ function _buildKardex(sheet, nombre) {
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("⚪ S/F")
       .setBackground(C.yellow).setFontColor("#555555").setRanges([cfR]).build(),
   ]);
+  */
 
   sheet.setFrozenColumns(3);
+  sheet.hideColumns(6, 3); // Ocultar CADUCIDAD, LOTE, 🚦
 }
 
 // ── POBLAR KARDEX DESDE MAESTRO ───────────────────────────────────────────────
@@ -561,8 +585,8 @@ function _poblarKardex(sheet) {
     formulasSemaforo.push([formulaCad]);
   }
   
-  // Asignar las fórmulas en masa a la columna 8 (Col H - 🚦)
-  sheet.getRange(KARDEX_START, 8, count, 1).setFormulas(formulasSemaforo);
+  // Asignar las fórmulas en masa a la columna 8 (Col H - 🚦) (Feature deshabilitada)
+  // sheet.getRange(KARDEX_START, 8, count, 1).setFormulas(formulasSemaforo);
 
   // Fórmulas SLD para cada día: SLD = SLDprev + ENT - SAL
   for (let d = 0; d < KARDEX_DAYS; d++) {
@@ -591,6 +615,13 @@ function _poblarKardex(sheet) {
 
   // Formato numérico para datos diarios
   sheet.getRange(KARDEX_START, 10, count, 21).setNumberFormat("0.##");
+
+  // Crear filtro automático en KARDEX
+  const kRange = sheet.getRange(6, 1, count + 1, KARDEX_TOTAL_COLS);
+  if (sheet.getFilter()) {
+    sheet.getFilter().remove();
+  }
+  kRange.createFilter();
 }
 
 // ── CONSTRUCCIÓN: VISTA MÓVIL ─────────────────────────────────────────────────
@@ -1167,11 +1198,21 @@ function agregarProducto() {
   const idFam = iResp.getResponseText().trim();
 
   // Inferir categoría del prefijo
-  const categoria = CATEGORIAS_MAP[idFam.split('-')[0]] || '';
+  const idFamPrefix = idFam.split('-')[0].toUpperCase();
+  const categoria = CATEGORIAS_MAP[idFamPrefix];
+  if (!categoria) {
+    ui.alert("⚠️ ID de Familia Inválido", `No se pudo determinar la categoría para el prefijo "${idFamPrefix}".\n\nPrefijos válidos:\n- REF (REFRIGERADOS)\n- FYV (FRUTAS Y VERDURAS)\n- LEC (LÁCTEOS)\n- ABR (ABARROTES)\n- BEB (BEBIDAS)\n- DES (DESECHABLES)\n- JAR (JARCERÍA)\n\nEl producto no fue agregado.`, ui.ButtonSet.OK);
+    return;
+  }
 
-  const uResp = ui.prompt("🆕 Nuevo Producto", "Unidad (kg / lt / pza / paq):", ui.ButtonSet.OK_CANCEL);
+  const uResp = ui.prompt("🆕 Nuevo Producto", "Unidad (kg / lt / pza / paq / g / ml / rol / fco / dom / bol / caj):", ui.ButtonSet.OK_CANCEL);
   if (uResp.getSelectedButton() !== ui.Button.OK) return;
-  const unidad = uResp.getResponseText().trim();
+  const unidad = uResp.getResponseText().trim().toLowerCase();
+  const unidadesValidas = ["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"];
+  if (!unidadesValidas.includes(unidad)) {
+    ui.alert("⚠️ Unidad Inválida", `La unidad "${unidad}" no es válida.\n\nValores válidos: ${unidadesValidas.join(", ")}`, ui.ButtonSet.OK);
+    return;
+  }
 
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) { ui.alert("El archivo está ocupado. Intenta de nuevo."); return; }
@@ -1216,19 +1257,10 @@ function agregarProducto() {
         const nextRowK = lastRowK + 1;
         
         kSheet.getRange(nextRowK, 1, 1, 5).setValues([[newNo, categoria, prod, "", unidad]]);
-        kSheet.getRange(nextRowK, 6).setDataValidation(
-          SpreadsheetApp.newDataValidation().requireDate()
-            .setHelpText("Fecha de caducidad del lote").build()
-        ).setNumberFormat("DD/MMM/YY");
+        // kSheet.getRange(nextRowK, 6).setDataValidation(...) (Feature deshabilitada)
+        kSheet.getRange(nextRowK, 6).setNumberFormat("DD/MMM/YY");
         
-        const formulaCad = '=IF(ISBLANK(F' + nextRowK + '); "⚪ S/F"; ' +
-                           'IF(F' + nextRowK + '-TODAY()<=0; "🔴 CAD"; ' +
-                           'IF(F' + nextRowK + '-TODAY()<=2; "🔴 ≤2d"; ' +
-                           'IF(F' + nextRowK + '-TODAY()<=7; "🟠 ≤7d"; ' +
-                           'IF(F' + nextRowK + '-TODAY()<=14; "🟡 ≤14d"; ' +
-                           'IF(F' + nextRowK + '-TODAY()<=28; "🟤 ≤28d"; ' +
-                           'IF(F' + nextRowK + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
-        kSheet.getRange(nextRowK, 8).setFormula(formulaCad);
+        // kSheet.getRange(nextRowK, 8).setFormula(...) (Feature deshabilitada)
         kSheet.getRange(nextRowK, 9).setValue(0);
         
         for (let d = 0; d < KARDEX_DAYS; d++) {
@@ -1270,8 +1302,8 @@ function agregarProducto() {
     _buildVista("BA");
     _buildVista("BM");
 
-    // 5. Recrear Caducidades
-    crearCaducidades();
+    // 5. Recrear Caducidades (Feature deshabilitada)
+    // crearCaducidades();
 
     ui.alert("✅ Producto agregado", `"${prod}" se ha agregado al catálogo, kardex y hojas de historial.`, ui.ButtonSet.OK);
     _log("agregarProducto", `Producto: ${prod}`);
@@ -1329,7 +1361,7 @@ function anularProducto() {
     // Recrear vistas
     _buildVista("BA");
     _buildVista("BM");
-    crearCaducidades();
+    // crearCaducidades(); // Feature deshabilitada
 
     ui.alert("✅ Producto anulado", "El producto ha sido marcado como inactivo y ocultado de las hojas de operaciones.", ui.ButtonSet.OK);
     _log("anularProducto", `Fila Maestro: ${foundRow}`);
@@ -1673,7 +1705,7 @@ function desactivarSeleccionadosMaestro() {
       rangeMaestro.setValues(valuesMaestro);
       _buildVista("BA");
       _buildVista("BM");
-      crearCaducidades();
+      // crearCaducidades(); // Feature deshabilitada
       SpreadsheetApp.getActive().toast(`Se desactivaron ${affected} productos ✓`, "⚙️ Mise", 4);
     }
   } finally {
@@ -1715,7 +1747,7 @@ function activarSeleccionadosMaestro() {
       rangeMaestro.setValues(valuesMaestro);
       _buildVista("BA");
       _buildVista("BM");
-      crearCaducidades();
+      // crearCaducidades(); // Feature deshabilitada
       SpreadsheetApp.getActive().toast(`Se activaron ${affected} productos ✓`, "⚙️ Mise", 4);
     }
   } finally {
@@ -1802,7 +1834,7 @@ function eliminarSeleccionadosMaestro() {
     // Recrear vistas y caducidades
     _buildVista("BA");
     _buildVista("BM");
-    crearCaducidades();
+    // crearCaducidades(); // Feature deshabilitada
     
     ui.alert("✅ Eliminación completada", `Se eliminaron ${selectedRows.length} producto(s) definitivamente.`, ui.ButtonSet.OK);
     _log("eliminarSeleccionadosMaestro", `Eliminados: ${nombres}`);
@@ -1911,7 +1943,8 @@ function _ordenarYRenumerarTodo() {
       kSheet.getRange(KARDEX_START, 11 + d * 3, newKData.length, 1).setValues(salVals);
     }
     
-    // Re-escribir fórmulas de semáforo (col 8)
+    // Re-escribir fórmulas de semáforo (col 8) (Feature deshabilitada)
+    /*
     const formulasSemaforo = [];
     for (let r = 0; r < newKData.length; r++) {
       const rn = KARDEX_START + r;
@@ -1925,6 +1958,7 @@ function _ordenarYRenumerarTodo() {
       formulasSemaforo.push([f]);
     }
     kSheet.getRange(KARDEX_START, 8, newKData.length, 1).setFormulas(formulasSemaforo);
+    */
     
     // Re-escribir fórmulas SLD
     for (let d = 0; d < KARDEX_DAYS; d++) {
@@ -1949,7 +1983,21 @@ function _ordenarYRenumerarTodo() {
       kSheet.getRange(KARDEX_START, 11 + d * 3, newKData.length, 1).setBackgrounds(Array(newKData.length).fill([C.salBg]));
       kSheet.getRange(KARDEX_START, 12 + d * 3, newKData.length, 1).setBackgrounds(Array(newKData.length).fill([C.iceBlue]));
     }
+
+    // Actualizar filtro automático en KARDEX
+    const kFilterRange = kSheet.getRange(6, 1, newKData.length + 1, KARDEX_TOTAL_COLS);
+    if (kSheet.getFilter()) {
+      kSheet.getFilter().remove();
+    }
+    kFilterRange.createFilter();
   });
+
+  // Actualizar filtro automático en MAESTRO
+  const mFilterRange = maestro.getRange(3, 1, data.length + 1, MAESTRO_COLS);
+  if (maestro.getFilter()) {
+    maestro.getFilter().remove();
+  }
+  mFilterRange.createFilter();
   
   _log("_ordenarYRenumerarTodo", `Re-ordenado y re-numerado: ${data.length} productos`);
 }
@@ -2014,26 +2062,26 @@ function crearHojaCargaMasiva() {
   sheet = ss.insertSheet("➕ AGREGAR_MÚLTIPLES");
   
   // Headers
-  sheet.getRange("A1:E1").merge()
+  sheet.getRange("A1:F1").merge()
     .setValue("MISE — CARGA MASIVA DE PRODUCTOS")
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(1, 30);
   
-  sheet.getRange("A2:E2").merge()
-    .setValue("Instrucciones: Completa las columnas B a E. Llena tantas filas como productos quieras agregar.")
+  sheet.getRange("A2:F2").merge()
+    .setValue("Instrucciones: Completa las columnas B a F. Llena tantas filas como productos quieras agregar.")
     .setBackground(C.cream).setFontColor("#333333").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(2, 20);
   
-  sheet.getRange("A3:D3").merge()
+  sheet.getRange("A3:E3").merge()
     .setValue("Confirmar Carga de Productos:").setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("right").setVerticalAlignment("middle").setBackground(C.sage).setFontColor("#FFFFFF");
-  sheet.getRange("E3").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
+  sheet.getRange("F3").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
   sheet.setRowHeight(3, 24);
   
-  sheet.getRange("A4:E4")
-    .setValues([["No", "ID FAMILIA (Opcional)", "PRODUCTO (Obligatorio)", "PRESENTACIÓN (Obligatorio)", "UNIDAD (Obligatorio)"]])
+  sheet.getRange("A4:F4")
+    .setValues([["No", "CATEGORÍA (Obligatorio)", "ID FAMILIA (Opcional)", "PRODUCTO (Obligatorio)", "PRESENTACIÓN (Obligatorio)", "UNIDAD (Obligatorio)"]])
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(4, 26);
@@ -2046,28 +2094,38 @@ function crearHojaCargaMasiva() {
   const bgs = [];
   for (let i = 0; i < rows; i++) {
     colA.push([i + 1]);
-    bgs.push(Array(5).fill(i % 2 === 0 ? C.rowA : C.rowB));
+    bgs.push(Array(6).fill(i % 2 === 0 ? C.rowA : C.rowB));
   }
   sheet.getRange(5, 1, rows, 1).setValues(colA);
-  sheet.getRange(5, 1, rows, 5).setBackgrounds(bgs)
+  sheet.getRange(5, 1, rows, 6).setBackgrounds(bgs)
     .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle");
   sheet.getRange(5, 1, rows, 1).setHorizontalAlignment("center");
   sheet.getRange(5, 2, rows, 1).setHorizontalAlignment("center");
-  sheet.getRange(5, 5, rows, 1).setHorizontalAlignment("center");
+  sheet.getRange(5, 3, rows, 1).setHorizontalAlignment("center");
+  sheet.getRange(5, 6, rows, 1).setHorizontalAlignment("center");
   
-  // Dropdown de unidades en columna E
+  // Dropdown de categorías en columna B (col 2)
+  const catValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(CATEGORIAS_LISTA, true)
+    .setAllowInvalid(false)
+    .setHelpText("Selecciona una categoría válida.")
+    .build();
+  sheet.getRange(5, 2, rows, 1).setDataValidation(catValidation);
+  
+  // Dropdown de unidades en columna F (col 6)
   const unitValidation = SpreadsheetApp.newDataValidation()
     .requireValueInList(["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"], true)
     .setAllowInvalid(false)
     .setHelpText("Selecciona una unidad válida.")
     .build();
-  sheet.getRange(5, 5, rows, 1).setDataValidation(unitValidation);
+  sheet.getRange(5, 6, rows, 1).setDataValidation(unitValidation);
   
   sheet.setColumnWidth(1, 40);
-  sheet.setColumnWidth(2, 160);
-  sheet.setColumnWidth(3, 220);
-  sheet.setColumnWidth(4, 180);
-  sheet.setColumnWidth(5, 140);
+  sheet.setColumnWidth(2, 180);
+  sheet.setColumnWidth(3, 160);
+  sheet.setColumnWidth(4, 220);
+  sheet.setColumnWidth(5, 180);
+  sheet.setColumnWidth(6, 140);
   
   ss.setActiveSheet(sheet);
 }
@@ -2080,31 +2138,32 @@ function procesarCargaMasiva() {
   const lastRowT = tempSheet.getLastRow();
   if (lastRowT < 5) {
     SpreadsheetApp.getUi().alert("No hay productos para cargar.");
-    tempSheet.getRange("E3").setValue(false);
+    tempSheet.getRange("F3").setValue(false);
     return;
   }
   
-  const rawData = tempSheet.getRange(5, 1, lastRowT - 4, 5).getValues();
+  const rawData = tempSheet.getRange(5, 1, lastRowT - 4, 6).getValues();
   const validRows = [];
   for (let i = 0; i < rawData.length; i++) {
-    const idFam = String(rawData[i][1]).trim();
-    const prod = String(rawData[i][2]).trim();
-    const pres = String(rawData[i][3]).trim();
-    const unit = String(rawData[i][4]).trim();
+    const cat = String(rawData[i][1]).trim();
+    const idFam = String(rawData[i][2]).trim();
+    const prod = String(rawData[i][3]).trim();
+    const pres = String(rawData[i][4]).trim();
+    const unit = String(rawData[i][5]).trim();
     
     if (prod !== "") {
-      if (pres === "" || unit === "") {
-        SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: El producto "${prod}" debe tener PRESENTACIÓN y UNIDAD obligatoriamente.`);
-        tempSheet.getRange("E3").setValue(false);
+      if (cat === "" || pres === "" || unit === "") {
+        SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: El producto "${prod}" debe tener CATEGORÍA, PRESENTACIÓN y UNIDAD obligatoriamente.`);
+        tempSheet.getRange("F3").setValue(false);
         return;
       }
-      validRows.push({ idFam, prod, pres, unit });
+      validRows.push({ cat, idFam, prod, pres, unit });
     }
   }
   
   if (validRows.length === 0) {
-    SpreadsheetApp.getUi().alert("No se encontraron productos para cargar. Escribe al menos el nombre del producto en la columna C.");
-    tempSheet.getRange("E3").setValue(false);
+    SpreadsheetApp.getUi().alert("No se encontraron productos para cargar. Escribe al menos el nombre del producto en la columna D.");
+    tempSheet.getRange("F3").setValue(false);
     return;
   }
   
@@ -2114,14 +2173,14 @@ function procesarCargaMasiva() {
     SpreadsheetApp.getUi().ButtonSet.YES_NO
   );
   if (proceed !== SpreadsheetApp.getUi().Button.YES) {
-    tempSheet.getRange("E3").setValue(false);
+    tempSheet.getRange("F3").setValue(false);
     return;
   }
   
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) {
     SpreadsheetApp.getUi().alert("El archivo está ocupado. Intenta de nuevo.");
-    tempSheet.getRange("E3").setValue(false);
+    tempSheet.getRange("F3").setValue(false);
     return;
   }
   
@@ -2139,8 +2198,7 @@ function procesarCargaMasiva() {
     for (let i = 0; i < validRows.length; i++) {
       const item = validRows[i];
       const newNo = ++lastNo;
-      const cat = CATEGORIAS_MAP[item.idFam.split('-')[0]] || '';
-      maestroRows.push([newNo, item.idFam, cat, item.prod, item.pres, item.unit, "SÍ", 0, 0, false]);
+      maestroRows.push([newNo, item.idFam, item.cat, item.prod, item.pres, item.unit, "SÍ", 0, 0, false]);
       
       const rowColor = (newNo % 2 === 1) ? C.rowA : C.rowB;
       bgsM.push(Array(MAESTRO_COLS).fill(rowColor));
@@ -2177,38 +2235,21 @@ function procesarCargaMasiva() {
         
         const kardexRows = [];
         const bgsK = [];
-        const formulasSemaforo = [];
         
         for (let i = 0; i < newProductsData.length; i++) {
           const np = newProductsData[i];
-          const rn = startRowK + i;
-          
-          // Cols A-E: No, CATEGORÍA, PRODUCTO, PRESENTACIÓN, UNIDAD
-          const catK = CATEGORIAS_MAP[np.item.idFam.split('-')[0]] || '';
-          kardexRows.push([np.newNo, catK, np.item.prod, np.item.pres, np.item.unit]);
+          kardexRows.push([np.newNo, np.item.cat, np.item.prod, np.item.pres, np.item.unit]);
           
           const rowColor = np.rowColor;
           bgsK.push(Array(KARDEX_TOTAL_COLS).fill(rowColor));
-          
-          // Semáforo fórmula
-          const formulaCad = '=IF(ISBLANK(F' + rn + '); "⚪ S/F"; ' +
-                             'IF(F' + rn + '-TODAY()<=0; "🔴 CAD"; ' +
-                             'IF(F' + rn + '-TODAY()<=2; "🔴 ≤2d"; ' +
-                             'IF(F' + rn + '-TODAY()<=7; "🟠 ≤7d"; ' +
-                             'IF(F' + rn + '-TODAY()<=14; "🟡 ≤14d"; ' +
-                             'IF(F' + rn + '-TODAY()<=28; "🟤 ≤28d"; ' +
-                             'IF(F' + rn + '-TODAY()<=60; "🔵 ≤60d"; "🟢 OK")))))))';
-          formulasSemaforo.push([formulaCad]);
         }
         
         // Escribir bases en Kardex
         kSheet.getRange(startRowK, 1, validRows.length, 5).setValues(kardexRows);
-        kSheet.getRange(startRowK, 6, validRows.length, 1).setDataValidation(
-          SpreadsheetApp.newDataValidation().requireDate()
-            .setHelpText("Fecha de caducidad del lote").build()
-        ).setNumberFormat("DD/MMM/YY");
+        // kSheet.getRange(startRowK, 6, ...).setDataValidation(...) (Feature deshabilitada)
+        kSheet.getRange(startRowK, 6, validRows.length, 1).setNumberFormat("DD/MMM/YY");
         
-        kSheet.getRange(startRowK, 8, validRows.length, 1).setFormulas(formulasSemaforo);
+        // kSheet.getRange(startRowK, 8, ...).setFormulas(...) (Feature deshabilitada)
         kSheet.getRange(startRowK, 9, validRows.length, 1).setValue(0);
         
         // Fórmulas SLD y campos vacíos
@@ -2267,8 +2308,8 @@ function procesarCargaMasiva() {
     _buildVista("BA");
     _buildVista("BM");
     
-    // 5. Recrear Caducidades
-    crearCaducidades();
+    // 5. Recrear Caducidades (Feature deshabilitada)
+    // crearCaducidades();
     
     // 6. Eliminar hoja temporal
     try {
@@ -2325,27 +2366,27 @@ function crearHojaEdicionMasiva() {
   editSheet = ss.insertSheet("✏️ EDITAR_PRODUCTOS");
   
   // Headers
-  editSheet.getRange("A1:G1").merge()
+  editSheet.getRange("A1:H1").merge()
     .setValue("MISE — EDICIÓN MASIVA DE PRODUCTOS")
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   editSheet.setRowHeight(1, 30);
   
-  editSheet.getRange("A2:G2").merge()
-    .setValue("Instrucciones: Modifica los campos que desees. Las columnas PRODUCTO, PRESENTACIÓN y UNIDAD son obligatorias. Deja la columna A (No) intacta.")
+  editSheet.getRange("A2:H2").merge()
+    .setValue("Instrucciones: Modifica los campos que desees. Las columnas CATEGORÍA, PRODUCTO, PRESENTACIÓN y UNIDAD son obligatorias. Deja la columna A (No) intacta.")
     .setBackground(C.cream).setFontColor("#333333").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
   editSheet.setRowHeight(2, 20);
   
-  editSheet.getRange("A3:D3").merge()
+  editSheet.getRange("A3:E3").merge()
     .setValue("Confirmar Edición de Productos:").setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("right").setVerticalAlignment("middle").setBackground(C.sage).setFontColor("#FFFFFF");
-  editSheet.getRange("E3").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
-  editSheet.getRange("F3:G3").merge().setValue("").setBackground(C.cream);
+  editSheet.getRange("F3").insertCheckboxes().setValue(false).setBackground(C.yellow).setHorizontalAlignment("center");
+  editSheet.getRange("G3:H3").merge().setValue("").setBackground(C.cream);
   editSheet.setRowHeight(3, 24);
   
-  editSheet.getRange("A4:G4")
-    .setValues([["No (No editar)", "PRODUCTO (Obligatorio)", "PRESENTACIÓN (Obligatorio)", "UNIDAD (Obligatorio)", "ID FAMILIA (Opcional)", "MÍN (Stock)", "MÁX (Stock)"]])
+  editSheet.getRange("A4:H4")
+    .setValues([["No (No editar)", "CATEGORÍA (Obligatorio)", "PRODUCTO (Obligatorio)", "PRESENTACIÓN (Obligatorio)", "UNIDAD (Obligatorio)", "ID FAMILIA (Opcional)", "MÍN (Stock)", "MÁX (Stock)"]])
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9)
     .setHorizontalAlignment("center").setVerticalAlignment("middle");
   editSheet.setRowHeight(4, 26);
@@ -2356,33 +2397,43 @@ function crearHojaEdicionMasiva() {
   const editRows = [];
   const bgs = [];
   selectedProds.forEach((p, idx) => {
-    editRows.push([p.no, p.prod, p.pres, p.unit, p.idFam, p.min, p.max]);
-    bgs.push(Array(7).fill(idx % 2 === 0 ? C.rowA : C.rowB));
+    editRows.push([p.no, p.cat, p.prod, p.pres, p.unit, p.idFam, p.min, p.max]);
+    bgs.push(Array(8).fill(idx % 2 === 0 ? C.rowA : C.rowB));
   });
   
   const startRow = 5;
-  editSheet.getRange(startRow, 1, selectedProds.length, 7).setValues(editRows);
-  editSheet.getRange(startRow, 1, selectedProds.length, 7).setBackgrounds(bgs)
+  editSheet.getRange(startRow, 1, selectedProds.length, 8).setValues(editRows);
+  editSheet.getRange(startRow, 1, selectedProds.length, 8).setBackgrounds(bgs)
     .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle");
   editSheet.getRange(startRow, 1, selectedProds.length, 1).setHorizontalAlignment("center").setFontWeight("bold").setFontColor("#C62828");
-  editSheet.getRange(startRow, 5, selectedProds.length, 1).setHorizontalAlignment("center");
-  editSheet.getRange(startRow, 6, selectedProds.length, 2).setHorizontalAlignment("center");
+  editSheet.getRange(startRow, 2, selectedProds.length, 1).setHorizontalAlignment("center");
+  editSheet.getRange(startRow, 6, selectedProds.length, 1).setHorizontalAlignment("center");
+  editSheet.getRange(startRow, 7, selectedProds.length, 2).setHorizontalAlignment("center");
   
-  // Dropdown de unidades en columna D (col 4)
+  // Dropdown de categorías en columna B (col 2)
+  const catValidation = SpreadsheetApp.newDataValidation()
+    .requireValueInList(CATEGORIAS_LISTA, true)
+    .setAllowInvalid(false)
+    .setHelpText("Selecciona una categoría válida.")
+    .build();
+  editSheet.getRange(startRow, 2, selectedProds.length, 1).setDataValidation(catValidation);
+
+  // Dropdown de unidades en columna E (col 5)
   const unitValidation = SpreadsheetApp.newDataValidation()
     .requireValueInList(["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"], true)
     .setAllowInvalid(false)
     .setHelpText("Selecciona una unidad válida.")
     .build();
-  editSheet.getRange(startRow, 4, selectedProds.length, 1).setDataValidation(unitValidation);
+  editSheet.getRange(startRow, 5, selectedProds.length, 1).setDataValidation(unitValidation);
   
   editSheet.setColumnWidth(1, 100);
-  editSheet.setColumnWidth(2, 220);
-  editSheet.setColumnWidth(3, 180);
-  editSheet.setColumnWidth(4, 140);
+  editSheet.setColumnWidth(2, 180);
+  editSheet.setColumnWidth(3, 220);
+  editSheet.setColumnWidth(4, 180);
   editSheet.setColumnWidth(5, 140);
-  editSheet.setColumnWidth(6, 90);
+  editSheet.setColumnWidth(6, 140);
   editSheet.setColumnWidth(7, 90);
+  editSheet.setColumnWidth(8, 90);
   
   // Proteger la primera columna para advertir que no debe ser modificada
   try {
@@ -2403,34 +2454,35 @@ function procesarEdicionMasiva() {
   const lastRowE = editSheet.getLastRow();
   if (lastRowE < 5) {
     SpreadsheetApp.getUi().alert("No hay productos para guardar.");
-    editSheet.getRange("E3").setValue(false);
+    editSheet.getRange("F3").setValue(false);
     return;
   }
   
-  const rawData = editSheet.getRange(5, 1, lastRowE - 4, 7).getValues();
+  const rawData = editSheet.getRange(5, 1, lastRowE - 4, 8).getValues();
   const validEdits = [];
   for (let i = 0; i < rawData.length; i++) {
     const no = parseInt(rawData[i][0]);
-    const prod = String(rawData[i][1]).trim();
-    const pres = String(rawData[i][2]).trim();
-    const unit = String(rawData[i][3]).trim();
-    const idFam = String(rawData[i][4]).trim();
-    const min = parseFloat(rawData[i][5]) || 0;
-    const max = parseFloat(rawData[i][6]) || 0;
+    const cat = String(rawData[i][1]).trim();
+    const prod = String(rawData[i][2]).trim();
+    const pres = String(rawData[i][3]).trim();
+    const unit = String(rawData[i][4]).trim();
+    const idFam = String(rawData[i][5]).trim();
+    const min = parseFloat(rawData[i][6]) || 0;
+    const max = parseFloat(rawData[i][7]) || 0;
     
     if (isNaN(no) || no <= 0) {
       SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: El identificador "No" no es válido. No debiste modificar la primera columna.`);
-      editSheet.getRange("E3").setValue(false);
+      editSheet.getRange("F3").setValue(false);
       return;
     }
     
-    if (prod === "" || pres === "" || unit === "") {
-      SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: Los campos PRODUCTO, PRESENTACIÓN y UNIDAD son obligatorios.`);
-      editSheet.getRange("E3").setValue(false);
+    if (cat === "" || prod === "" || pres === "" || unit === "") {
+      SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: Los campos CATEGORÍA, PRODUCTO, PRESENTACIÓN y UNIDAD son obligatorios.`);
+      editSheet.getRange("F3").setValue(false);
       return;
     }
     
-    validEdits.push({ no, prod, pres, unit, idFam, min, max });
+    validEdits.push({ no, cat, prod, pres, unit, idFam, min, max });
   }
   
   const proceed = SpreadsheetApp.getUi().alert(
@@ -2439,14 +2491,14 @@ function procesarEdicionMasiva() {
     SpreadsheetApp.getUi().ButtonSet.YES_NO
   );
   if (proceed !== SpreadsheetApp.getUi().Button.YES) {
-    editSheet.getRange("E3").setValue(false);
+    editSheet.getRange("F3").setValue(false);
     return;
   }
   
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) {
     SpreadsheetApp.getUi().alert("El archivo está ocupado. Intenta de nuevo.");
-    editSheet.getRange("E3").setValue(false);
+    editSheet.getRange("F3").setValue(false);
     return;
   }
   
@@ -2461,7 +2513,7 @@ function procesarEdicionMasiva() {
         const idx = item.no - 1;
         if (idx >= 0 && idx < dataM.length) {
           dataM[idx][1] = item.idFam;
-          dataM[idx][2] = CATEGORIAS_MAP[item.idFam.split('-')[0]] || '';
+          dataM[idx][2] = item.cat;
           dataM[idx][3] = item.prod;
           dataM[idx][4] = item.pres;
           dataM[idx][5] = item.unit;
@@ -2473,7 +2525,7 @@ function procesarEdicionMasiva() {
       rangeM.setValues(dataM);
     }
     
-    // 2. Actualizar KARDEX_BA y KARDEX_BM (No, PRODUCTO, PRESENTACIÓN, UNIDAD)
+    // 2. Actualizar KARDEX_BA y KARDEX_BM (No, CATEGORÍA, PRODUCTO, PRESENTACIÓN, UNIDAD)
     Object.values(BODEGAS).forEach(b => {
       const kSheet = ss.getSheetByName(b.kardex);
       if (kSheet) {
@@ -2485,7 +2537,7 @@ function procesarEdicionMasiva() {
             const item = validEdits[i];
             const idx = item.no - 1;
             if (idx >= 0 && idx < dataK.length) {
-              dataK[idx][1] = CATEGORIAS_MAP[item.idFam.split('-')[0]] || '';
+              dataK[idx][1] = item.cat;
               dataK[idx][2] = item.prod;
               dataK[idx][3] = item.pres;
               dataK[idx][4] = item.unit;
@@ -2521,8 +2573,8 @@ function procesarEdicionMasiva() {
     _buildVista("BA");
     _buildVista("BM");
     
-    // 5. Recrear Caducidades
-    crearCaducidades();
+    // 5. Recrear Caducidades (Feature deshabilitada)
+    // crearCaducidades();
     
     // 6. Eliminar hoja temporal
     try {

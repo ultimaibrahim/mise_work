@@ -245,28 +245,50 @@ function onEdit(e) {
 
   // 2. Validaciones rápidas de entrada (F y G)
   if (col === COL_CANT_PEDIR) {
-    const val = e.range.getValue();
-    if (val !== "" && (typeof val !== "number" || val < 0)) {
-      e.range.clearContent();
-      try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
-      return;
-    }
-    
-    // Si se agrega un pedido (> 0), y ya se había ordenado previamente, pintar de naranja la alerta en Col J
-    if (typeof val === "number" && val > 0) {
-      const isSorted = PropertiesService.getScriptProperties().getProperty("IS_ORDER_SORTED") === "true";
-      if (isSorted) {
-        sheet.getRange(row, 10).setValue("🚨 ADICIÓN");
+    let val = e.range.getValue();
+    if (val !== "") {
+      if (typeof val === "string") {
+        const cleanVal = val.replace(',', '.').trim();
+        const num = Number(cleanVal);
+        if (!isNaN(num) && num >= 0) {
+          e.range.setValue(num);
+          val = num;
+        }
       }
-    } else {
-      // Restaurar fórmula normal si se vacía la cantidad
-      sheet.getRange(row, 10).setFormula('=IF(F' + row + '=""; ""; IF(G' + row + '<F' + row + '; "⚠️ INCOMPLETO"; ""))');
+      const checkVal = Number(val);
+      if (isNaN(checkVal) || checkVal < 0) {
+        e.range.clearContent();
+        try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
+        return;
+      }
+      
+      // Si se agrega un pedido (> 0), y ya se había ordenado previamente, pintar de naranja la alerta en Col J
+      if (checkVal > 0) {
+        const isSorted = PropertiesService.getScriptProperties().getProperty("IS_ORDER_SORTED") === "true";
+        if (isSorted) {
+          sheet.getRange(row, 10).setValue("🚨 ADICIÓN");
+        }
+      } else {
+        // Restaurar fórmula normal si se vacía la cantidad
+        sheet.getRange(row, 10).setFormula('=IF(F' + row + '=""; ""; IF(G' + row + '<F' + row + '; "⚠️ INCOMPLETO"; ""))');
+      }
     }
   } else if (col === COL_RECIBIDA) {
-    const val = e.range.getValue();
-    if (val !== "" && (typeof val !== "number" || val < 0)) {
-      e.range.clearContent();
-      try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
+    let val = e.range.getValue();
+    if (val !== "") {
+      if (typeof val === "string") {
+        const cleanVal = val.replace(',', '.').trim();
+        const num = Number(cleanVal);
+        if (!isNaN(num) && num >= 0) {
+          e.range.setValue(num);
+          val = num;
+        }
+      }
+      const checkVal = Number(val);
+      if (isNaN(checkVal) || checkVal < 0) {
+        e.range.clearContent();
+        try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
+      }
     }
   }
 }

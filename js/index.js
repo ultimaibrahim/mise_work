@@ -452,7 +452,7 @@ const OB_CONTENT = {
                     <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">PEDIDO</th>
                   </tr>
                   <tr style="background:rgba(61, 90, 71, 0.03);">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:bold; color:var(--verde);">1. REFRIGERADOS</td>
+                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:bold; color:var(--verde);">REFRIGERADOS</td>
                     <td style="padding:0.45rem 0.6rem; border:1px solid var(--border);">Queso Mozzarella</td>
                     <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold;">10</td>
                   </tr>
@@ -462,7 +462,7 @@ const OB_CONTENT = {
               <div class="mock-phone">
                 <p style="text-align:center; font-weight:600; margin-top:2rem; font-size:0.85rem;"><i data-lucide="sort-asc" style="width:20px; display:block; margin:0 auto 0.5rem auto; color:var(--oro);"></i> Recorrido Físico</p>
                 <p style="text-align:center; font-size:0.75rem; color:var(--text-muted); padding:0 1rem; line-height:1.4; margin-top:0.4rem;">
-                  Al presionar <strong>Ordenar</strong>, el pedido se organiza automáticamente del pasillo 1 al 7, permitiendo al bodeguero surtir de golpe sin tener que regresar.
+                  Al presionar <strong>Ordenar</strong>, el pedido se organiza automáticamente por categorías, permitiendo al bodeguero surtir de golpe sin tener que regresar.
                 </p>
               </div>
             `}
