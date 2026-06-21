@@ -404,6 +404,7 @@ let simActiveTab = 'pedido';
 let simIsSorted = false;
 let simWeekAdvanced = false;
 let simSurtidoUnlocked = false;
+let simTutorialCompleted = false;
 
 // HELPER DE FECHA DINÁMICA
 function getFormattedDate() {
@@ -415,11 +416,31 @@ function getFormattedDate() {
   return `${day}/${month}/${year}`;
 }
 
+// UPDATE FLOATING REOPEN BUTTON VISIBILITY
+function updateReopenButtonVisibility() {
+  const btn = document.getElementById('sim-guide-reopen-btn');
+  const panel = document.getElementById('sim-guide-panel');
+  if (btn && panel) {
+    const isCollapsed = panel.classList.contains('guide-collapsed');
+    if (isCollapsed && !simTutorialCompleted) {
+      btn.classList.remove('hidden');
+    } else {
+      btn.classList.add('hidden');
+    }
+  }
+}
+window.updateReopenButtonVisibility = updateReopenButtonVisibility;
+
 // COLLAPSE TUTORIAL PANEL
 window.toggleSimGuide = function() {
   const panel = document.getElementById('sim-guide-panel');
   const icon = document.getElementById('guide-toggle-icon');
   if (panel) {
+    if (simTutorialCompleted) {
+      simTutorialCompleted = false;
+      simCurrentStep = 0;
+      initStep();
+    }
     panel.classList.toggle('guide-collapsed');
     if (icon) {
       if (panel.classList.contains('guide-collapsed')) {
@@ -429,6 +450,7 @@ window.toggleSimGuide = function() {
       }
       if (typeof lucide !== 'undefined') lucide.createIcons();
     }
+    updateReopenButtonVisibility();
   }
 };
 
@@ -726,8 +748,37 @@ window.initSimulator = function() {
   simIsSorted = false;
   simWeekAdvanced = false;
   simSurtidoUnlocked = false;
+  simTutorialCompleted = false;
+  
+  const panel = document.getElementById('sim-guide-panel');
+  if (panel) {
+    panel.classList.remove('guide-collapsed');
+  }
   
   initStep();
+  updateReopenButtonVisibility();
+};
+
+window.resetSimulator = function() {
+  simCurrentStep = 0;
+  simIsSorted = false;
+  simWeekAdvanced = false;
+  simSurtidoUnlocked = false;
+  simTutorialCompleted = false;
+  
+  const panel = document.getElementById('sim-guide-panel');
+  if (panel) {
+    panel.classList.remove('guide-collapsed');
+  }
+  
+  const icon = document.getElementById('guide-toggle-icon');
+  if (icon) {
+    icon.setAttribute('data-lucide', 'sidebar-close');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+  
+  initStep();
+  updateReopenButtonVisibility();
 };
 
 window.switchSimulatorRole = function(role) {
@@ -741,6 +792,7 @@ window.switchSimulatorRole = function(role) {
     simCurrentStep = 0;
     simIsSorted = false;
     simWeekAdvanced = false;
+    simTutorialCompleted = false;
     
     const badge = document.getElementById('sim-role-badge');
     if (badge) {
@@ -748,7 +800,13 @@ window.switchSimulatorRole = function(role) {
     }
     updateMenuVisibility();
     
+    const panel = document.getElementById('sim-guide-panel');
+    if (panel) {
+      panel.classList.remove('guide-collapsed');
+    }
+    
     initStep();
+    updateReopenButtonVisibility();
     
     if (container) {
       container.classList.remove('role-transitioning');
@@ -811,7 +869,14 @@ window.simStepNext = function() {
   if (simCurrentStep < steps.length - 1) {
     simCurrentStep++;
     initStep();
+    updateReopenButtonVisibility();
   } else {
+    simTutorialCompleted = true;
+    const panel = document.getElementById('sim-guide-panel');
+    if (panel) {
+      panel.classList.add('guide-collapsed');
+    }
+    updateReopenButtonVisibility();
     navigateTo('manual');
   }
 };
@@ -820,6 +885,7 @@ window.simStepBack = function() {
   if (simCurrentStep > 0) {
     simCurrentStep--;
     initStep();
+    updateReopenButtonVisibility();
   }
 };
 

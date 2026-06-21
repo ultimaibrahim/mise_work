@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark" class="dark">
+<html lang="es" data-theme="light" class="">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -164,7 +164,7 @@
 
 
   <!-- ==================== 2. SIMULATOR VIEW ==================== -->
-  <div id="simulator-view" class="view-container hidden flex flex-col h-screen bg-bg text-text overflow-hidden">
+  <div id="simulator-view" class="view-container hidden flex flex-col w-full h-screen bg-bg text-text overflow-hidden">
     <!-- Simulator Top Header -->
     <header class="simulator-header flex justify-between items-center px-4 md:px-6 py-4 bg-surface border-b border-border z-20">
       <div class="flex items-center gap-3">
@@ -276,6 +276,11 @@
         </div>
       </div>
 
+      <!-- Reopen Guide Floating Button -->
+      <button id="sim-guide-reopen-btn" onclick="toggleSimGuide()" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-oro hover:bg-amber text-crema px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition-all duration-300 z-30 font-bold text-xs uppercase tracking-wider scale-90 hover:scale-95 border border-oro/20 active:scale-90 hidden">
+        <i data-lucide="help-circle" class="w-4 h-4"></i> Mostrar Guía
+      </button>
+
       <div id="sim-guide-panel" class="bg-surface border-t border-border flex flex-col overflow-hidden shadow-2xl z-10 transition-all duration-300">
         <!-- Progress bar indicator -->
         <div class="h-1.5 w-full bg-border">
@@ -299,6 +304,10 @@
         <div class="p-4 md:p-6 border-t border-border bg-surface-2 flex justify-between items-center gap-4">
           <button class="btn-ob text-xs md:text-sm" id="sim-btn-back" disabled onclick="simStepBack()">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Atrás
+          </button>
+
+          <button class="btn-ob text-xs md:text-sm text-text-muted hover:text-oro" id="sim-btn-reset" onclick="resetSimulator()">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reiniciar
           </button>
           
           <button class="btn-ob primary text-xs md:text-sm" id="sim-btn-next" onclick="simStepNext()">
