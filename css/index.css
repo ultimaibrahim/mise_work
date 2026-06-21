@@ -993,6 +993,7 @@ body.theme-transitioning * {
   gap: 1.5rem;
   margin: 2.2rem 0;
   align-items: stretch;
+  min-height: 260px; /* Evita saltos y reflow loops al cambiar descripciones */
 }
 
 .sheet-interface-container .sheet-mockup-wrapper {

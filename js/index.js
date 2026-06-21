@@ -113,7 +113,7 @@ if (searchInput) {
 document.querySelectorAll('.sheet-interface-container').forEach(container => {
   const inspectorContent = container.querySelector('.inspector-content');
   const inspector = container.querySelector('.sheet-inspector');
-  const emptyStateHTML = inspectorContent ? inspectorContent.innerHTML : '';
+  let emptyStateHTML = ''; // Se cargará dinámicamente en el primer evento para capturar el SVG renderizado
   let selectedCell = null;
 
   const hoverCells = container.querySelectorAll('.hover-cell');
@@ -123,10 +123,14 @@ document.querySelectorAll('.sheet-interface-container').forEach(container => {
     const targetBox = document.getElementById(`tip-${tipId}`);
 
     const showCellInfo = () => {
+      // Capturar el HTML ya procesado con el SVG de Lucide original
+      if (!emptyStateHTML && inspectorContent) {
+        emptyStateHTML = inspectorContent.innerHTML;
+      }
+      
       if (targetBox && inspectorContent) {
         inspectorContent.innerHTML = targetBox.innerHTML;
         if (inspector) inspector.classList.add('active');
-        lucide.createIcons();
       }
     };
 
@@ -139,10 +143,11 @@ document.querySelectorAll('.sheet-interface-container').forEach(container => {
           if (inspector) inspector.classList.add('active');
         }
       } else {
-        if (inspectorContent) inspectorContent.innerHTML = emptyStateHTML;
+        if (inspectorContent && emptyStateHTML) {
+          inspectorContent.innerHTML = emptyStateHTML;
+        }
         if (inspector) inspector.classList.remove('active');
       }
-      lucide.createIcons();
     };
 
     // Click/Tap para seleccionar celda fijando la explicación
