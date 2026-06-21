@@ -586,7 +586,7 @@ strong {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(11, 12, 21, 0.93);
+  background: rgba(20, 24, 22, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   z-index: 10000;
@@ -1203,3 +1203,187 @@ html[data-theme="dark"] .sheet-desc-box:hover {
     width: 100%;
   }
 }
+
+/* ==================== NUEVOS ESTILOS PORTAL Y SIMULADOR ==================== */
+
+/* Aurora background effect */
+.aurora-bg {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(61, 90, 71, 0.15), transparent 40%),
+              radial-gradient(circle at 70% 60%, rgba(184, 144, 47, 0.12), transparent 40%),
+              radial-gradient(circle at 40% 80%, rgba(122, 158, 138, 0.1), transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(42, 63, 50, 0.15), transparent 45%);
+  filter: blur(80px);
+  z-index: 0;
+  animation: aurora-rotate 25s infinite linear;
+  pointer-events: none;
+}
+@keyframes aurora-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Shiny gradient title */
+.main-title {
+  background: linear-gradient(135deg, var(--verde) 20%, var(--oro) 50%, var(--sage) 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
+  animation: shiny-text 6s linear infinite;
+}
+html[data-theme="dark"] .main-title {
+  background: linear-gradient(135deg, var(--crema) 20%, var(--oro) 50%, var(--sage) 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@keyframes shiny-text {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Spotlight Cards */
+.spotlight-card {
+  position: relative;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  padding: 1px;
+  overflow: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    800px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+    rgba(184, 144, 47, 0.15),
+    transparent 40%
+  );
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+.spotlight-inner {
+  position: relative;
+  z-index: 2;
+  padding: 2.2rem 2rem;
+  border-radius: calc(var(--radius-lg) - 1px);
+  background: var(--surface);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+.spotlight-card:hover .spotlight-inner {
+  background: var(--surface-2);
+}
+.card-icon-wrapper {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.spotlight-card:hover .card-icon-wrapper {
+  border-color: var(--oro);
+  background: var(--accent-glow);
+}
+
+/* Sheets Simulator Styles */
+.sim-table {
+  border-collapse: collapse;
+}
+.sim-table th, .sim-table td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  vertical-align: middle;
+}
+.sim-table th {
+  background-color: var(--surface-2);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: center;
+  user-select: none;
+}
+.sim-table tr {
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+.sim-table tr.active-row {
+  background-color: rgba(184, 144, 47, 0.12);
+}
+.sim-table tr.success-row {
+  background-color: rgba(61, 138, 95, 0.15) !important;
+}
+.sim-table tr.addition-row {
+  background-color: rgba(239, 108, 0, 0.15) !important;
+}
+.sim-table tr.inactive-row {
+  opacity: 0.45;
+  background-color: var(--surface-2);
+}
+.sim-table td.edit-cell {
+  background-color: var(--accent-glow);
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+.sim-table td.edit-cell:hover {
+  background-color: rgba(184, 144, 47, 0.25);
+}
+.sim-table input.sim-cell-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+  text-align: center;
+  padding: 0;
+}
+.sim-tab-btn {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  background: transparent;
+  margin-bottom: -1px;
+}
+.sim-tab-btn.active {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--oro);
+  border-bottom: 2px solid var(--surface);
+}
+
+/* Routing views transition */
+.view-container {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.view-container.hidden {
+  display: none !important;
+}
+

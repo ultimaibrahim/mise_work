@@ -1,7 +1,63 @@
-// Inicializar Iconos Lucide al cargar el DOM
+// Inicializar elementos al cargar el DOM
 document.addEventListener('DOMContentLoaded', () => {
-  lucide.createIcons();
-  openOnboarding(false); // Auto-lanzamiento en primer inicio si no se ha completado
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+  
+  // Sincronizar tema inicial
+  const isDark = document.documentElement.classList.contains('dark') || 
+                 document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.classList.remove('dark');
+  }
+  syncThemeIcons();
+
+  // Registrar clic en todos los toggles de tema
+  ['landing-theme-toggle', 'sim-theme-toggle', 'manual-theme-toggle', 'theme-toggle'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        toggleTheme();
+      });
+    }
+  });
+
+  // Escuchar movimiento del ratón para Spotlight Cards
+  const cards = document.querySelectorAll('.spotlight-card');
+  cards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  });
+
+  // Habilitar click en ROL Badge del simulador para alternar rol
+  const badge = document.getElementById('sim-role-badge');
+  if (badge) {
+    badge.style.cursor = 'pointer';
+    badge.title = 'Haz clic para cambiar de Rol';
+    badge.addEventListener('click', () => {
+      const newRole = simRole === 'pedidos' ? 'bodega' : 'pedidos';
+      switchSimulatorRole(newRole);
+    });
+  }
+
+  // Enrutar al iniciar
+  const hash = window.location.hash || '#/landing';
+  const view = hash.replace('#/', '');
+  if (['landing', 'simulator', 'manual'].includes(view)) {
+    navigateTo(view);
+  } else {
+    navigateTo('landing');
+  }
 });
 
 // --- MANEJO DE NAVEGACIÓN ---
@@ -210,641 +266,797 @@ if (btnMenuBodega && btnMenuPedidos) {
   });
 }
 
-// --- LÓGICA DEL WALKTHROUGH DE ONBOARDING ---
-let obRole = null; // 'bodega' o 'pedidos'
-let obCurrentStep = 0;
-let obViewMode = 'pc'; // 'pc' o 'movil'
-
-const obOverlay = document.getElementById('onboarding-overlay');
-const obTitle = document.getElementById('ob-title');
-const obBody = document.getElementById('ob-body');
-const obProgressBar = document.getElementById('ob-progress-bar');
-const obBtnBack = document.getElementById('ob-btn-back');
-const obBtnNext = document.getElementById('ob-btn-next');
-const obBtnSkip = document.getElementById('ob-btn-skip');
-const obDotsContainer = document.getElementById('ob-dots');
-
-const OB_CONTENT = {
-  welcome: {
-    title: "Elige tu Rol de Trabajo",
-    render: () => `
-      <p style="margin-bottom:1.5rem; text-align:center; color:var(--text-muted); font-size:0.95rem; line-height:1.6;">
-        Bienvenido al sistema inteligente de control y distribución de existencias de **La Crêpe Parisienne**. 
-        Para comenzar el recorrido guiado, por favor selecciona el perfil correspondiente a tu labor operativa diaria:
-      </p>
-      <div class="role-selection-grid">
-        <div class="role-card ${obRole === 'bodega' ? 'selected' : ''}" id="role-btn-bodega">
-          <div class="role-card-icon"><i data-lucide="warehouse" style="width:24px; height:24px;"></i></div>
-          <h4 class="card-title" style="margin-top:0.5rem; font-size:1.1rem;">Surtidor / Bodeguero</h4>
-          <p class="card-desc" style="font-size:0.85rem; line-height:1.4;">Control de stock semanal en la bodega central, entradas, salidas y administración del catálogo oficial.</p>
-        </div>
-        <div class="role-card ${obRole === 'pedidos' ? 'selected' : ''}" id="role-btn-pedidos">
-          <div class="role-card-icon"><i data-lucide="store" style="width:24px; height:24px;"></i></div>
-          <h4 class="card-title" style="margin-top:0.5rem; font-size:1.1rem;">Encargado de Tienda</h4>
-          <p class="card-desc" style="font-size:0.85rem; line-height:1.4;">Levantamiento de pedidos diarios a pie de pasillo y conciliación de mercancía física recibida.</p>
-        </div>
-      </div>
-      <p style="margin-top:2rem; font-size:0.82rem; text-align:center; color:var(--oro); font-weight:500;">
-        *Nota: Podrás alternar de perfil o repetir esta guía en cualquier momento pulsando "Guía de Inicio" en la barra lateral.*
-      </p>
-    `
-  },
-  bodega: [
-    {
-      title: "Catálogo MAESTRO (Configuración)",
-      render: () => `
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          En el libro de <strong>Bodegas</strong>, la pestaña <strong>MAESTRO</strong> administra las altas, bajas y estados de todos los insumos que pueden ordenar las tiendas.
-        </p>
-        
-        <div class="preview-container">
-          <div class="preview-header">
-            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-          </div>
-          <div class="preview-content">
-              <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; display:flex; gap:0.4rem; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Bodegas &gt; MAESTRO</div>
-                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.75rem;">
-                  <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PRODUCTO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">ACTIVO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">SELECCIONAR</th>
-                  </tr>
-                  <tr>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Jamón Lala Pechuga</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; color:var(--verde-soft); font-weight:bold;">SÍ</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;"><input type="checkbox" checked disabled></td>
-                  </tr>
-                </table>
-              </div>
-          </div>
-        </div>
-        
-        <div class="dos-donts-grid">
-          <div class="dos-box">
-            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
-            <ul class="rules-list">
-              <li>Utilizar el menú <strong>⚙️ Mise → Editar productos seleccionados</strong> en PC para corregir nombres en lote.</li>
-              <li>Marcar <strong>NO</strong> en la columna ACTIVO para ocultar de inmediato insumos agotados de las vistas de tiendas.</li>
-            </ul>
-          </div>
-          <div class="donts-box">
-            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
-            <ul class="rules-list">
-              <li><strong>NO</strong> renombres o borres filas del catálogo de forma manual directa. Esto corrompe la sincronización.</li>
-              <li><strong>NO</strong> limpies las casillas de selección manualmente; usa la celda interactiva <strong>Limpiar Sel. (H2)</strong>.</li>
-            </ul>
-          </div>
-        </div>
-      `
-    },
-    {
-      title: "Kardex de Entradas y Salidas",
-      render: () => `
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          En las pestañas <strong>KARDEX_BA</strong> (Andares) y <strong>KARDEX_BM</strong> (Mercado), el bodeguero registra entradas (compras) y salidas (entregas) diarias. Soporta <strong>hasta 4 decimales</strong> (formato <code>0.####</code>) para un control de inventario exacto.
-        </p>
-        
-        <div class="preview-container">
-          <div class="preview-header">
-            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-          </div>
-          <div class="preview-content">
-              <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Bodegas &gt; KARDEX_BA</div>
-                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
-                  <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PRODUCTO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">LUN (ENT)</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">LUN (SAL)</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">SALDO ACTUAL</th>
-                  </tr>
-                  <tr>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Fruta de temporada (Domo)</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#eef9f0;">1.5</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#fdf2f2;">0.375</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold; color:var(--oro);">1.125 kg</td>
-                  </tr>
-                </table>
-              </div>
-          </div>
-        </div>
-        
-        <div class="dos-donts-grid">
-          <div class="dos-box">
-            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
-            <ul class="rules-list">
-              <li>Registrar las entradas físicas exactas (compras) en cuanto ingresan al almacén utilizando hasta 4 decimales.</li>
-              <li>Ejecutar <strong>Avanzar semana</strong> los sábados al concluir el conteo final de cierre.</li>
-            </ul>
-          </div>
-          <div class="donts-box">
-            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
-            <ul class="rules-list">
-              <li><strong>NO</strong> alteres las fechas de control de la celda G4 a mitad de semana.</li>
-              <li><strong>NO</strong> borres la fila de fórmulas de saldo. El sistema calcula los saldos y acumulados de forma autónoma.</li>
-            </ul>
-          </div>
-        </div>
-      `
-    },
-    {
-      title: "Semáforo de Caducidades",
-      render: () => `
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          La pestaña <strong>CADUCIDADES</strong> compara las fechas ingresadas en ambos Kardex y colorea alertas automáticas para dar rotación prioritaria.
-        </p>
-        
-        <div class="preview-container">
-          <div class="preview-header">
-            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-          </div>
-          <div class="preview-content">
-              <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Bodegas &gt; CADUCIDADES</div>
-                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
-                  <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PRODUCTO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">B-ANDARES</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">B-MERCADO</th>
-                  </tr>
-                  <tr>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Frambuesa Congelada</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; background:#ffebeb; color:var(--rojo-soft); font-weight:bold;">25/Jun (≤7d)</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">18/Jul (OK)</td>
-                  </tr>
-                </table>
-              </div>
-          </div>
-        </div>
-        
-        <div class="dos-donts-grid">
-          <div class="dos-box">
-            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
-            <ul class="rules-list">
-              <li>Revisar este semáforo periódicamente para coordinar traspasos de inventarios lentos entre sucursales.</li>
-              <li>Despachar siempre primero los productos con fecha más corta de anaquel (PEPS).</li>
-            </ul>
-          </div>
-          <div class="donts-box">
-            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
-            <ul class="rules-list">
-              <li><strong>NO</strong> dejes en blanco el campo de caducidad al registrar entradas de insumos perecederos.</li>
-              <li><strong>NO</strong> ignores las alertas rojas en pantalla; representan mermas inminentes.</li>
-            </ul>
-          </div>
-        </div>
-      `
+// --- GESTIÓN DE RUTA Y NAVEGACIÓN SPA ---
+window.navigateTo = function(viewName) {
+  const views = ['landing', 'simulator', 'manual'];
+  views.forEach(v => {
+    const el = document.getElementById(`${v}-view`);
+    if (el) {
+      if (v === viewName) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
     }
-  ],
+  });
+  
+  window.location.hash = `#/${viewName}`;
+  
+  if (viewName === 'manual') {
+    const activeNav = document.querySelector('.nav-item.active');
+    if (activeNav) {
+      const target = activeNav.getAttribute('data-target');
+      const activeSection = document.getElementById(`sect-${target}`);
+      if (activeSection) {
+        activeSection.classList.add('active');
+      }
+    }
+  }
+  
+  if (viewName === 'simulator') {
+    initSimulator();
+  }
+  
+  syncThemeIcons();
+};
+
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash || '#/landing';
+  const view = hash.replace('#/', '');
+  if (['landing', 'simulator', 'manual'].includes(view)) {
+    const targetView = document.getElementById(`${view}-view`);
+    if (targetView && targetView.classList.contains('hidden')) {
+      navigateTo(view);
+    }
+  }
+});
+
+// --- MANEJO DE TEMA ---
+window.toggleTheme = function() {
+  document.body.classList.add('theme-transitioning');
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  document.documentElement.setAttribute('data-theme', newTheme);
+  if (newTheme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+  
+  syncThemeIcons();
+  
+  setTimeout(() => {
+    document.body.classList.remove('theme-transitioning');
+  }, 400);
+};
+
+window.syncThemeIcons = function() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const icons = document.querySelectorAll('#landing-theme-toggle i, #sim-theme-toggle i, #manual-theme-toggle i, #theme-icon');
+  icons.forEach(icon => {
+    if (isDark) {
+      icon.setAttribute('data-lucide', 'sun');
+    } else {
+      icon.setAttribute('data-lucide', 'moon');
+    }
+  });
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+};
+
+// --- LÓGICA DE SIMULADOR DE GOOGLE SHEETS INTERACTIVO ---
+let simRole = 'pedidos'; 
+let simCurrentStep = 0;
+let simPedidosData = [];
+let simMaestroData = [];
+let simKardexData = [];
+let simActiveTab = 'pedido';
+let simIsSorted = false;
+let simWeekAdvanced = false;
+
+const INITIAL_PEDIDOS = [
+  { no: 1, cat: '1. REFRIGERADOS', prod: 'Harina Crepas (Domo)', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 2, cat: '1. REFRIGERADOS', prod: 'Queso Mozzarella', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 3, cat: '2. ABARROTES', prod: 'Nutella', unit: 'bote', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 4, cat: '2. ABARROTES', prod: 'Azúcar Refinada', unit: 'bulto', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 5, cat: '3. FRUTAS Y VERDURAS', prod: 'Fresa Entera', unit: 'caja', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: false }
+];
+
+const INITIAL_MAESTRO = [
+  { no: 1, id: 'REF-001', prod: 'Jamón Lala Pechuga', pres: 'BOL 1 kg', unit: 'kg', activo: 'SÍ', min: 5, max: 20, selected: true },
+  { no: 2, id: 'REF-002', prod: 'Queso Mozzarella', pres: 'BOL 2 kg', unit: 'kg', activo: 'SÍ', min: 10, max: 40, selected: false },
+  { no: 3, id: 'ABA-001', prod: 'Nutella', pres: 'BOTE 3 kg', unit: 'bote', activo: 'SÍ', min: 1, max: 5, selected: false },
+  { no: 4, id: 'FYV-001', prod: 'Fresa Entera', pres: 'CAJA 2 kg', unit: 'caja', activo: 'NO', min: 2, max: 10, selected: false }
+];
+
+const INITIAL_KARDEX = [
+  { no: 1, prod: 'Jamón Lala Pechuga', lunEnt: '15', lunSal: '2', saldo: '13', active: true },
+  { no: 2, prod: 'Queso Mozzarella', lunEnt: '20', lunSal: '5', saldo: '15', active: true },
+  { no: 3, prod: 'Nutella', lunEnt: '5', lunSal: '1', saldo: '4', active: true },
+  { no: 4, prod: 'Fresa Entera', lunEnt: '10', lunSal: '3', saldo: '7', active: true }
+];
+
+const SIM_STEPS = {
   pedidos: [
     {
-      title: "Levantamiento de Pedidos y Filtros",
-      render: (viewMode) => `
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          En los libros de sucursales, el encargado captura cantidades en **CANT. A PEDIR (F)**. Soporta <strong>hasta 4 decimales</strong> (ej. <code>1.125</code>) para evitar redondeos.
-        </p>
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          Usa los <strong>Filtros por Categoría</strong> nativos en la cabecera (Columna B) para aislar secciones de insumos (ej. refrigerados, lácteos) y pedir de forma rápida en tu móvil o PC.
-        </p>
-        
-        <div class="preview-container">
-          <div class="preview-header">
-            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-            <div class="preview-tabs">
-              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
-              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
-            </div>
-          </div>
-          <div class="preview-content">
-            ${viewMode === 'pc' ? `
-              <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Pedidos Andares &gt; PEDIDO DIARIO</div>
-                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
-                  <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">CATEGORÍA</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PRODUCTO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">PEDIR</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">ESTADO</th>
-                  </tr>
-                  <tr style="background:#fffdec;">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); color:var(--oro); font-weight:bold;">1. REFRIGERADOS</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600;">Harina Crepas (Domo)</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold;">1.125</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; color:#cda300; font-weight:bold;">⏳ PENDIENTE</td>
-                  </tr>
-                </table>
-              </div>
-            ` : `
-              <div class="mock-phone">
-                <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem;">
-                  1. REFRIGERADOS
-                </div>
-                <div style="padding:0.8rem; display:flex; flex-direction:column; gap:0.4rem; margin-top:0.8rem;">
-                  <span style="font-weight:bold; font-size:0.8rem;">Harina Crepas (Domo)</span>
-                  <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <span style="color:var(--text-muted);">Pedir:</span>
-                    <input type="text" value="1.125" style="width:70px; text-align:center; background:var(--surface-2); border:1px solid var(--border); color:var(--text); border-radius:var(--radius-sm); padding:0.2rem;" disabled>
-                  </div>
-                  <span style="color:#cda300; font-weight:bold; font-size:0.7rem; margin-top:0.2rem;">⏳ Estado: Pendiente</span>
-                </div>
-              </div>
-            `}
-          </div>
-        </div>
-        
-        <div class="dos-donts-grid">
-          <div class="dos-box">
-            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
-            <ul class="rules-list">
-              <li>Ingresar cantidades con decimales (ej. <code>1.125</code>) para que la bodega reciba el peso real solicitado.</li>
-              <li>Aislar categorías usando el filtro nativo de la celda B3 en tu celular para mayor comodidad.</li>
-            </ul>
-          </div>
-          <div class="donts-box">
-            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
-            <ul class="rules-list">
-              <li><strong>NO</strong> escribas texto o letras en la columna de pedidos.</li>
-              <li><strong>NO</strong> uses comas si tu hoja usa puntos decimales. Sé consistente con la configuración de tu región.</li>
-            </ul>
-          </div>
-        </div>
-      `
+      title: "1. Bienvenido al Simulador de Pedidos",
+      desc: `
+        <p class="mb-3">Como <strong>Encargado de Tienda</strong>, tu labor consiste en registrar el pedido diario a pie de pasillo en tu celular o PC.</p>
+        <p class="mb-3">A la izquierda verás la hoja de cálculo interactiva cargada en la sección <strong>PEDIDO DIARIO</strong>.</p>
+        <p class="text-oro font-semibold">Presiona "Siguiente" para comenzar el tutorial interactivo.</p>
+      `,
+      init: () => {
+        simActiveTab = 'pedido';
+        simPedidosData = JSON.parse(JSON.stringify(INITIAL_PEDIDOS));
+        simIsSorted = false;
+        renderSimTabs();
+        renderSimTable();
+      },
+      verify: () => true
     },
     {
-      title: "Ordenar Pedido",
-      render: (viewMode) => `
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          Una vez ingresados tus insumos, marca el checkbox de <strong>⚙️ Ordenar (Celda D2)</strong>. El pedido se organizará automáticamente agrupando todos los insumos por su categoría de almacenamiento y subirá los productos pedidos al principio de cada grupo.
-        </p>
-        
-        <div class="preview-container">
-          <div class="preview-header">
-            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-            <div class="preview-tabs">
-              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
-              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
-            </div>
-          </div>
-          <div class="preview-content">
-            ${viewMode === 'pc' ? `
-              <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Vista Ordenada</div>
-                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
-                  <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PASILLO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border);">PRODUCTO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">PEDIDO</th>
-                  </tr>
-                  <tr style="background:rgba(61, 90, 71, 0.03);">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:bold; color:var(--verde);">1. REFRIGERADOS</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border);">Queso Mozzarella</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold;">10</td>
-                  </tr>
-                </table>
-              </div>
-            ` : `
-              <div class="mock-phone">
-                <p style="text-align:center; font-weight:600; margin-top:2rem; font-size:0.85rem;"><i data-lucide="sort-asc" style="width:20px; display:block; margin:0 auto 0.5rem auto; color:var(--oro);"></i> Recorrido Físico</p>
-                <p style="text-align:center; font-size:0.75rem; color:var(--text-muted); padding:0 1rem; line-height:1.4; margin-top:0.4rem;">
-                  Al presionar <strong>Ordenar</strong>, el pedido se organiza automáticamente por categorías, permitiendo al bodeguero surtir de golpe sin tener que regresar.
-                </p>
-              </div>
-            `}
-          </div>
-        </div>
-        
-        <div class="dos-donts-grid">
-          <div class="dos-box">
-            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
-            <ul class="rules-list">
-              <li>Utilizar el checkbox **Ordenar (D2)** para reacomodar la lista una vez hayas terminado de registrar todo.</li>
-              <li>Colapsar las familias que no pediste para un control visual más limpio en tienda.</li>
-            </ul>
-          </div>
-          <div class="donts-box">
-            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
-            <ul class="rules-list">
-              <li><strong>NO</strong> ordenes la hoja usando las flechas de ordenamiento nativo A-Z de Sheets, ya que esto dañará la lógica de celdas cruzadas.</li>
-            </ul>
-          </div>
-        </div>
-      `
+      title: "2. Capturar Pedidos (Flotantes)",
+      desc: `
+        <p class="mb-3">Vamos a simular el levantamiento. Haz clic en la celda amarilla bajo la columna <strong>PEDIR</strong> para la fila de <strong>Harina Crepas (F2)</strong> e introduce la cantidad <strong>1.5</strong>.</p>
+        <p class="mb-3 text-xs text-text-muted">Consejo: Al capturar, la fila completa se ilumina en amarillo para confirmar visualmente el insumo pedido.</p>
+      `,
+      init: () => {
+        simActiveTab = 'pedido';
+        renderSimTabs();
+        renderSimTable();
+        setTimeout(() => {
+          const input = document.getElementById('input-pedir-1');
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        }, 100);
+      },
+      verify: () => {
+        const val = parseFloat(simPedidosData[0].pedir);
+        return !isNaN(val) && val > 0;
+      },
+      errorMsg: "Ingresa un número válido mayor a 0 (ej. 1.5) en la celda PEDIR de Harina Crepas (F2)."
     },
     {
-      title: "Surtido Rápido Móvil",
-      render: (viewMode) => `
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          Al marcar <strong>🚚 Surtido (L2)</strong> se genera la hoja operativa <strong>🚚 SURTIDO RÁPIDO</strong>. Diseñada para su uso en celulares, cuenta con **Columnas Ocultas** para ahorrar espacio y la **Inmovilización de Producto**.
-        </p>
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          La columna <strong>PRODUCTO</strong> queda fija a la izquierda: al desplazarte horizontalmente en tu móvil para registrar las cantidades recibidas, el nombre de los productos permanecerá fijo en pantalla.
-        </p>
-        
-        <div class="preview-container">
-          <div class="preview-header">
-            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-            <div class="preview-tabs">
-              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
-              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
-            </div>
-          </div>
-          <div class="preview-content">
-            ${viewMode === 'pc' ? `
-              <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem;"><i data-lucide="file-spreadsheet" style="width:14px;"></i> Surtido Rápido &gt; Columnas Inmovilizadas</div>
-                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
-                  <tr style="background:var(--surface-2); font-weight:bold; color:var(--text-muted);">
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); background:var(--surface-3); position:sticky; left:0; z-index:1;">[PRODUCTO] (Congelada)</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">PEDIDO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">COMPLETO</th>
-                    <th style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">INEXISTENTE</th>
-                  </tr>
-                  <tr>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600; background:var(--surface-1); position:sticky; left:0; border-right:2px solid var(--border); z-index:1;">Queso Mozzarella</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;">1.125</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;"><input type="checkbox" disabled></td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center;"><input type="checkbox" disabled></td>
-                  </tr>
-                </table>
-              </div>
-            ` : `
-              <div class="mock-phone">
-                <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem;">
-                  Surtido Rápido Móvil
-                </div>
-                <div style="padding:0.5rem; display:flex; flex-direction:column; gap:0.2rem; margin-top:0.4rem;">
-                  <span style="font-weight:bold; font-size:0.8rem; color:var(--oro);">Queso Mozzarella</span>
-                  <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface-2); padding:0.4rem; border-radius:var(--radius-sm); font-size:0.75rem;">
-                    <span>Pedido: <strong>1.125</strong></span>
-                    <span>Completo: <input type="checkbox" checked disabled></span>
-                    <span>Inexistente: <input type="checkbox" disabled></span>
-                  </div>
-                </div>
-              </div>
-            `}
-          </div>
+      title: "3. Ordenamiento por Categorías",
+      desc: `
+        <p class="mb-3">¡Excelente! La fila se sombreó en amarillo de forma automática.</p>
+        <p class="mb-3">Para agilizar el surtido por pasillo, presiona el botón inferior o selecciona <strong>Sincronizar estados</strong> en el menú <strong>⚙️ Mise</strong> para simular el reordenamiento.</p>
+        <div class="flex justify-center my-4">
+          <button onclick="simRunSort()" class="btn-ob primary text-xs flex items-center gap-1.5"><i data-lucide="arrow-down-narrow-wide" class="w-4 h-4"></i> Ordenar y Agrupar Pasillos</button>
         </div>
-        
-        <div class="dos-donts-grid">
-          <div class="dos-box">
-            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
-            <ul class="rules-list">
-              <li>Desplazarte horizontalmente en tu móvil con tranquilidad: el producto siempre permanecerá a la vista a la izquierda de la pantalla.</li>
-              <li>Marcar directamente el checkbox de la columna F para indicar que el producto llegó completo.</li>
-            </ul>
-          </div>
-          <div class="donts-box">
-            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
-            <ul class="rules-list">
-              <li><strong>NO</strong> intentes mostrar de nuevo las columnas A y B manualmente; están ocultas a propósito para optimizar el espacio horizontal en celulares.</li>
-            </ul>
-          </div>
-        </div>
-      `
+      `,
+      init: () => {
+        renderSimTable();
+      },
+      verify: () => {
+        return simIsSorted;
+      },
+      errorMsg: "Presiona el botón 'Ordenar y Agrupar Pasillos' para simular el ordenamiento."
     },
     {
-      title: "Dashboard y Colores Dinámicos",
-      render: (viewMode) => `
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          <strong>Dashboard en Tiempo Real:</strong> En la parte superior derecha de Surtido Rápido se encuentra una tarjeta de control que resume de forma automática cuántos productos de tu lista están:
-          <span style="color:var(--verde); font-weight:bold;">Completos</span>, 
-          <span style="color:#e65100; font-weight:bold;">Incompletos (Parciales)</span>, 
-          <span style="color:var(--rojo); font-weight:bold;">Inexistentes</span> o son 
-          <span style="color:#e65100; font-weight:bold;">Adiciones</span>.
-        </p>
-        <p style="font-size:0.92rem; line-height:1.6; margin-bottom:1rem;">
-          <strong>Colores Dinámicos & Adiciones:</strong> Toda la fila cambia de color instantáneamente según el estado del producto. Si agregas un producto nuevo al Pedido Diario después de haber ordenado la lista, se marcará automáticamente en color naranja vibrante como <code>🚨 ADICIÓN</code>. Al surtirlo y marcar su estado, su color de alerta se sobrescribe al de su nuevo estado.
-        </p>
-        
-        <div class="preview-container">
-          <div class="preview-header">
-            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);"><i data-lucide="eye" style="width:14px; vertical-align:middle; margin-right:4px;"></i> Visualización del Diseño</span>
-            <div class="preview-tabs">
-              <button class="preview-tab-btn ${viewMode === 'pc' ? 'active' : ''}" onclick="setObViewMode('pc')">PC / Escritorio</button>
-              <button class="preview-tab-btn ${viewMode === 'movil' ? 'active' : ''}" onclick="setObViewMode('movil')">Móvil / Celular</button>
-            </div>
-          </div>
-          <div class="preview-content">
-            ${viewMode === 'pc' ? `
-              <div class="mock-desktop">
-                <div style="background:var(--header-bg); padding:0.5rem; border-bottom:1px solid var(--border); font-weight:600; font-size:0.75rem; display:flex; justify-content:space-between;">
-                  <span>Surtido Rápido</span>
-                  <span style="background:var(--surface-3); padding:0.1rem 0.4rem; border-radius:var(--radius-sm); font-size:0.65rem; color:var(--oro);">📊 C: 5 | I: 1 | N: 0 | A: 0</span>
-                </div>
-                <table style="width:100%; border-collapse:collapse; text-align:left; font-size:0.72rem;">
-                  <tr style="background:rgba(76, 175, 80, 0.08);">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600; color:var(--verde);">✓ Queso Mozzarella</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold; color:var(--verde);">COMPLETO</td>
-                  </tr>
-                  <tr style="background:rgba(255, 167, 38, 0.12);">
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); font-weight:600; color:#e65100;">+ Nutella (Extra)</td>
-                    <td style="padding:0.45rem 0.6rem; border:1px solid var(--border); text-align:center; font-weight:bold; background:#FFA726; color:#000;">🚨 ADICIÓN</td>
-                  </tr>
-                </table>
-              </div>
-            ` : `
-              <div class="mock-phone">
-                <div style="background:var(--header-bg); padding:0.4rem; border-bottom:1px solid var(--border); font-weight:600; text-align:center; font-size:0.72rem; display:flex; justify-content:space-between; align-items:center;">
-                  <span>Vista Móvil</span>
-                  <span style="background:var(--surface-2); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.6rem; color:var(--oro);">📊 C:5 I:1 N:0</span>
-                </div>
-                <div style="padding:0.5rem; display:flex; flex-direction:column; gap:0.4rem; margin-top:0.4rem;">
-                  <div style="background:rgba(76, 175, 80, 0.08); padding:0.4rem; border-radius:var(--radius-sm); border-left:4px solid var(--verde); font-size:0.7rem;">
-                    <strong>Queso Mozzarella</strong> - Completo Green
-                  </div>
-                  <div style="background:rgba(255, 167, 38, 0.12); padding:0.4rem; border-radius:var(--radius-sm); border-left:4px solid #FFA726; font-size:0.7rem;">
-                    <strong>Nutella (Extra)</strong> - 🚨 ADICIÓN
-                  </div>
-                </div>
-              </div>
-            `}
-          </div>
+      title: "4. Alertas de Adiciones",
+      desc: `
+        <p class="mb-3">¡La lista se ha reorganizado físicamente agrupando las categorías!</p>
+        <p class="mb-3">Si agregas una cantidad extra después del envío, el sistema lo marcará como adición. Edita la celda <strong>PEDIR de Nutella (F3)</strong> ingresando la cantidad <strong>1</strong>.</p>
+      `,
+      init: () => {
+        simActiveTab = 'pedido';
+        renderSimTable();
+        setTimeout(() => {
+          const input = document.getElementById('input-pedir-3');
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        }, 100);
+      },
+      verify: () => {
+        const val = parseFloat(simPedidosData[2].pedir);
+        return !isNaN(val) && val > 0;
+      },
+      errorMsg: "Introduce la cantidad 1 en la celda de Nutella (F3) para simular la adición."
+    },
+    {
+      title: "5. Surtido Rápido Móvil",
+      desc: `
+        <p class="mb-3">¡Perfecto! Al agregar Nutella a destiempo, el sistema generó automáticamente la alerta <strong>🚨 ADICIÓN</strong> en color naranja.</p>
+        <p class="mb-3">Ahora simulemos la entrega. Haz clic en la pestaña <strong>🚚 SURTIDO RÁPIDO</strong> a la izquierda e indica que la Harina llegó <strong>Completa</strong> marcando su casilla.</p>
+      `,
+      init: () => {
+        // Enlazar pestaña
+      },
+      verify: () => {
+        return simActiveTab === 'surtido' && simPedidosData[0].recibido === 'completo';
+      },
+      errorMsg: "Selecciona la pestaña 🚚 SURTIDO RÁPIDO y marca la casilla Completo para Harina Crepas."
+    },
+    {
+      title: "6. ¡Flujo Completado!",
+      desc: `
+        <p class="mb-3">¡Enhorabuena! Has aprendido a pedir, ordenar pasillos, ver adiciones y registrar el recibo en móvil.</p>
+        <p class="mb-3">Al marcar completo, la fila cambia a color verde y los KPIs superiores se actualizan al instante.</p>
+        <div class="flex flex-col gap-2 pt-2">
+          <button onclick="navigateTo('manual')" class="btn-ob text-xs justify-center font-bold">Ver el Manual Detallado</button>
+          <button onclick="switchSimulatorRole('bodega')" class="btn-ob primary text-xs justify-center font-bold">Probar Rol de Bodeguero</button>
         </div>
-        
-        <div class="dos-donts-grid">
-          <div class="dos-box">
-            <div class="dos-box-title"><i data-lucide="check-circle" style="width:16px;"></i> Permitido (Dos)</div>
-            <ul class="rules-list">
-              <li>Monitorear la tarjeta de resumen superior en tiempo real para ver el avance del surtido sin tener que contar fila por fila.</li>
-              <li>Saber que si agregas un insumo de último minuto en Pedido Diario, aparecerá marcado como adición para que no se olvide.</li>
-            </ul>
-          </div>
-          <div class="donts-box">
-            <div class="donts-box-title"><i data-lucide="x-circle" style="width:16px;"></i> A Evitar (Don'ts)</div>
-            <ul class="rules-list">
-              <li><strong>NO</strong> borres la tarjeta de resumen ni rompas sus fórmulas automáticas; se ubica en el área de columnas I y J.</li>
-            </ul>
-          </div>
-        </div>
-      `
+      `,
+      init: () => {},
+      verify: () => true
     }
   ],
-  summary: {
-    title: "¡Configuración Exitosa!",
-    render: (role) => `
-      <p style="margin-bottom:1.5rem; text-align:center; color:var(--text-muted); font-size:0.95rem; line-height:1.6;">
-        Has concluido tu capacitación en el walkthrough de la Suite MISE v1.1. 
-        Ya puedes acceder a las herramientas y libros en la nube desde tu dispositivo:
-      </p>
-      
-      <div style="display:flex; flex-direction:column; gap:0.8rem; margin:1.5rem 0;">
-        <a href="https://docs.google.com/spreadsheets/d/1kfjtwoX1U-ELq2du1zzJgc4VgO03n28wCVdiKrweHug/edit?usp=sharing" target="_blank" style="text-decoration:none; display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); border:1px solid var(--border); padding:0.9rem 1.2rem; border-radius:var(--radius-md); color:var(--text); transition:var(--transition); font-size:0.9rem;" onmouseover="this.style.borderColor='var(--oro)'; this.style.background='var(--surface-2)'" onmouseout="this.style.borderColor='var(--border)'; this.style.background='var(--card-bg)'">
-          <span style="display:flex; align-items:center; gap:0.6rem; font-weight:600;"><i data-lucide="warehouse" style="color:var(--oro); width:16px;"></i> Libro de Bodegas</span>
-          <span style="font-size:0.78rem; color:var(--oro); font-weight:500;">Abrir Sheets <i data-lucide="external-link" style="width:12px; vertical-align:middle; margin-left:2px;"></i></span>
-        </a>
-        <a href="https://docs.google.com/spreadsheets/d/13yB8hsdwGHsckym_UOBVFZqCGlxGye6fTsL_MDnIDjo/edit?usp=sharing" target="_blank" style="text-decoration:none; display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); border:1px solid var(--border); padding:0.9rem 1.2rem; border-radius:var(--radius-md); color:var(--text); transition:var(--transition); font-size:0.9rem;" onmouseover="this.style.borderColor='var(--oro)'; this.style.background='var(--surface-2)'" onmouseout="this.style.borderColor='var(--border)'; this.style.background='var(--card-bg)'">
-          <span style="display:flex; align-items:center; gap:0.6rem; font-weight:600;"><i data-lucide="store" style="color:var(--oro); width:16px;"></i> Pedidos Andares</span>
-          <span style="font-size:0.78rem; color:var(--oro); font-weight:500;">Abrir Sheets <i data-lucide="external-link" style="width:12px; vertical-align:middle; margin-left:2px;"></i></span>
-        </a>
-        <a href="https://docs.google.com/spreadsheets/d/1ifjZNdeMb_mBblcnyp6VhTqnm9C3tKOb1kKVFTwAwr8/edit?usp=sharing" target="_blank" style="text-decoration:none; display:flex; justify-content:space-between; align-items:center; background:var(--card-bg); border:1px solid var(--border); padding:0.9rem 1.2rem; border-radius:var(--radius-md); color:var(--text); transition:var(--transition); font-size:0.9rem;" onmouseover="this.style.borderColor='var(--oro)'; this.style.background='var(--surface-2)'" onmouseout="this.style.borderColor='var(--border)'; this.style.background='var(--card-bg)'">
-          <span style="display:flex; align-items:center; gap:0.6rem; font-weight:600;"><i data-lucide="store" style="color:var(--oro); width:16px;"></i> Pedidos Mercado</span>
-          <span style="font-size:0.78rem; color:var(--oro); font-weight:500;">Abrir Sheets <i data-lucide="external-link" style="width:12px; vertical-align:middle; margin-left:2px;"></i></span>
-        </a>
-      </div>
-      
-      <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); line-height:1.5;">
-        El manual detallado a la izquierda sigue disponible con información de todas las hojas y opciones avanzadas. ¡Exito en la operación!
-      </p>
-    `
-  }
+  bodega: [
+    {
+      title: "1. Bienvenido al Rol de Bodeguero",
+      desc: `
+        <p class="mb-3">Como <strong>Administrador de Bodegas</strong>, administras el catálogo de productos y registras el Kardex de entradas/salidas.</p>
+        <p class="mb-3">En el simulador izquierdo verás la hoja <strong>MAESTRO</strong>. Haz clic en "Siguiente" para iniciar.</p>
+      `,
+      init: () => {
+        simActiveTab = 'maestro';
+        simMaestroData = JSON.parse(JSON.stringify(INITIAL_MAESTRO));
+        simKardexData = JSON.parse(JSON.stringify(INITIAL_KARDEX));
+        simWeekAdvanced = false;
+        renderSimTabs();
+        renderSimTable();
+      },
+      verify: () => true
+    },
+    {
+      title: "2. Administración de Catálogo",
+      desc: `
+        <p class="mb-3">Para volver a habilitar la <strong>Fresa Entera</strong> en las tiendas, cambia el valor de su celda <strong>ACTIVO (Columna F, Fila 4)</strong> haciendo clic en su celda <strong>NO</strong>.</p>
+        <p class="mb-3 text-xs text-text-muted">Nota: Cuando un producto cambia a ACTIVO = SÍ, aparece de inmediato en el pedido de las tiendas.</p>
+      `,
+      init: () => {
+        simActiveTab = 'maestro';
+        renderSimTable();
+      },
+      verify: () => {
+        return simMaestroData[3].activo === 'SÍ';
+      },
+      errorMsg: "Haz clic en la celda NO de Fresa Entera para cambiar su estado a SÍ."
+    },
+    {
+      title: "3. Registro de Kardex",
+      desc: `
+        <p class="mb-3">Registramos entradas y salidas en el Kardex. Haz clic en la pestaña <strong>KARDEX_BA</strong> a la izquierda para ver el formato.</p>
+        <p class="text-oro font-semibold">Presiona Siguiente cuando estés en la pestaña KARDEX_BA.</p>
+      `,
+      init: () => {},
+      verify: () => {
+        return simActiveTab === 'kardex';
+      },
+      errorMsg: "Haz clic en la pestaña KARDEX_BA a la izquierda."
+    },
+    {
+      title: "4. Avanzar Semana (Cierre)",
+      desc: `
+        <p class="mb-3">Al concluir el sábado, debes cerrar la semana. Haz clic en el menú superior <strong>⚙️ Mise</strong> y selecciona la opción <strong>Avanzar semana</strong>.</p>
+        <p class="mb-3">Esto simulará el respaldo histórico, la limpieza de registros diarios y el traslado del stock final como saldo inicial.</p>
+      `,
+      init: () => {
+        simActiveTab = 'kardex';
+        renderSimTable();
+      },
+      verify: () => {
+        return simWeekAdvanced;
+      },
+      errorMsg: "Haz clic en el menú ⚙️ Mise → 'Avanzar semana' y confirma el cuadro de diálogo."
+    },
+    {
+      title: "5. ¡Capacitación Terminada!",
+      desc: `
+        <p class="mb-3">¡Cierre semanal procesado con éxito! Las celdas se han limpiado y los saldos iniciales se trasladaron de forma inteligente.</p>
+        <p class="mb-3">Ya estás listo para operar la Suite MISE con total confianza.</p>
+        <div class="flex flex-col gap-2 pt-2">
+          <button onclick="navigateTo('manual')" class="btn-ob text-xs justify-center font-bold">Ver el Manual Detallado</button>
+          <button onclick="navigateTo('landing')" class="btn-ob primary text-xs justify-center font-bold">Volver al Portal</button>
+        </div>
+      `,
+      init: () => {},
+      verify: () => true
+    }
+  ]
 };
 
-function openOnboarding(force = false) {
-  if (!obOverlay) return;
-  if (!force && localStorage.getItem('mise_onboarding_completed') === 'true') {
+window.initSimulator = function() {
+  if (!simRole) {
+    simRole = 'pedidos';
+  }
+  
+  const badge = document.getElementById('sim-role-badge');
+  if (badge) {
+    badge.textContent = `ROL: ${simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO'}`;
+  }
+  
+  simCurrentStep = 0;
+  simIsSorted = false;
+  simWeekAdvanced = false;
+  
+  initStep();
+};
+
+window.switchSimulatorRole = function(role) {
+  simRole = role;
+  simCurrentStep = 0;
+  simIsSorted = false;
+  simWeekAdvanced = false;
+  
+  const badge = document.getElementById('sim-role-badge');
+  if (badge) {
+    badge.textContent = `ROL: ${simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO'}`;
+  }
+  
+  initStep();
+};
+
+function initStep() {
+  const steps = SIM_STEPS[simRole];
+  const step = steps[simCurrentStep];
+  
+  const pct = (simCurrentStep / (steps.length - 1)) * 100;
+  const bar = document.getElementById('sim-progress-bar');
+  if (bar) bar.style.width = `${pct}%`;
+  
+  const progressText = document.getElementById('sim-step-progress');
+  if (progressText) progressText.textContent = `Paso ${simCurrentStep + 1} de ${steps.length}`;
+  
+  const stepTitle = document.getElementById('sim-step-title');
+  if (stepTitle) stepTitle.textContent = step.title;
+  
+  const stepDesc = document.getElementById('sim-step-desc');
+  if (stepDesc) stepDesc.innerHTML = step.desc;
+  
+  const backBtn = document.getElementById('sim-btn-back');
+  if (backBtn) backBtn.disabled = simCurrentStep === 0;
+  
+  const nextBtn = document.getElementById('sim-btn-next');
+  if (nextBtn) {
+    if (simCurrentStep === steps.length - 1) {
+      nextBtn.innerHTML = `Finalizar <i data-lucide="check" class="w-4 h-4"></i>`;
+    } else {
+      nextBtn.innerHTML = `Siguiente <i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+    }
+  }
+  
+  if (step.init) {
+    step.init();
+  }
+  
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+}
+
+window.simStepNext = function() {
+  const steps = SIM_STEPS[simRole];
+  const step = steps[simCurrentStep];
+  
+  const nextBtn = document.getElementById('sim-btn-next');
+  if (nextBtn) {
+    nextBtn.classList.remove('animate-bounce');
+  }
+  
+  if (step.verify && !step.verify()) {
+    alert(step.errorMsg || "Por favor, completa la acción requerida antes de continuar.");
     return;
   }
-  obCurrentStep = 0;
-  obRole = null;
-  obViewMode = 'pc';
-  obOverlay.classList.add('active');
-  renderObStep();
-}
-
-function closeOnboarding() {
-  localStorage.setItem('mise_onboarding_completed', 'true');
-  if (obOverlay) obOverlay.classList.remove('active');
-}
-
-window.setObViewMode = function(mode) {
-  obViewMode = mode;
-  renderObStep();
+  
+  if (simCurrentStep < steps.length - 1) {
+    simCurrentStep++;
+    initStep();
+  } else {
+    navigateTo('manual');
+  }
 };
 
-function selectObRole(role) {
-  obRole = role;
-  renderObStep();
-}
-
-function renderObStep() {
-  if (!obTitle || !obBody || !obProgressBar || !obDotsContainer || !obBtnBack || !obBtnNext) return;
-
-  // Determinar estructura de pasos
-  let totalStepsCount = 2; // Bienvenida + Resumen (mínimo)
-
-  if (obRole) {
-    totalStepsCount = 2 + OB_CONTENT[obRole].length; // Bienvenido + Pasos Rol + Resumen
+window.simStepBack = function() {
+  if (simCurrentStep > 0) {
+    simCurrentStep--;
+    initStep();
   }
+};
 
-  // Renderizar cuerpo de la pantalla
-  if (obCurrentStep === 0) {
-    // Pantalla de Bienvenida y Selección de Rol
-    obTitle.textContent = OB_CONTENT.welcome.title;
-    obBody.innerHTML = OB_CONTENT.welcome.render();
-    
-    // Asignar listeners a tarjetas de rol
-    const btnBdg = document.getElementById('role-btn-bodega');
-    const btnPed = document.getElementById('role-btn-pedidos');
-    
-    if (btnBdg && btnPed) {
-      btnBdg.addEventListener('click', () => {
-        selectObRole('bodega');
-      });
-      btnPed.addEventListener('click', () => {
-        selectObRole('pedidos');
-      });
+window.selectSimCell = function(cellId, value, formula) {
+  const cellIdEl = document.getElementById('sim-cell-id');
+  const formulaBarEl = document.getElementById('sim-formula-bar');
+  if (cellIdEl) cellIdEl.textContent = cellId;
+  if (formulaBarEl) formulaBarEl.textContent = formula || value || '';
+};
+
+window.handleSimInputChange = function(no, field, value) {
+  if (simRole === 'pedidos') {
+    const row = simPedidosData.find(r => r.no === no);
+    if (row) {
+      row[field] = value;
+      selectSimCell(`E${no + 1}`, value, value);
+      renderSimTable();
+      updateSimKPIs();
+      
+      // Auto triggers for tutorial helpers
+      if (simCurrentStep === 1 && no === 1 && parseFloat(value) > 0) {
+        const nextBtn = document.getElementById('sim-btn-next');
+        if (nextBtn) nextBtn.classList.add('animate-bounce');
+      }
+      
+      if (simCurrentStep === 3 && no === 3 && parseFloat(value) > 0) {
+        row.alerta = '🚨 ADICIÓN';
+        renderSimTable();
+        const nextBtn = document.getElementById('sim-btn-next');
+        if (nextBtn) nextBtn.classList.add('animate-bounce');
+      }
     }
-    
-    obBtnBack.disabled = true;
-    obBtnNext.disabled = !obRole; // Deshabilitado si no se ha seleccionado rol
-    obBtnNext.innerHTML = 'Siguiente <i data-lucide="arrow-right" style="width:16px;"></i>';
-  } 
-  else if (obCurrentStep === totalStepsCount - 1) {
-    // Pantalla Final de Resumen y Enlaces
-    obTitle.textContent = OB_CONTENT.summary.title;
-    obBody.innerHTML = OB_CONTENT.summary.render(obRole);
-    
-    obBtnBack.disabled = false;
-    obBtnNext.disabled = false;
-    obBtnNext.innerHTML = 'Finalizar <i data-lucide="check" style="width:16px;"></i>';
-  } 
-  else {
-    // Pasos intermedios del rol
-    const roleSteps = OB_CONTENT[obRole];
-    const stepIndex = obCurrentStep - 1;
-    const activeStepData = roleSteps[stepIndex];
-    
-    obTitle.textContent = activeStepData.title;
-    obBody.innerHTML = activeStepData.render(obViewMode);
-    
-    obBtnBack.disabled = false;
-    obBtnNext.disabled = false;
-    obBtnNext.innerHTML = 'Siguiente <i data-lucide="arrow-right" style="width:16px;"></i>';
   }
+};
 
-  // Calcular barra de progreso
-  const progressPercent = (obCurrentStep / (totalStepsCount - 1)) * 100;
-  obProgressBar.style.width = `${progressPercent}%`;
-
-  // Generar dots dinámicos
-  obDotsContainer.innerHTML = '';
-  for (let i = 0; i < totalStepsCount; i++) {
-    const dot = document.createElement('div');
-    dot.className = `onboarding-dot ${i === obCurrentStep ? 'active' : ''}`;
-    obDotsContainer.appendChild(dot);
+window.simRunSort = function() {
+  if (simRole === 'pedidos') {
+    simPedidosData.sort((a, b) => {
+      if (a.cat !== b.cat) {
+        return a.cat.localeCompare(b.cat);
+      }
+      const aPedir = parseFloat(a.pedir) || 0;
+      const bPedir = parseFloat(b.pedir) || 0;
+      if (aPedir !== bPedir) {
+        return bPedir - aPedir;
+      }
+      return a.no - b.no;
+    });
+    
+    simIsSorted = true;
+    renderSimTable();
+    simStepNext();
   }
+};
 
-  // Re-inicializar iconos Lucide en el contenido inyectado
-  lucide.createIcons();
-}
-
-// Listeners de navegación de Onboarding
-if (obBtnNext) {
-  obBtnNext.addEventListener('click', () => {
-    let totalStepsCount = 2;
-    if (obRole) {
-      totalStepsCount = 2 + OB_CONTENT[obRole].length;
+window.toggleSimSurtidoCheckbox = function(no, type) {
+  if (simRole === 'pedidos') {
+    const row = simPedidosData.find(r => r.no === no);
+    if (row) {
+      if (type === 'completo') {
+        row.recibido = row.recibido === 'completo' ? '' : 'completo';
+      } else if (type === 'inexistente') {
+        row.recibido = row.recibido === 'inexistente' ? '' : 'inexistente';
+      }
+      renderSimTable();
+      updateSimKPIs();
+      
+      if (simCurrentStep === 4 && no === 1 && row.recibido === 'completo') {
+        const nextBtn = document.getElementById('sim-btn-next');
+        if (nextBtn) nextBtn.classList.add('animate-bounce');
+      }
     }
-    
-    if (obCurrentStep < totalStepsCount - 1) {
-      obCurrentStep++;
-      renderObStep();
+  }
+};
+
+window.toggleSimMaestroActivo = function(no) {
+  if (simRole === 'bodega' && simActiveTab === 'maestro') {
+    const row = simMaestroData.find(r => r.no === no);
+    if (row) {
+      row.activo = row.activo === 'SÍ' ? 'NO' : 'SÍ';
+      selectSimCell(`F${no + 1}`, row.activo, row.activo);
+      
+      const pedRow = simPedidosData.find(r => r.prod === row.prod);
+      if (pedRow) {
+        pedRow.active = row.activo === 'SÍ';
+      }
+      
+      renderSimTable();
+      
+      if (simCurrentStep === 1 && row.prod === 'Fresa Entera' && row.activo === 'SÍ') {
+        simStepNext();
+      }
+    }
+  }
+};
+
+window.toggleSimMaestroSelect = function(no) {
+  if (simActiveTab === 'maestro') {
+    const row = simMaestroData.find(r => r.no === no);
+    if (row) {
+      row.selected = !row.selected;
+      renderSimTable();
+    }
+  }
+};
+
+window.handleKardexInputChange = function(no, field, value) {
+  if (simActiveTab === 'kardex') {
+    const row = simKardexData.find(r => r.no === no);
+    if (row) {
+      row[field] = value;
+      const ent = parseFloat(row.lunEnt) || 0;
+      const sal = parseFloat(row.lunSal) || 0;
+      row.saldo = (ent - sal).toString();
+      selectSimCell(field === 'lunEnt' ? `C${no + 1}` : `D${no + 1}`, value, value);
+      renderSimTable();
+    }
+  }
+};
+
+window.simTriggerMenu = function(action) {
+  if (action === 'avanzar') {
+    document.getElementById('sim-dialog-overlay').classList.remove('hidden');
+  } else if (action === 'setup') {
+    alert("Ejecutando Setup Completo en el libro de cálculo...");
+  } else if (action === 'sincronizar') {
+    if (simRole === 'pedidos' && simCurrentStep === 2) {
+      simRunSort();
     } else {
-      closeOnboarding();
+      alert("Sincronización y enlace de catálogos completada.");
     }
-  });
-}
+  }
+};
 
-if (obBtnBack) {
-  obBtnBack.addEventListener('click', () => {
-    if (obCurrentStep > 0) {
-      obCurrentStep--;
-      renderObStep();
+window.closeSimDialog = function(confirm) {
+  document.getElementById('sim-dialog-overlay').classList.add('hidden');
+  if (confirm) {
+    if (simRole === 'bodega' && simCurrentStep === 3) {
+      simWeekAdvanced = true;
+      simKardexData.forEach(row => {
+        row.lunEnt = '0';
+        row.lunSal = '0';
+      });
+      renderSimTable();
+      simStepNext();
+    } else {
+      alert("Operación confirmada.");
     }
+  }
+};
+
+function updateSimKPIs() {
+  const completeCount = simPedidosData.filter(r => r.recibido === 'completo' && r.active && parseFloat(r.pedir) > 0).length;
+  const partialCount = simPedidosData.filter(r => parseFloat(r.pedir) > 0 && r.active && !r.recibido).length;
+  const nonexistentCount = simPedidosData.filter(r => r.recibido === 'inexistente' && r.active && parseFloat(r.pedir) > 0).length;
+  const additionCount = simPedidosData.filter(r => r.alerta === '🚨 ADICIÓN' && r.active).length;
+  
+  const titleBar = document.getElementById('sim-sheet-title');
+  if (titleBar) {
+    titleBar.innerHTML = `
+      <div class="flex justify-between items-center w-full">
+        <span>Libro de Cálculo - MISE Simulator</span>
+        <span class="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold font-mono">
+          📊 C: ${completeCount} | P: ${partialCount} | N: ${nonexistentCount} | A: ${additionCount}
+        </span>
+      </div>
+    `;
+  }
+}
+
+function renderSimTabs() {
+  const bar = document.getElementById('sim-tabs-bar');
+  if (!bar) return;
+  
+  bar.innerHTML = '';
+  
+  let tabs = [];
+  if (simRole === 'pedidos') {
+    tabs = [
+      { id: 'pedido', label: '📋 PEDIDO DIARIO' },
+      { id: 'surtido', label: '🚚 SURTIDO RÁPIDO' }
+    ];
+  } else {
+    tabs = [
+      { id: 'maestro', label: '📋 MAESTRO' },
+      { id: 'kardex', label: '📦 KARDEX_BA' }
+    ];
+  }
+  
+  tabs.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = `sim-tab-btn ${simActiveTab === tab.id ? 'active' : ''}`;
+    btn.textContent = tab.label;
+    btn.onclick = (e) => {
+      e.preventDefault();
+      simActiveTab = tab.id;
+      renderSimTabs();
+      renderSimTable();
+      
+      // Auto triggers for steps
+      if (simRole === 'pedidos' && simCurrentStep === 4 && tab.id === 'surtido') {
+        // Wait for render to finish
+      }
+      if (simRole === 'bodega' && simCurrentStep === 2 && tab.id === 'kardex') {
+        simStepNext();
+      }
+    };
+    bar.appendChild(btn);
   });
 }
 
-if (obBtnSkip) {
-  obBtnSkip.addEventListener('click', () => {
-    closeOnboarding();
-  });
+function renderSimTable() {
+  const headEl = document.getElementById('sim-table-head');
+  const bodyEl = document.getElementById('sim-table-body');
+  if (!headEl || !bodyEl) return;
+  
+  headEl.innerHTML = '';
+  bodyEl.innerHTML = '';
+  
+  if (simActiveTab === 'pedido') {
+    headEl.innerHTML = `
+      <tr>
+        <th class="w-10">No</th>
+        <th>CATEGORÍA</th>
+        <th>PRODUCTO</th>
+        <th>UNIDAD</th>
+        <th class="w-20">PEDIR</th>
+        <th class="w-24">ESTADO</th>
+        <th>ALERTAS</th>
+      </tr>
+    `;
+    
+    simPedidosData.forEach(row => {
+      if (row.prod === 'Fresa Entera' && !row.active) {
+        return;
+      }
+      
+      const val = row.pedir;
+      let rowClass = '';
+      if (parseFloat(val) > 0) {
+        rowClass = 'active-row';
+      }
+      if (row.alerta === '🚨 ADICIÓN') {
+        rowClass = 'addition-row';
+      }
+      
+      const tr = document.createElement('tr');
+      tr.className = rowClass;
+      tr.innerHTML = `
+        <td class="text-center font-bold">${row.no}</td>
+        <td class="font-bold text-emerald-800 dark:text-emerald-400">${row.cat}</td>
+        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('C${row.no+1}', '${row.prod}')">${row.prod}</td>
+        <td class="text-center">${row.unit}</td>
+        <td class="edit-cell text-center font-bold">
+          <input type="text" class="sim-cell-input" id="input-pedir-${row.no}" 
+            value="${row.pedir}" 
+            onfocus="selectSimCell('E${row.no+1}', '${row.pedir}')"
+            oninput="handleSimInputChange(${row.no}, 'pedir', this.value)">
+        </td>
+        <td class="text-center font-bold ${parseFloat(row.pedir) > 0 ? 'text-amber-600' : 'text-text-muted'}">
+          ${parseFloat(row.pedir) > 0 ? '⏳ PENDIENTE' : '-'}
+        </td>
+        <td class="text-center font-bold ${row.alerta === '🚨 ADICIÓN' ? 'text-orange-600' : 'text-text-muted'}">
+          ${row.alerta}
+        </td>
+      `;
+      bodyEl.appendChild(tr);
+    });
+  } 
+  else if (simActiveTab === 'surtido') {
+    headEl.innerHTML = `
+      <tr>
+        <th>PRODUCTO</th>
+        <th class="w-20">PEDIDO</th>
+        <th class="w-24">COMPLETO</th>
+        <th class="w-24">INEXISTENTE</th>
+      </tr>
+    `;
+    
+    const filteredRows = simPedidosData.filter(r => parseFloat(r.pedir) > 0 && r.active);
+    
+    if (filteredRows.length === 0) {
+      bodyEl.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center py-8 text-text-muted italic">
+            No hay productos en el pedido. Regresa a PEDIDO DIARIO y captura cantidades.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    filteredRows.forEach(row => {
+      let rowClass = '';
+      if (row.recibido === 'completo') {
+        rowClass = 'success-row';
+      } else if (row.recibido === 'inexistente') {
+        rowClass = 'inactive-row';
+      }
+      
+      const tr = document.createElement('tr');
+      tr.className = rowClass;
+      tr.innerHTML = `
+        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('A${row.no+1}', '${row.prod}')">${row.prod}</td>
+        <td class="text-center font-bold">${row.pedir}</td>
+        <td class="text-center">
+          <input type="checkbox" ${row.recibido === 'completo' ? 'checked' : ''} 
+            onclick="toggleSimSurtidoCheckbox(${row.no}, 'completo')">
+        </td>
+        <td class="text-center">
+          <input type="checkbox" ${row.recibido === 'inexistente' ? 'checked' : ''} 
+            onclick="toggleSimSurtidoCheckbox(${row.no}, 'inexistente')">
+        </td>
+      `;
+      bodyEl.appendChild(tr);
+    });
+  }
+  else if (simActiveTab === 'maestro') {
+    headEl.innerHTML = `
+      <tr>
+        <th class="w-10">No</th>
+        <th>ID_FAMILIA</th>
+        <th>PRODUCTO</th>
+        <th>PRESENTACION</th>
+        <th>UNIDAD</th>
+        <th class="w-20">ACTIVO</th>
+        <th>MÍN</th>
+        <th>MÁX</th>
+        <th class="w-20">SELECCIONAR</th>
+      </tr>
+    `;
+    
+    simMaestroData.forEach(row => {
+      let rowClass = '';
+      if (row.activo === 'NO') {
+        rowClass = 'inactive-row';
+      } else if (row.selected) {
+        rowClass = 'active-row';
+      }
+      
+      const tr = document.createElement('tr');
+      tr.className = rowClass;
+      tr.innerHTML = `
+        <td class="text-center font-bold">${row.no}</td>
+        <td class="text-center font-mono">${row.id}</td>
+        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('C${row.no+1}', '${row.prod}')">${row.prod}</td>
+        <td>${row.pres}</td>
+        <td class="text-center">${row.unit}</td>
+        <td class="edit-cell text-center font-bold" onclick="toggleSimMaestroActivo(${row.no})">
+          ${row.activo}
+        </td>
+        <td class="text-center">${row.min}</td>
+        <td class="text-center">${row.max}</td>
+        <td class="text-center">
+          <input type="checkbox" ${row.selected ? 'checked' : ''} onclick="toggleSimMaestroSelect(${row.no})">
+        </td>
+      `;
+      bodyEl.appendChild(tr);
+    });
+  }
+  else if (simActiveTab === 'kardex') {
+    headEl.innerHTML = `
+      <tr>
+        <th class="w-10">No</th>
+        <th>PRODUCTO</th>
+        <th class="w-24">LUN (ENT)</th>
+        <th class="w-24">LUN (SAL)</th>
+        <th class="w-24">SALDO ACTUAL</th>
+      </tr>
+    `;
+    
+    simKardexData.forEach(row => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-center font-bold">${row.no}</td>
+        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('B${row.no+1}', '${row.prod}')">${row.prod}</td>
+        <td class="text-center bg-emerald-50 dark:bg-emerald-950/10">
+          <input type="text" class="sim-cell-input text-emerald-800 dark:text-emerald-400 font-bold" 
+            value="${row.lunEnt}" 
+            onfocus="selectSimCell('C${row.no+1}', '${row.lunEnt}')"
+            oninput="handleKardexInputChange(${row.no}, 'lunEnt', this.value)">
+        </td>
+        <td class="text-center bg-red-50 dark:bg-red-950/10">
+          <input type="text" class="sim-cell-input text-red-800 dark:text-red-400 font-bold" 
+            value="${row.lunSal}" 
+            onfocus="selectSimCell('D${row.no+1}', '${row.lunSal}')"
+            oninput="handleKardexInputChange(${row.no}, 'lunSal', this.value)">
+        </td>
+        <td class="text-center font-bold text-oro" onclick="selectSimCell('E${row.no+1}', '${row.saldo}')">
+          ${row.saldo}
+        </td>
+      `;
+      bodyEl.appendChild(tr);
+    });
+  }
+  
+  updateSimKPIs();
 }
 
-// Evento para lanzar el onboarding desde el menú lateral
-const navItemWalkthrough = document.getElementById('nav-item-walkthrough');
-if (navItemWalkthrough) {
-  navItemWalkthrough.addEventListener('click', () => {
-    openOnboarding(true); // Forzar apertura
-  });
-}
+window.openOnboarding = function(force = false) {
+  navigateTo('simulator');
+};
