@@ -189,7 +189,7 @@
 
     <div class="flex flex-1 overflow-hidden relative">
       <!-- Left Column: The Simulated Google Sheets Spreadsheet (Scrollable, takes up most space) -->
-      <div class="flex-1 overflow-auto bg-surface-2 p-3 md:p-6 flex flex-col justify-start relative min-w-0">
+      <div class="flex-1 overflow-auto bg-surface-2 p-3 md:p-6 pb-72 flex flex-col justify-start relative min-w-0">
         <div class="max-w-5xl w-full mx-auto space-y-4 role-fade-container" id="sim-role-container">
           <!-- Excel/Sheets Menu Bar Simulator -->
           <div class="sheets-window-header bg-surface border border-border rounded-lg overflow-hidden shadow-2xl">
@@ -197,7 +197,7 @@
             <div class="bg-surface-2 px-4 py-2 border-b border-border flex justify-between items-center text-[11px] md:text-xs">
               <div class="flex items-center gap-3">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                <span class="font-bold text-text" id="sim-sheet-title">@ MISE - Pedidos</span>
+                <span class="font-bold text-text" id="sim-sheet-title">(at) MISE - Pedidos</span>
               </div>
               <div class="flex gap-1.5">
                 <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
@@ -276,8 +276,7 @@
         </div>
       </div>
 
-      <!-- Right Column: Guided Panel -->
-      <div id="sim-guide-panel" class="w-96 bg-surface border-l border-border flex flex-col h-full overflow-hidden shadow-2xl z-10 transition-all duration-300">
+      <div id="sim-guide-panel" class="bg-surface border-t border-border flex flex-col overflow-hidden shadow-2xl z-10 transition-all duration-300">
         <!-- Progress bar indicator -->
         <div class="h-1.5 w-full bg-border">
           <div class="h-full bg-oro transition-all duration-500" id="sim-progress-bar" style="width: 0%;"></div>

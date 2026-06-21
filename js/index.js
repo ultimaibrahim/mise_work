@@ -700,6 +700,17 @@ const SIM_STEPS = {
   ]
 };
 
+function updateMenuVisibility() {
+  const menuGroup = document.getElementById('sim-menu-group');
+  if (menuGroup) {
+    if (simRole === 'pedidos') {
+      menuGroup.classList.add('hidden');
+    } else {
+      menuGroup.classList.remove('hidden');
+    }
+  }
+}
+
 window.initSimulator = function() {
   if (!simRole) {
     simRole = 'pedidos';
@@ -709,10 +720,12 @@ window.initSimulator = function() {
   if (badge) {
     badge.textContent = `ROL: ${simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO'}`;
   }
+  updateMenuVisibility();
   
   simCurrentStep = 0;
   simIsSorted = false;
   simWeekAdvanced = false;
+  simSurtidoUnlocked = false;
   
   initStep();
 };
@@ -733,6 +746,7 @@ window.switchSimulatorRole = function(role) {
     if (badge) {
       badge.textContent = `ROL: ${simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO'}`;
     }
+    updateMenuVisibility();
     
     initStep();
     
@@ -988,7 +1002,7 @@ window.closeSimDialog = function(confirm) {
 function updateSimKPIs() {
   const titleBar = document.getElementById('sim-sheet-title');
   if (titleBar) {
-    titleBar.innerHTML = `@ MISE - Pedidos`;
+    titleBar.innerHTML = `(at) MISE - Pedidos`;
   }
 }
 
