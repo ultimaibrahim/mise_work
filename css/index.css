@@ -542,42 +542,75 @@ strong {
   color: var(--text-muted);
 }
 
-/* --- RESPONSIVIDAD --- */
+/* --- RESPONSIVIDAD (MOBILE-FIRST DRAWER) --- */
+#sidebar-overlay {
+  display: none;
+}
+
 @media (max-width: 992px) {
   body {
-    flex-direction: column;
+    position: relative;
   }
+  
   .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 290px;
+    z-index: 100;
+    transform: translateX(-100%);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .sidebar-header {
-    padding: 1rem 1.5rem;
+  
+  .sidebar.open {
+    transform: translateX(0);
   }
-  .search-container, .nav-list, .sidebar-footer {
-    display: none;
+  
+  #sidebar-overlay.active {
+    display: block !important;
+    opacity: 1;
   }
-  .sidebar.open .search-container,
-  .sidebar.open .nav-list,
-  .sidebar.open .sidebar-footer {
-    display: block;
-  }
+
   .menu-toggle {
     display: block;
   }
+  
   .main-content {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1.2rem;
   }
-  .header-right {
-    display: flex;
-    gap: 0.5rem;
-  }
+  
   .content-header {
-    padding: 0 1.5rem;
+    padding: 0 1.2rem;
   }
 }
+
+/* --- COLLAPSIBLE GUIDE PANEL FOR SIMULATOR --- */
+#sim-guide-panel {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease, width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 24rem; /* w-96 */
+  opacity: 1;
+}
+
+#sim-guide-panel.guide-collapsed {
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  margin-left: 0;
+  border-left: none;
+}
+
+/* --- ROLE SWITCHING FADE TRANSITION --- */
+.role-fade-container {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.role-fade-container.role-transitioning {
+  opacity: 0;
+  transform: scale(0.985);
+}
+
 
 /* --- ONBOARDING OVERLAY & WALKTHROUGH --- */
 .onboarding-overlay {
@@ -1233,13 +1266,18 @@ html[data-theme="dark"] .sheet-desc-box:hover {
 .main-title {
   background: linear-gradient(135deg, var(--verde) 20%, var(--oro) 50%, var(--sage) 80%);
   -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   -webkit-text-fill-color: transparent;
   background-size: 200% auto;
   animation: shiny-text 6s linear infinite;
+  line-height: 1.15;
 }
 html[data-theme="dark"] .main-title {
-  background: linear-gradient(135deg, var(--crema) 20%, var(--oro) 50%, var(--sage) 80%);
+  background: linear-gradient(135deg, #FFFFFF 10%, var(--oro) 50%, #F5EFE6 90%);
   -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   -webkit-text-fill-color: transparent;
 }
 @keyframes shiny-text {
