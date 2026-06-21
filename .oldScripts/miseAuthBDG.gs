@@ -67,35 +67,31 @@ const C = {
 
 // ── MENÚ ──────────────────────────────────────────────────────────────────────
 function onOpen() {
-  try {
-    SpreadsheetApp.getUi()
-      .createMenu("⚙️ Mise")
-      .addItem("🚀 Setup completo",                         "setupCompleto")
-      .addSeparator()
-      .addItem("📅 Configurar semana — B-Andares",          "configurarSemanaBA")
-      .addItem("📅 Configurar semana — B-Mercado",          "configurarSemanaBM")
-      .addSeparator()
-      .addItem("📅 Avanzar semana — B-Andares",             "avanzarSemanaBA")
-      .addItem("📅 Avanzar semana — B-Mercado",             "avanzarSemanaBM")
-      .addSeparator()
-      .addItem("📊 Recrear VISTA_MOVIL_BA",                 "crearVistaMóvilBA")
-      .addItem("📊 Recrear VISTA_MOVIL_BM",                 "crearVistaMóvilBM")
-      // .addItem("🏷 Recrear CADUCIDADES",                    "crearCaducidades")
-      .addSeparator()
-      .addItem("🆕 Agregar producto al catálogo",           "agregarProducto")
-      .addItem("➕ Carga masiva de productos",             "crearHojaCargaMasiva")
-      .addItem("📝 Editar productos seleccionados",         "crearHojaEdicionMasiva")
-      .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
-      .addItem("🔧 Restaurar validaciones de MAESTRO",     "restaurarValidacionesMaestro")
-      .addSeparator()
-      .addItem("🧪 Correr tests",                           "runTests")
-      .addItem("🧹 Limpiar propiedades",                    "limpiarProps")
-      .addSeparator()
-      .addItem("ℹ️ Acerca de",                               "acercaDe")
-      .addToUi();
-  } catch (e) {
-    // ponytail: menus aren't supported on mobile, ignore
-  }
+  SpreadsheetApp.getUi()
+    .createMenu("⚙️ Mise")
+    .addItem("🚀 Setup completo",                         "setupCompleto")
+    .addSeparator()
+    .addItem("📅 Configurar semana — B-Andares",          "configurarSemanaBA")
+    .addItem("📅 Configurar semana — B-Mercado",          "configurarSemanaBM")
+    .addSeparator()
+    .addItem("📅 Avanzar semana — B-Andares",             "avanzarSemanaBA")
+    .addItem("📅 Avanzar semana — B-Mercado",             "avanzarSemanaBM")
+    .addSeparator()
+    .addItem("📊 Recrear VISTA_MOVIL_BA",                 "crearVistaMóvilBA")
+    .addItem("📊 Recrear VISTA_MOVIL_BM",                 "crearVistaMóvilBM")
+    // .addItem("🏷 Recrear CADUCIDADES",                    "crearCaducidades")
+    .addSeparator()
+    .addItem("🆕 Agregar producto al catálogo",           "agregarProducto")
+    .addItem("➕ Carga masiva de productos",             "crearHojaCargaMasiva")
+    .addItem("📝 Editar productos seleccionados",         "crearHojaEdicionMasiva")
+    .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
+    .addItem("🔧 Restaurar validaciones de MAESTRO",     "restaurarValidacionesMaestro")
+    .addSeparator()
+    .addItem("🧪 Correr tests",                           "runTests")
+    .addItem("🧹 Limpiar propiedades",                    "limpiarProps")
+    .addSeparator()
+    .addItem("ℹ️ Acerca de",                               "acercaDe")
+    .addToUi();
 }
 
 // ── onEdit: REGISTRO TRANSACCIONAL Y ACCIONES ──────────────────────────────────
@@ -259,7 +255,7 @@ function onEdit(e) {
 
 // ── SETUP COMPLETO CORREGIDO SIN ERRORES DE ACCESO ───────────────────────────
 function setupCompleto() {
-  const ui   = getUiSafe();
+  const ui   = SpreadsheetApp.getUi();
   const resp = ui.alert(
     "🚀 Setup completo",
     "Se borrarán TODAS las hojas del libro y se creará el sistema desde cero.\n\n¿Continuar?",
@@ -651,24 +647,12 @@ function crearVistaMóvilBA() { _buildVista("BA"); }
 function crearVistaMóvilBM() { _buildVista("BM"); }
 
 function _buildVista(key) {
-  // ponytail: reuse existing sheet to preserve sheet ID and avoid breaking IMPORTRANGE in target sheets
   const bodega = BODEGAS[key];
   const ss     = SpreadsheetApp.getActiveSpreadsheet();
 
   let sheet = ss.getSheetByName(bodega.vista);
-  if (sheet) {
-    sheet.clear();
-    sheet.clearConditionalFormatRules();
-    sheet.setGridlines(true);
-    sheet.setFrozenRows(0);
-    const maxRows = sheet.getMaxRows();
-    const maxCols = sheet.getMaxColumns();
-    if (maxRows > 0 && maxCols > 0) {
-      sheet.getRange(1, 1, maxRows, maxCols).breakAtMerge();
-    }
-  } else {
-    sheet = ss.insertSheet(bodega.vista);
-  }
+  if (sheet) ss.deleteSheet(sheet);
+  sheet = ss.insertSheet(bodega.vista);
 
   // Header — 9 cols (incluye CATEGORÍA y ACTIVO)
   sheet.getRange(1, 1, 1, 9).merge()
@@ -784,14 +768,212 @@ function _buildVista(key) {
   _log("_buildVista", `${bodega.nombre}: ${count} productos`);
 }
 
+// ── CADUCIDADES (vista simple, sin INDIRECT) ──────────────────────────────────
+function crearCaducidades() {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  const NOMBRE = "CADUCIDADES";
 
+  let sheet = ss.getSheetByName(NOMBRE);
+  if (sheet) ss.deleteSheet(sheet);
+  sheet = ss.insertSheet(NOMBRE);
+
+  // Layout de columnas:
+  // A=No  B=PRODUCTO  C=CAT  D=UND
+  // E=CAD_BA  F=LOTE_BA  G=🚦_BA
+  // H=SEP (separador visual)
+  // I=CAD_BM  J=LOTE_BM  K=🚦_BM
+  // L=⚡VENCE PRIMERO (cuál bodega tiene el lote más próximo a vencer)
+  const TOTAL_COLS = 12;
+  if (sheet.getMaxColumns() < TOTAL_COLS) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), TOTAL_COLS - sheet.getMaxColumns());
+  }
+
+  // Fila 1: título completo
+  sheet.getRange(1, 1, 1, TOTAL_COLS).merge()
+    .setValue("MISE — CADUCIDADES   |   La Crêpe Parisienne · Grupo MYT")
+    .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center");
+  sheet.setRowHeight(1, 30);
+
+  // Fila 2: leyenda semáforo
+  sheet.getRange(2, 1, 1, 8)
+    .setValues([["🔴 CAD","🔴 ≤2d","🟠 ≤7d","🟡 ≤14d","🟤 ≤28d","🔵 ≤60d","🟢 OK","⚪ S/F"]])
+    .setFontSize(8).setBackground("#F5F5F5").setFontColor("#666666").setHorizontalAlignment("center");
+  sheet.setRowHeight(2, 18);
+
+  // Fila 3: headers de sección — dos bloques + separador
+  // Bloque info
+  sheet.getRange(3, 1, 1, 4)
+    .setValues([["No","PRODUCTO","CAT","UND"]])
+    .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center");
+
+  // Bloque B-Andares
+  sheet.getRange(3, 5, 1, 3)
+    .setValues([["CADUCIDAD","LOTE","🚦"]])
+    .setBackground(C.mdGreen).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center");
+  // Encabezado de bodega sobre el bloque
+  sheet.getRange("E2:G2").merge()
+    .setValue("B-ANDARES")
+    .setBackground(C.mdGreen).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center");
+
+  // Separador columna H
+  sheet.getRange(3, 8).setValue("|")
+    .setBackground(C.dark).setFontColor(C.dark).setHorizontalAlignment("center");
+  sheet.getRange("H2").setValue("|").setBackground(C.dark).setFontColor(C.dark);
+
+  // Bloque B-Mercado
+  sheet.getRange(3, 9, 1, 3)
+    .setValues([["CADUCIDAD","LOTE","🚦"]])
+    .setBackground(C.ltGreen).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center");
+  sheet.getRange("I2:K2").merge()
+    .setValue("B-MERCADO")
+    .setBackground(C.ltGreen).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center");
+
+  // Columna ⚡
+  sheet.getRange(3, 12).setValue("⚡ VENCE ANTES")
+    .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center");
+  sheet.getRange("L2").setValue("⚡").setBackground(C.dark).setFontColor("#FFFFFF")
+    .setHorizontalAlignment("center");
+
+  sheet.setRowHeight(2, 20);
+  sheet.setRowHeight(3, 26);
+  sheet.setFrozenRows(3);
+
+  // Construir mapa separado por bodega: nombre → row en ese KARDEX
+  const mapBA = {}, mapBM = {};
+  const maps  = { BA: mapBA, BM: mapBM };
+
+  Object.entries(BODEGAS).forEach(([key, b]) => {
+    const ks = ss.getSheetByName(b.kardex);
+    if (!ks) return;
+    const lr = ks.getLastRow();
+    if (lr < KARDEX_START) return;
+    const rows = ks.getRange(KARDEX_START, 1, lr - KARDEX_START + 1, 3).getValues();
+    rows.forEach((row, i) => {
+      const nombre = String(row[2]).trim();
+      if (nombre) maps[key][nombre] = KARDEX_START + i;
+    });
+  });
+
+  // Datos desde MAESTRO
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  const lr2     = maestro.getLastRow();
+  const mData   = maestro.getRange(MAESTRO_START, 1, lr2 - MAESTRO_START + 1, 6).getValues()
+    .filter(r => r[0] !== "");
+
+  const DR    = 4;
+  const count = mData.length;
+  const refBA = _quoteName(BODEGAS.BA.kardex);
+  const refBM = _quoteName(BODEGAS.BM.kardex);
+
+  mData.forEach((p, i) => {
+    const r      = DR + i;
+    const nombre = String(p[3]).trim();
+    const bg     = i % 2 === 0 ? C.rowA : C.rowB;
+    const cat    = String(p[2] || '').trim();
+
+    // Cols A-D: info del producto
+    sheet.getRange(r, 1).setValue(p[0]).setBackground(bg).setHorizontalAlignment("center");
+    sheet.getRange(r, 2).setValue(nombre).setBackground(bg).setHorizontalAlignment("left");
+    sheet.getRange(r, 3).setValue(cat).setBackground(bg).setHorizontalAlignment("center");
+    sheet.getRange(r, 4).setValue(p[5]).setBackground(bg).setHorizontalAlignment("center");
+
+    // Cols E-G: B-Andares
+    const krBA = mapBA[nombre];
+    if (krBA) {
+      sheet.getRange(r, 5).setFormula('=IFERROR(' + refBA + '!F' + krBA + ';"")')
+        .setNumberFormat("DD/MMM/YY").setBackground(bg);
+      sheet.getRange(r, 6).setFormula('=' + refBA + '!G' + krBA).setBackground(bg);
+      sheet.getRange(r, 7).setFormula('=' + refBA + '!H' + krBA).setBackground(C.yellow);
+    } else {
+      sheet.getRange(r, 5).setValue("").setBackground(bg);
+      sheet.getRange(r, 6).setValue("").setBackground(bg);
+      sheet.getRange(r, 7).setValue("⚪ S/F").setBackground(C.yellow);
+    }
+
+    // Col H: separador visual
+    sheet.getRange(r, 8).setValue("").setBackground(C.dark);
+
+    // Cols I-K: B-Mercado
+    const krBM = mapBM[nombre];
+    if (krBM) {
+      sheet.getRange(r, 9).setFormula('=IFERROR(' + refBM + '!F' + krBM + ';"")')
+        .setNumberFormat("DD/MMM/YY").setBackground(bg);
+      sheet.getRange(r, 10).setFormula('=' + refBM + '!G' + krBM).setBackground(bg);
+      sheet.getRange(r, 11).setFormula('=' + refBM + '!H' + krBM).setBackground(C.yellow);
+    } else {
+      sheet.getRange(r, 9).setValue("").setBackground(bg);
+      sheet.getRange(r, 10).setValue("").setBackground(bg);
+      sheet.getRange(r, 11).setValue("⚪ S/F").setBackground(C.yellow);
+    }
+
+    // Col L: ⚡ VENCE ANTES — cuál bodega tiene la caducidad más próxima
+    // Fórmula: compara E (BA) e I (BM). Si ambas vacías → "—"
+    // Si solo una tiene fecha → esa. Si ambas → la menor.
+    const eRef = 'E' + r;
+    const iRef = 'I' + r;
+    sheet.getRange(r, 12)
+      .setFormula('=IF(AND(E' + r + '="";I' + r + '="");"—";IF(E' + r + '="";"B-Mercado";IF(I' + r + '="";"B-Andares";IF(E' + r + '<=I' + r + ';"B-Andares";"B-Mercado"))))')
+      .setHorizontalAlignment("center").setBackground(bg);
+  });
+
+  // Anchos de columna
+  sheet.setColumnWidth(1, 32);   // No
+  sheet.setColumnWidth(2, 195);  // PRODUCTO
+  sheet.setColumnWidth(3, 50);   // CAT
+  sheet.setColumnWidth(4, 50);   // UND
+  sheet.setColumnWidth(5, 90);   // CAD_BA
+  sheet.setColumnWidth(6, 85);   // LOTE_BA
+  sheet.setColumnWidth(7, 50);   // 🚦_BA
+  sheet.setColumnWidth(8, 8);    // SEP
+  sheet.setColumnWidth(9, 90);   // CAD_BM
+  sheet.setColumnWidth(10, 85);  // LOTE_BM
+  sheet.setColumnWidth(11, 50);  // 🚦_BM
+  sheet.setColumnWidth(12, 95);  // ⚡
+
+  // Formato condicional: semáforos BA (col G) y BM (col K)
+  const _cfRules = (range) => [
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🔴 CAD")
+      .setBackground("#FFCDD2").setFontColor("#B71C1C").setBold(true).setRanges([range]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🔴 ≤2d")
+      .setBackground("#FFCDD2").setFontColor("#B71C1C").setRanges([range]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🟠 ≤7d")
+      .setBackground("#FFE0B2").setFontColor("#BF360C").setRanges([range]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🟡 ≤14d")
+      .setBackground("#FFF9C4").setFontColor("#F57F17").setRanges([range]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🟤 ≤28d")
+      .setBackground("#EFEBE9").setFontColor("#4E342E").setRanges([range]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🔵 ≤60d")
+      .setBackground("#E3F2FD").setFontColor("#0D47A1").setRanges([range]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("🟢 OK")
+      .setBackground("#C8E6C9").setFontColor("#1B5E20").setRanges([range]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo("⚪ S/F")
+      .setBackground(C.yellow).setFontColor("#555555").setRanges([range]).build(),
+  ];
+
+  const cfBA = sheet.getRange(DR, 7, count, 1);
+  const cfBM = sheet.getRange(DR, 11, count, 1);
+  sheet.setConditionalFormatRules([..._cfRules(cfBA), ..._cfRules(cfBM)]);
+
+  _log("crearCaducidades", `Dual BA+BM. ${count} productos`);
+
+  SpreadsheetApp.getActive().toast(
+    `${count} productos con caducidades de ambas bodegas`, "🏷 Caducidades", 5
+  );
+}
 
 // ── CONFIGURAR SEMANA ─────────────────────────────────────────────────────────
 function configurarSemanaBA() { _configurarSemana("BA"); }
 function configurarSemanaBM() { _configurarSemana("BM"); }
 
 function _configurarSemana(key) {
-  const ui     = getUiSafe();
+  const ui     = SpreadsheetApp.getUi();
   const bodega = BODEGAS[key];
   const ss     = SpreadsheetApp.getActiveSpreadsheet();
   const sheet  = ss.getSheetByName(bodega.kardex);
@@ -836,7 +1018,7 @@ function avanzarSemanaBA() { _avanzarSemana("BA"); }
 function avanzarSemanaBM() { _avanzarSemana("BM"); }
 
 function _avanzarSemana(key) {
-  const ui     = getUiSafe();
+  const ui     = SpreadsheetApp.getUi();
   const bodega = BODEGAS[key];
   const ss     = SpreadsheetApp.getActiveSpreadsheet();
   const sheet  = ss.getSheetByName(bodega.kardex);
@@ -1019,7 +1201,7 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
 
 // ── AGREGAR PRODUCTO ──────────────────────────────────────────────────────────
 function agregarProducto() {
-  const ui      = getUiSafe();
+  const ui      = SpreadsheetApp.getUi();
   const ss      = SpreadsheetApp.getActiveSpreadsheet();
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
   if (!maestro) { ui.alert("No existe MAESTRO."); return; }
@@ -1150,7 +1332,7 @@ function agregarProducto() {
 }
 
 function anularProducto() {
-  const ui = getUiSafe();
+  const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
   if (!maestro) { ui.alert("No existe MAESTRO."); return; }
@@ -1307,7 +1489,7 @@ function runTests() {
 // ── UTILIDADES ────────────────────────────────────────────────────────────────
 function limpiarProps() {
   PropertiesService.getScriptProperties().deleteAllProperties();
-  getUiSafe().alert("🧹 Propiedades limpiadas.\nYa puedes ejecutar Setup completo.");
+  SpreadsheetApp.getUi().alert("🧹 Propiedades limpiadas.\nYa puedes ejecutar Setup completo.");
 }
 
 function _col(n) {
@@ -1498,12 +1680,12 @@ function _catalogo() {
 }
 
 function acercaDe() {
-  getUiSafe().alert(
+  SpreadsheetApp.getUi().alert(
     "⚙️ Mise v5.1",
     "Suite Atelier · La Crêpe Parisienne · Grupo MYT\n\n" +
     "Sistema de inventario operativo para bodega.\n" +
     "131 productos · 2 bodegas · historial semanal · semáforo de caducidad",
-    getUiSafe().ButtonSet.OK
+    SpreadsheetApp.getUi().ButtonSet.OK
   );
 }
 
@@ -1520,7 +1702,7 @@ function desactivarSeleccionadosMaestro() {
   
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) {
-    getUiSafe().alert("El archivo está ocupado. Intenta de nuevo.");
+    SpreadsheetApp.getUi().alert("El archivo está ocupado. Intenta de nuevo.");
     return;
   }
   
@@ -1562,7 +1744,7 @@ function activarSeleccionadosMaestro() {
   
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) {
-    getUiSafe().alert("El archivo está ocupado. Intenta de nuevo.");
+    SpreadsheetApp.getUi().alert("El archivo está ocupado. Intenta de nuevo.");
     return;
   }
   
@@ -1604,7 +1786,7 @@ function limpiarSeleccionMaestro() {
 }
 
 function eliminarSeleccionadosMaestro() {
-  const ui = getUiSafe();
+  const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
   if (!maestro) return;
@@ -1892,7 +2074,7 @@ function crearHojaCargaMasiva() {
   let sheet = ss.getSheetByName("➕ AGREGAR_MÚLTIPLES");
   if (sheet) {
     ss.setActiveSheet(sheet);
-    getUiSafe().alert("Ya existe la hoja '➕ AGREGAR_MÚLTIPLES'. Termina de llenarla o bórrala antes de crear otra.");
+    SpreadsheetApp.getUi().alert("Ya existe la hoja '➕ AGREGAR_MÚLTIPLES'. Termina de llenarla o bórrala antes de crear otra.");
     return;
   }
   
@@ -1974,7 +2156,7 @@ function procesarCargaMasiva() {
   
   const lastRowT = tempSheet.getLastRow();
   if (lastRowT < 5) {
-    getUiSafe().alert("No hay productos para cargar.");
+    SpreadsheetApp.getUi().alert("No hay productos para cargar.");
     tempSheet.getRange("F3").setValue(false);
     return;
   }
@@ -1990,7 +2172,7 @@ function procesarCargaMasiva() {
     
     if (prod !== "") {
       if (cat === "" || pres === "" || unit === "") {
-        getUiSafe().alert(`Error en fila ${i + 5}: El producto "${prod}" debe tener CATEGORÍA, PRESENTACIÓN y UNIDAD obligatoriamente.`);
+        SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: El producto "${prod}" debe tener CATEGORÍA, PRESENTACIÓN y UNIDAD obligatoriamente.`);
         tempSheet.getRange("F3").setValue(false);
         return;
       }
@@ -1999,24 +2181,24 @@ function procesarCargaMasiva() {
   }
   
   if (validRows.length === 0) {
-    getUiSafe().alert("No se encontraron productos para cargar. Escribe al menos el nombre del producto en la columna D.");
+    SpreadsheetApp.getUi().alert("No se encontraron productos para cargar. Escribe al menos el nombre del producto en la columna D.");
     tempSheet.getRange("F3").setValue(false);
     return;
   }
   
-  const proceed = getUiSafe().alert(
+  const proceed = SpreadsheetApp.getUi().alert(
     "➕ Confirmar Carga Masiva",
     `¿Confirmas agregar ${validRows.length} productos nuevos en lote al catálogo, kardex y hojas de historial?`,
-    getUiSafe().ButtonSet.YES_NO
+    SpreadsheetApp.getUi().ButtonSet.YES_NO
   );
-  if (proceed !== getUiSafe().Button.YES) {
+  if (proceed !== SpreadsheetApp.getUi().Button.YES) {
     tempSheet.getRange("F3").setValue(false);
     return;
   }
   
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) {
-    getUiSafe().alert("El archivo está ocupado. Intenta de nuevo.");
+    SpreadsheetApp.getUi().alert("El archivo está ocupado. Intenta de nuevo.");
     tempSheet.getRange("F3").setValue(false);
     return;
   }
@@ -2291,7 +2473,7 @@ function procesarEdicionMasiva() {
   
   const lastRowE = editSheet.getLastRow();
   if (lastRowE < 5) {
-    getUiSafe().alert("No hay productos para guardar.");
+    SpreadsheetApp.getUi().alert("No hay productos para guardar.");
     editSheet.getRange("F3").setValue(false);
     return;
   }
@@ -2309,13 +2491,13 @@ function procesarEdicionMasiva() {
     const max = parseFloat(rawData[i][7]) || 0;
     
     if (isNaN(no) || no <= 0) {
-      getUiSafe().alert(`Error en fila ${i + 5}: El identificador "No" no es válido. No debiste modificar la primera columna.`);
+      SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: El identificador "No" no es válido. No debiste modificar la primera columna.`);
       editSheet.getRange("F3").setValue(false);
       return;
     }
     
     if (cat === "" || prod === "" || pres === "" || unit === "") {
-      getUiSafe().alert(`Error en fila ${i + 5}: Los campos CATEGORÍA, PRODUCTO, PRESENTACIÓN y UNIDAD son obligatorios.`);
+      SpreadsheetApp.getUi().alert(`Error en fila ${i + 5}: Los campos CATEGORÍA, PRODUCTO, PRESENTACIÓN y UNIDAD son obligatorios.`);
       editSheet.getRange("F3").setValue(false);
       return;
     }
@@ -2323,19 +2505,19 @@ function procesarEdicionMasiva() {
     validEdits.push({ no, cat, prod, pres, unit, idFam, min, max });
   }
   
-  const proceed = getUiSafe().alert(
+  const proceed = SpreadsheetApp.getUi().alert(
     "📝 Guardar Cambios de Edición",
     `¿Confirmas guardar los cambios de ${validEdits.length} productos y actualizar el catálogo, kardex e historial?`,
-    getUiSafe().ButtonSet.YES_NO
+    SpreadsheetApp.getUi().ButtonSet.YES_NO
   );
-  if (proceed !== getUiSafe().Button.YES) {
+  if (proceed !== SpreadsheetApp.getUi().Button.YES) {
     editSheet.getRange("F3").setValue(false);
     return;
   }
   
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(30000)) {
-    getUiSafe().alert("El archivo está ocupado. Intenta de nuevo.");
+    SpreadsheetApp.getUi().alert("El archivo está ocupado. Intenta de nuevo.");
     editSheet.getRange("F3").setValue(false);
     return;
   }
@@ -2420,33 +2602,9 @@ function procesarEdicionMasiva() {
       ss.deleteSheet(editSheet);
     } catch(e) {}
     
-    getUiSafe().alert("✅ Edición masiva completada", `Se actualizaron ${validEdits.length} productos con éxito.`, getUiSafe().ButtonSet.OK);
+    SpreadsheetApp.getUi().alert("✅ Edición masiva completada", `Se actualizaron ${validEdits.length} productos con éxito.`, SpreadsheetApp.getUi().ButtonSet.OK);
     _log("procesarEdicionMasiva", `${validEdits.length} productos actualizados.`);
   } finally {
     lock.releaseLock();
-  }
-}
-
-// ponytail: safe wrapper for getUi to prevent mobile runtime crashes
-function getUiSafe() {
-  try {
-    return SpreadsheetApp.getUi();
-  } catch(e) {
-    return {
-      alert: function(title, optMsg) {
-        const msg = optMsg || title;
-        try { SpreadsheetApp.getActive().toast(msg, "⚠️ Alerta", 5); } catch(err) {}
-        return "NO";
-      },
-      prompt: function(title, optMsg) {
-        try { SpreadsheetApp.getActive().toast("Filtros/Texto no disponibles en móvil.", "⚠️ Acción Cancelada", 5); } catch(err) {}
-        return {
-          getSelectedButton: function() { return "CANCEL"; },
-          getResponseText: function() { return ""; }
-        };
-      },
-      ButtonSet: { YES_NO: "YES_NO", OK: "OK", OK_CANCEL: "OK_CANCEL", YES_NO_CANCEL: "YES_NO_CANCEL" },
-      Button: { YES: "YES", NO: "NO", OK: "OK", CANCEL: "CANCEL" }
-    };
   }
 }

@@ -59,22 +59,18 @@ const ESTADO = {
 function onOpen() {
   _checkAutoResetNuevoDia();
   _actualizarAvisoPedido();
-  try {
-    SpreadsheetApp.getUi()
-      .createMenu("⚙️ Mise")
-      .addItem("🚀 Setup completo", "setupCompleto")
-      .addSeparator()
-      .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
-      .addSeparator()
-      .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
-      .addSeparator()
-      .addItem("🎲 Generar datos de prueba",               "generarDatosPrueba")
-      .addSeparator()
-      .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
-      .addToUi();
-  } catch(e) {
-    // ponytail: menus aren't supported on mobile, ignore
-  }
+  SpreadsheetApp.getUi()
+    .createMenu("⚙️ Mise")
+    .addItem("🚀 Setup completo", "setupCompleto")
+    .addSeparator()
+    .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
+    .addSeparator()
+    .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
+    .addSeparator()
+    .addItem("🎲 Generar datos de prueba",               "generarDatosPrueba")
+    .addSeparator()
+    .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
+    .addToUi();
 }
 
 // ── AVISO DE CONEXIÓN / POBLAR DATOS ──────────────────────────────────────────
@@ -403,16 +399,12 @@ function onEdit(e) {
 
       // Si es la columna de pedir, manejar alerta de adición
       if (col === COL_CANT_PEDIR) {
-        // ponytail: only check script properties if the transition is from 0/empty to >0 to avoid reading PropertiesService on every edit
-        const wasEmpty = (e.oldValue === undefined || e.oldValue === null || String(e.oldValue).trim() === "" || Number(e.oldValue) === 0);
         if (checkVal > 0) {
-          if (wasEmpty) {
-            const props = PropertiesService.getScriptProperties();
-            const isSorted = props.getProperty("IS_ORDER_SORTED") === "true";
-            const isSurtidoActive = props.getProperty("IS_SURTIDO_ACTIVE") === "true";
-            if (isSorted || isSurtidoActive) {
-              sheet.getRange(row, 10).setValue("🚨 ADICIÓN");
-            }
+          const props = PropertiesService.getScriptProperties();
+          const isSorted = props.getProperty("IS_ORDER_SORTED") === "true";
+          const isSurtidoActive = props.getProperty("IS_SURTIDO_ACTIVE") === "true";
+          if (isSorted || isSurtidoActive) {
+            sheet.getRange(row, 10).setValue("🚨 ADICIÓN");
           }
         } else {
           // Restaurar fórmula normal si se vacía la cantidad
@@ -423,17 +415,12 @@ function onEdit(e) {
   }
 
   // Si existe la pestaña de Surtido Rápido, actualizarla en segundo plano silenciosamente
-  if (col === COL_CANT_PEDIR || col === COL_RECIBIDA) {
-    try {
-      const surtido = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("🚚 SURTIDO RÁPIDO");
-      if (surtido) {
-        const prodName = sheet.getRange(row, 3).getValue();
-        const cantPedir = sheet.getRange(row, COL_CANT_PEDIR).getValue();
-        const cantRecibida = sheet.getRange(row, COL_RECIBIDA).getValue();
-        _syncSingleRowToSurtido(prodName, cantPedir, cantRecibida);
-      }
-    } catch (err) {}
-  }
+  try {
+    const surtido = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("🚚 SURTIDO RÁPIDO");
+    if (surtido) {
+      generarSurtidoRapidoSilencioso();
+    }
+  } catch (err) {}
 }
 
 function sincronizarEstados() {
@@ -671,7 +658,7 @@ function ordenarPedido() {
 }
 
 function configurarBodega() {
-  const ui    = getUiSafe();
+  const ui    = SpreadsheetApp.getUi();
   const props = PropertiesService.getScriptProperties();
   const propKey = `BODEGA_URL_${BODEGA_KEY}`;
   const urlActual = props.getProperty(propKey) || "https://docs.google.com/spreadsheets/d/1kfjtwoX1U-ELq2du1zzJgc4VgO03n28wCVdiKrweHug/";
@@ -711,7 +698,7 @@ function _setupSync(bodegaUrl) {
 function instalarTriggers() {
   ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === "sincronizarEstados") ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger("sincronizarEstados").timeBased().everyMinutes(10).create();
-  getUiSafe().alert("✅ Trigger instalado", "Los estados se sincronizarán cada 10 minutos.", getUiSafe().ButtonSet.OK);
+  SpreadsheetApp.getUi().alert("✅ Trigger instalado", "Los estados se sincronizarán cada 10 minutos.", SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function desinstalarTriggers() {
@@ -722,7 +709,7 @@ function desinstalarTriggers() {
 function resetearPedido() {
   let proceed = false;
   try {
-    const ui = getUiSafe();
+    const ui = SpreadsheetApp.getUi();
     const resp = ui.alert("🗑 Resetear pedido", "¿Confirmas limpiar el pedido actual?", ui.ButtonSet.YES_NO);
     proceed = (resp === ui.Button.YES);
   } catch(e) {
@@ -790,11 +777,11 @@ function _fmtDate(date) {
 }
 
 function avanzarSemanaInfo() {
-  getUiSafe().alert("📅 Avanzar semana","Esta función se ejecuta en el archivo principal Mise_Bodega.");
+  SpreadsheetApp.getUi().alert("📅 Avanzar semana","Esta función se ejecuta en el archivo principal Mise_Bodega.");
 }
 
 function setupCompleto() {
-  const ui   = getUiSafe();
+  const ui   = SpreadsheetApp.getUi();
   const resp = ui.alert("🚀 Setup completo","¿Deseas reconstruir la arquitectura desde cero?", ui.ButtonSet.YES_NO);
   if (resp !== ui.Button.YES) return;
   PropertiesService.getScriptProperties().deleteAllProperties();
@@ -920,7 +907,7 @@ function _aplicarFormatosCondicionales(sheet) {
 }
 
 function acercaDe() {
-  getUiSafe().alert(`⚙️ Mise v5.0 — Pedidos ${BODEGA_NOMBRE}`, "Diseño con botones alineados a columnas visibles C-H y alertas de última hora inteligentes.");
+  SpreadsheetApp.getUi().alert(`⚙️ Mise v5.0 — Pedidos ${BODEGA_NOMBRE}`, "Diseño con botones alineados a columnas visibles C-H y alertas de última hora inteligentes.");
 }
 
 
@@ -1279,81 +1266,5 @@ function generarDatosPrueba() {
     SpreadsheetApp.getActive().toast(`Se generaron datos de prueba para ${numToOrder} productos ✓`, "🎲 Prueba", 4);
   } finally {
     lock.releaseLock();
-  }
-}
-
-// ponytail: safe targeted sync for a single row to Surtido Rápido sheet
-function _syncSingleRowToSurtido(prodName, cantPedir, cantRecibida) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sSheet = ss.getSheetByName("🚚 SURTIDO RÁPIDO");
-  if (!sSheet) return;
-  
-  const lr = sSheet.getLastRow();
-  if (lr < 4) return;
-  
-  // Buscar el producto en la columna C (PRODUCTO)
-  const products = sSheet.getRange(4, 3, lr - 3, 1).getValues();
-  let rowIdx = -1;
-  for (let i = 0; i < products.length; i++) {
-    if (String(products[i][0]).trim() === String(prodName).trim()) {
-      rowIdx = 4 + i;
-      break;
-    }
-  }
-  
-  // Si no se encuentra y cantPedir > 0, reconstruir la hoja porque es un nuevo producto en el pedido
-  if (rowIdx === -1) {
-    if (cantPedir > 0) {
-      generarSurtidoRapidoSilencioso();
-    }
-    return;
-  }
-  
-  // Si cantPedir es 0 o vacío, remover de Surtido Rápido (reconstruyendo la hoja)
-  if (cantPedir === 0 || cantPedir === "") {
-    generarSurtidoRapidoSilencioso();
-    return;
-  }
-  
-  // Si está, actualizar cantPedir y cantRecibida
-  sSheet.getRange(rowIdx, 4).setValue(cantPedir); // CANT. PEDIDA
-  sSheet.getRange(rowIdx, 5).setValue(cantRecibida); // CANT. RECIBIDA
-  
-  // Actualizar checkboxes
-  let completo = false;
-  let inexistente = false;
-  const numRecibida = parseFloat(cantRecibida);
-  if (!isNaN(numRecibida)) {
-    if (numRecibida === cantPedir) {
-      completo = true;
-    } else if (numRecibida === 0) {
-      inexistente = true;
-    }
-  }
-  sSheet.getRange(rowIdx, 6).setValue(completo);
-  sSheet.getRange(rowIdx, 7).setValue(inexistente);
-}
-
-// ponytail: safe wrapper for getUi to prevent mobile runtime crashes
-function getUiSafe() {
-  try {
-    return SpreadsheetApp.getUi();
-  } catch(e) {
-    return {
-      alert: function(title, optMsg) {
-        const msg = optMsg || title;
-        try { SpreadsheetApp.getActive().toast(msg, "⚠️ Alerta", 5); } catch(err) {}
-        return "NO";
-      },
-      prompt: function(title, optMsg) {
-        try { SpreadsheetApp.getActive().toast("Filtros/Texto no disponibles en móvil.", "⚠️ Acción Cancelada", 5); } catch(err) {}
-        return {
-          getSelectedButton: function() { return "CANCEL"; },
-          getResponseText: function() { return ""; }
-        };
-      },
-      ButtonSet: { YES_NO: "YES_NO", OK: "OK", OK_CANCEL: "OK_CANCEL", YES_NO_CANCEL: "YES_NO_CANCEL" },
-      Button: { YES: "YES", NO: "NO", OK: "OK", CANCEL: "CANCEL" }
-    };
   }
 }
