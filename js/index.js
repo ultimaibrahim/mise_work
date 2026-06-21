@@ -53,13 +53,16 @@ if (menuToggle) {
   });
 }
 
-// --- MANEJO DE TEMA (CLARO / OSCURO) ---
+// --- MANEJO DE TEMA (CLARO / OSCURO) Con Transición Suave ---
 const htmlEl = document.documentElement;
 const themeToggle = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 
 if (themeToggle) {
   themeToggle.addEventListener('click', () => {
+    // Añadir clase de transición suave al body
+    document.body.classList.add('theme-transitioning');
+    
     const currentTheme = htmlEl.getAttribute('data-theme');
     if (currentTheme === 'dark') {
       htmlEl.setAttribute('data-theme', 'light');
@@ -68,11 +71,17 @@ if (themeToggle) {
       htmlEl.setAttribute('data-theme', 'dark');
       themeIcon.setAttribute('data-lucide', 'sun');
     }
+    
     lucide.createIcons();
+    
+    // Remover clase de transición después de completarse
+    setTimeout(() => {
+      document.body.classList.remove('theme-transitioning');
+    }, 400);
   });
 }
 
-// --- BUSCADOR EN VIVO ---
+// --- BUSCADOR EN VIVO (Filtrado sin saltos invasivos) ---
 const searchInput = document.getElementById('search-input');
 if (searchInput) {
   searchInput.addEventListener('input', (e) => {
@@ -84,8 +93,7 @@ if (searchInput) {
       return;
     }
 
-    // Filtrar elementos de navegación y auto-mostrar el primero que coincida
-    let foundTarget = null;
+    // Filtrar elementos de navegación
     navItems.forEach(item => {
       const text = item.textContent.toLowerCase();
       const target = item.getAttribute('data-target');
@@ -94,58 +102,85 @@ if (searchInput) {
       
       if (text.includes(query) || sectionContent.includes(query)) {
         item.style.display = 'flex';
-        if (!foundTarget) foundTarget = item;
       } else {
         item.style.display = 'none';
       }
     });
-
-    // Si encuentra coincidencia, la activa de forma automática
-    if (foundTarget) {
-      foundTarget.click();
-    }
   });
 }
 
-// --- MOCKUP INTERACTIVO (TÁCTIL / CLICK) ---
-const hoverCells = document.querySelectorAll('.hover-cell');
-const tooltipBoxes = document.querySelectorAll('.tooltip-info-box');
+// --- MOCKUP INTERACTIVO CON PANEL INSPECTOR LATERAL ---
+document.querySelectorAll('.sheet-interface-container').forEach(container => {
+  const inspectorContent = container.querySelector('.inspector-content');
+  const inspector = container.querySelector('.sheet-inspector');
+  const emptyStateHTML = inspectorContent ? inspectorContent.innerHTML : '';
+  let selectedCell = null;
 
-hoverCells.forEach(cell => {
-  // Evento Click/Tap para móviles y escritorio
-  cell.addEventListener('click', (e) => {
-    e.stopPropagation();
+  const hoverCells = container.querySelectorAll('.hover-cell');
+
+  hoverCells.forEach(cell => {
     const tipId = cell.getAttribute('data-tip');
-    
-    // Quitar estado activo táctil de otras celdas
-    hoverCells.forEach(c => c.classList.remove('active-touch'));
-    
-    // Ocultar todos los tooltips
-    tooltipBoxes.forEach(box => box.style.display = 'none');
-    
-    // Mostrar tooltip correspondiente
     const targetBox = document.getElementById(`tip-${tipId}`);
-    if (targetBox) {
-      cell.classList.add('active-touch');
-      targetBox.style.display = 'block';
-    }
+
+    const showCellInfo = () => {
+      if (targetBox && inspectorContent) {
+        inspectorContent.innerHTML = targetBox.innerHTML;
+        if (inspector) inspector.classList.add('active');
+        lucide.createIcons();
+      }
+    };
+
+    const resetToSelected = () => {
+      if (selectedCell) {
+        const selTipId = selectedCell.getAttribute('data-tip');
+        const selTargetBox = document.getElementById(`tip-${selTipId}`);
+        if (selTargetBox && inspectorContent) {
+          inspectorContent.innerHTML = selTargetBox.innerHTML;
+          if (inspector) inspector.classList.add('active');
+        }
+      } else {
+        if (inspectorContent) inspectorContent.innerHTML = emptyStateHTML;
+        if (inspector) inspector.classList.remove('active');
+      }
+      lucide.createIcons();
+    };
+
+    // Click/Tap para seleccionar celda fijando la explicación
+    cell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      if (selectedCell === cell) {
+        // Deseleccionar al hacer click de nuevo
+        selectedCell.classList.remove('active-touch');
+        selectedCell = null;
+        resetToSelected();
+      } else {
+        // Seleccionar nueva celda
+        if (selectedCell) selectedCell.classList.remove('active-touch');
+        selectedCell = cell;
+        selectedCell.classList.add('active-touch');
+        showCellInfo();
+      }
+    });
+
+    // Hover (Preview rápido en escritorio)
+    cell.addEventListener('mouseenter', () => {
+      showCellInfo();
+    });
+
+    cell.addEventListener('mouseleave', () => {
+      resetToSelected();
+    });
   });
 
-  // Evento Hover para escritorio
-  cell.addEventListener('mouseenter', () => {
-    const tipId = cell.getAttribute('data-tip');
-    tooltipBoxes.forEach(box => box.style.display = 'none');
-    const targetBox = document.getElementById(`tip-${tipId}`);
-    if (targetBox) {
-      targetBox.style.display = 'block';
+  // Hacer click fuera restablece el panel inspector
+  document.addEventListener('click', () => {
+    if (selectedCell) {
+      selectedCell.classList.remove('active-touch');
+      selectedCell = null;
+      resetToSelected();
     }
   });
-});
-
-// Ocultar cajas de información al hacer clic en cualquier otra parte de la pantalla
-document.addEventListener('click', () => {
-  tooltipBoxes.forEach(box => box.style.display = 'none');
-  hoverCells.forEach(c => c.classList.remove('active-touch'));
 });
 
 // --- SELECTOR DE SUB-MENÚ AVANZADO ---

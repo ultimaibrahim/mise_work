@@ -163,65 +163,81 @@
           <strong>Instrucción táctil / visual:</strong> Haz clic o tap sobre las celdas marcadas con línea punteada dorada e icono ℹ️ para detallar su funcionamiento:
         </p>
 
-        <!-- Mockup Maestro -->
-        <div class="sheet-mockup-wrapper">
-          <div class="sheet-mockup-header">
-            <i data-lucide="table" style="width:14px;"></i> Vista de Hoja MAESTRO (Catálogo)
+        <!-- Mockup Maestro Interface Container -->
+        <div class="sheet-interface-container">
+          <div class="sheet-mockup-wrapper">
+            <div class="sheet-mockup-header">
+              <i data-lucide="table" style="width:14px;"></i> Vista de Hoja MAESTRO (Catálogo)
+            </div>
+            <div class="sheet-scroll-container">
+              <table class="sheet-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>ID_FAMILIA</th>
+                    <th>PRODUCTO</th>
+                    <th>PRESENTACION</th>
+                    <th>UNIDAD</th>
+                    <th>ACTIVO</th>
+                    <th>MÍN</th>
+                    <th>MÁX</th>
+                    <th>SELECCIONAR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>REF-001</td>
+                    <td class="hover-cell" data-tip="maestro-producto">Jamón Lala Pechuga <span class="cell-info-icon">ℹ️</span></td>
+                    <td>BOL 1 kg</td>
+                    <td>kg</td>
+                    <td class="hover-cell" data-tip="maestro-activo">SÍ <span class="cell-info-icon">ℹ️</span></td>
+                    <td>5</td>
+                    <td>20</td>
+                    <td class="hover-cell" data-tip="maestro-seleccionar"><input type="checkbox" checked disabled> <span class="cell-info-icon">ℹ️</span></td>
+                  </tr>
+                  <tr style="background: rgba(120, 144, 156, 0.12); opacity: 0.7;">
+                    <td>2</td>
+                    <td>FYV-002</td>
+                    <td>Fresa Entera</td>
+                    <td>CAJA 2 kg</td>
+                    <td>caja</td>
+                    <td class="hover-cell" data-tip="maestro-inactivo">NO <span class="cell-info-icon">ℹ️</span></td>
+                    <td>2</td>
+                    <td>10</td>
+                    <td><input type="checkbox" disabled></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div class="sheet-scroll-container">
-            <table class="sheet-table">
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>ID_FAMILIA</th>
-                  <th>PRODUCTO</th>
-                  <th>PRESENTACION</th>
-                  <th>UNIDAD</th>
-                  <th>ACTIVO</th>
-                  <th>MÍN</th>
-                  <th>MÁX</th>
-                  <th>SELECCIONAR</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>REF-001</td>
-                  <td class="hover-cell" data-tip="maestro-producto">Jamón Lala Pechuga <span class="cell-info-icon">ℹ️</span></td>
-                  <td>BOL 1 kg</td>
-                  <td>kg</td>
-                  <td class="hover-cell" data-tip="maestro-activo">SÍ <span class="cell-info-icon">ℹ️</span></td>
-                  <td>5</td>
-                  <td>20</td>
-                  <td class="hover-cell" data-tip="maestro-seleccionar"><input type="checkbox" checked disabled> <span class="cell-info-icon">ℹ️</span></td>
-                </tr>
-                <tr style="background: rgba(120, 144, 156, 0.12); opacity: 0.7;">
-                  <td>2</td>
-                  <td>FYV-002</td>
-                  <td>Fresa Entera</td>
-                  <td>CAJA 2 kg</td>
-                  <td>caja</td>
-                  <td class="hover-cell" data-tip="maestro-inactivo">NO <span class="cell-info-icon">ℹ️</span></td>
-                  <td>2</td>
-                  <td>10</td>
-                  <td><input type="checkbox" disabled></td>
-                </tr>
-              </tbody>
-            </table>
+
+          <!-- Side Inspector Panel -->
+          <div class="sheet-inspector" id="inspector-maestro">
+            <div class="inspector-header">
+              <i data-lucide="info" style="width:16px;"></i>
+              <span>Detalle de Celda</span>
+            </div>
+            <div class="inspector-content">
+              <div class="inspector-empty-state">
+                <i data-lucide="mouse-pointer-click" class="empty-icon"></i>
+                <p>Haz clic en una celda destacada con borde dorado e icono ℹ️ para ver su descripción.</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Cajas de información de mockup Maestro -->
-        <div class="tooltip-info-box" id="tip-maestro-producto">
+        <!-- Cajas de información de mockup Maestro (Hidden data sources) -->
+        <div class="tooltip-info-box" id="tip-maestro-producto" style="display:none;">
           <strong>Columna Producto:</strong> Nombre oficial de identificación legible del insumo. Al modificarlo en el catálogo principal, se actualiza en todas las hojas.
         </div>
-        <div class="tooltip-info-box" id="tip-maestro-activo">
+        <div class="tooltip-info-box" id="tip-maestro-activo" style="display:none;">
           <strong>Columna Activo:</strong> Indica si el producto está disponible. Si está en <strong>SÍ</strong>, el producto aparece en el pedido de las sucursales. Si cambia a <strong>NO</strong>, se oculta inmediatamente.
         </div>
-        <div class="tooltip-info-box" id="tip-maestro-seleccionar">
+        <div class="tooltip-info-box" id="tip-maestro-seleccionar" style="display:none;">
           <strong>Columna Seleccionar:</strong> Casillas de verificación utilizadas para realizar cambios en bloque. Al marcar un producto, su fila entera se colorea de azul para facilitar el control visual.
         </div>
-        <div class="tooltip-info-box" id="tip-maestro-inactivo">
+        <div class="tooltip-info-box" id="tip-maestro-inactivo" style="display:none;">
           <strong>Inactivo en Catálogo (NO):</strong> Las filas desactivadas se formatean de color gris atenuado (`#EEEEEE` con texto `#9E9E9E`) para distinguirlas visualmente del resto de productos.
         </div>
       </section>
@@ -261,62 +277,78 @@
           <strong>Instrucción táctil / visual:</strong> Haz clic o tap sobre las celdas marcadas con línea punteada dorada e icono ℹ️ para detallar su funcionamiento:
         </p>
 
-        <!-- Mockup Pedidos -->
-        <div class="sheet-mockup-wrapper">
-          <div class="sheet-mockup-header">
-            <i data-lucide="file-spreadsheet" style="width:14px;"></i> Vista de Hoja PEDIDO DIARIO (Sucursal)
+        <!-- Mockup Pedidos Interface Container -->
+        <div class="sheet-interface-container">
+          <div class="sheet-mockup-wrapper">
+            <div class="sheet-mockup-header">
+              <i data-lucide="file-spreadsheet" style="width:14px;"></i> Vista de Hoja PEDIDO DIARIO (Sucursal)
+            </div>
+            <div class="sheet-scroll-container">
+              <table class="sheet-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>CATEGORÍA</th>
+                    <th>PRODUCTO</th>
+                    <th>UNIDAD</th>
+                    <th>PEDIR</th>
+                    <th>RECIBIDO</th>
+                    <th>ESTADO</th>
+                    <th>ALERTAS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>REFRIGERADOS</td>
+                    <td>Jamón Lala Pechuga</td>
+                    <td>kg</td>
+                    <td class="hover-cell" data-tip="tienda-pedir">3 <span class="cell-info-icon">ℹ️</span></td>
+                    <td class="hover-cell" data-tip="tienda-recibido">3 <span class="cell-info-icon">ℹ️</span></td>
+                    <td class="hover-cell" data-tip="tienda-completo" style="background-color: var(--verde-soft); color: #fff; text-align:center; font-weight:700;">✅ COMPLETO <span class="cell-info-icon">ℹ️</span></td>
+                    <td>-</td>
+                  </tr>
+                  <tr style="background: rgba(255, 167, 38, 0.1);">
+                    <td>12</td>
+                    <td>ABARROTES</td>
+                    <td>Nutella</td>
+                    <td>bote</td>
+                    <td>1</td>
+                    <td>0</td>
+                    <td style="background-color: var(--naranja-soft); color: #fff; text-align:center; font-weight:700;">⏳ PENDIENTE</td>
+                    <td class="hover-cell" data-tip="tienda-adicion" style="background-color:#FFA726; color:#000; font-weight:bold; text-align:center;">🚨 ADICIÓN <span class="cell-info-icon">ℹ️</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div class="sheet-scroll-container">
-            <table class="sheet-table">
-              <thead>
-                <tr>
-                  <th>No</th>
-                  <th>CATEGORÍA</th>
-                  <th>PRODUCTO</th>
-                  <th>UNIDAD</th>
-                  <th>PEDIR</th>
-                  <th>RECIBIDO</th>
-                  <th>ESTADO</th>
-                  <th>ALERTAS</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>REFRIGERADOS</td>
-                  <td>Jamón Lala Pechuga</td>
-                  <td>kg</td>
-                  <td class="hover-cell" data-tip="tienda-pedir">3 <span class="cell-info-icon">ℹ️</span></td>
-                  <td class="hover-cell" data-tip="tienda-recibido">3 <span class="cell-info-icon">ℹ️</span></td>
-                  <td class="hover-cell" data-tip="tienda-completo" style="background-color: var(--verde-soft); color: #fff; text-align:center; font-weight:700;">✅ COMPLETO <span class="cell-info-icon">ℹ️</span></td>
-                  <td>-</td>
-                </tr>
-                <tr style="background: rgba(255, 167, 38, 0.1);">
-                  <td>12</td>
-                  <td>ABARROTES</td>
-                  <td>Nutella</td>
-                  <td>bote</td>
-                  <td>1</td>
-                  <td>0</td>
-                  <td style="background-color: var(--naranja-soft); color: #fff; text-align:center; font-weight:700;">⏳ PENDIENTE</td>
-                  <td class="hover-cell" data-tip="tienda-adicion" style="background-color:#FFA726; color:#000; font-weight:bold; text-align:center;">🚨 ADICIÓN <span class="cell-info-icon">ℹ️</span></td>
-                </tr>
-              </tbody>
-            </table>
+
+          <!-- Side Inspector Panel -->
+          <div class="sheet-inspector" id="inspector-tienda">
+            <div class="inspector-header">
+              <i data-lucide="info" style="width:16px;"></i>
+              <span>Detalle de Celda</span>
+            </div>
+            <div class="inspector-content">
+              <div class="inspector-empty-state">
+                <i data-lucide="mouse-pointer-click" class="empty-icon"></i>
+                <p>Haz clic en una celda destacada con borde dorado e icono ℹ️ para ver su descripción.</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Cajas de información de mockup Pedidos -->
-        <div class="tooltip-info-box" id="tip-tienda-pedir">
+        <!-- Cajas de información de mockup Pedidos (Hidden data sources) -->
+        <div class="tooltip-info-box" id="tip-tienda-pedir" style="display:none;">
           <strong>Cantidad a Pedir:</strong> Celda editable para el supervisor. Al escribir una cantidad mayor a cero, la fila completa se sombrea en color amarillo claro de manera automática.
         </div>
-        <div class="tooltip-info-box" id="tip-tienda-recibido">
+        <div class="tooltip-info-box" id="tip-tienda-recibido" style="display:none;">
           <strong>Cantidad Recibida:</strong> Campo utilizado por el bodeguero surtidor al momento de entregar los insumos en tienda física para conciliar.
         </div>
-        <div class="tooltip-info-box" id="tip-tienda-completo">
+        <div class="tooltip-info-box" id="tip-tienda-completo" style="display:none;">
           <strong>Estado de Entrega:</strong> Evalúa si la entrega fue completa (Verde), parcial/incompleta (Naranja claro) o si no se ha surtido (Amarillo).
         </div>
-        <div class="tooltip-info-box" id="tip-tienda-adicion">
+        <div class="tooltip-info-box" id="tip-tienda-adicion" style="display:none;">
           <strong>Alerta "🚨 ADICIÓN":</strong> Si se agrega una cantidad después de haber ordenado y enviado el pedido original, se colorea de naranja intenso como alerta de urgencia.
         </div>
       </section>
