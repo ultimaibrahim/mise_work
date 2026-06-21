@@ -403,6 +403,7 @@ let simKardexData = [];
 let simActiveTab = 'pedido';
 let simIsSorted = false;
 let simWeekAdvanced = false;
+let simSurtidoUnlocked = false;
 
 // HELPER DE FECHA DINÁMICA
 function getFormattedDate() {
@@ -422,9 +423,9 @@ window.toggleSimGuide = function() {
     panel.classList.toggle('guide-collapsed');
     if (icon) {
       if (panel.classList.contains('guide-collapsed')) {
-        icon.setAttribute('data-lucide', 'sidebar-close');
-      } else {
         icon.setAttribute('data-lucide', 'sidebar-open');
+      } else {
+        icon.setAttribute('data-lucide', 'sidebar-close');
       }
       if (typeof lucide !== 'undefined') lucide.createIcons();
     }
@@ -434,24 +435,43 @@ window.toggleSimGuide = function() {
 const INITIAL_PEDIDOS = [
   { no: 4, cat: '1. REFRIGERADOS', prod: 'Harina Crepas (Domo)', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
   { no: 5, cat: '1. REFRIGERADOS', prod: 'Queso Mozzarella', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 6, cat: '2. ABARROTES', prod: 'Nutella', unit: 'bote', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 7, cat: '2. ABARROTES', prod: 'Azúcar Refinada', unit: 'bulto', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 8, cat: '3. FRUTAS Y VERDURAS', prod: 'Fresa Entera', unit: 'caja', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: false }
+  { no: 6, cat: '1. REFRIGERADOS', prod: 'Mantequilla Gloria', unit: 'barra', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 7, cat: '1. REFRIGERADOS', prod: 'Crema Lyncott', unit: 'litro', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 8, cat: '2. ABARROTES', prod: 'Nutella', unit: 'bote', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 9, cat: '2. ABARROTES', prod: 'Azúcar Refinada', unit: 'bulto', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 10, cat: '2. ABARROTES', prod: 'Cajeta Coronado', unit: 'bote', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 11, cat: '2. ABARROTES', prod: 'Harina de Trigo', unit: 'bulto', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 12, cat: '3. FRUTAS Y VERDURAS', prod: 'Fresa Entera', unit: 'caja', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: false },
+  { no: 13, cat: '3. FRUTAS Y VERDURAS', prod: 'Plátano Tabasco', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 14, cat: '3. FRUTAS Y VERDURAS', prod: 'Mora Azul', unit: 'caja', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true }
 ];
 
 const INITIAL_MAESTRO = [
   { no: 1, id: 'REF-001', prod: 'Jamón Lala Pechuga', pres: 'BOL 1 kg', unit: 'kg', activo: 'SÍ', min: 5, max: 20, selected: true },
   { no: 2, id: 'REF-002', prod: 'Queso Mozzarella', pres: 'BOL 2 kg', unit: 'kg', activo: 'SÍ', min: 10, max: 40, selected: false },
   { no: 3, id: 'ABA-001', prod: 'Nutella', pres: 'BOTE 3 kg', unit: 'bote', activo: 'SÍ', min: 1, max: 5, selected: false },
-  { no: 4, id: 'FYV-001', prod: 'Fresa Entera', pres: 'CAJA 2 kg', unit: 'caja', activo: 'NO', min: 2, max: 10, selected: false }
+  { no: 4, id: 'FYV-001', prod: 'Fresa Entera', pres: 'CAJA 2 kg', unit: 'caja', activo: 'NO', min: 2, max: 10, selected: false },
+  { no: 5, id: 'REF-003', prod: 'Mantequilla Gloria', pres: 'CAJA 5 kg', unit: 'barra', activo: 'SÍ', min: 2, max: 8, selected: false },
+  { no: 6, id: 'REF-004', prod: 'Crema Lyncott', pres: 'BOTE 1 L', unit: 'litro', activo: 'SÍ', min: 3, max: 12, selected: false },
+  { no: 7, id: 'ABA-002', prod: 'Cajeta Coronado', pres: 'BOTE 4 kg', unit: 'bote', activo: 'SÍ', min: 1, max: 4, selected: false },
+  { no: 8, id: 'ABA-003', prod: 'Harina de Trigo', pres: 'SACO 10 kg', unit: 'bulto', activo: 'SÍ', min: 5, max: 15, selected: false },
+  { no: 9, id: 'FYV-002', prod: 'Plátano Tabasco', pres: 'CAJA 10 kg', unit: 'kg', activo: 'SÍ', min: 4, max: 10, selected: false },
+  { no: 10, id: 'FYV-003', prod: 'Mora Azul', pres: 'CAJA 1.5 kg', unit: 'caja', activo: 'SÍ', min: 2, max: 6, selected: false }
 ];
 
 const INITIAL_KARDEX = [
   { no: 1, prod: 'Jamón Lala Pechuga', lunEnt: '15', lunSal: '2', saldo: '13', active: true },
   { no: 2, prod: 'Queso Mozzarella', lunEnt: '20', lunSal: '5', saldo: '15', active: true },
   { no: 3, prod: 'Nutella', lunEnt: '5', lunSal: '1', saldo: '4', active: true },
-  { no: 4, prod: 'Fresa Entera', lunEnt: '10', lunSal: '3', saldo: '7', active: true }
+  { no: 4, prod: 'Fresa Entera', lunEnt: '10', lunSal: '3', saldo: '7', active: true },
+  { no: 5, prod: 'Mantequilla Gloria', lunEnt: '8', lunSal: '2', saldo: '6', active: true },
+  { no: 6, prod: 'Crema Lyncott', lunEnt: '12', lunSal: '4', saldo: '8', active: true },
+  { no: 7, prod: 'Cajeta Coronado', lunEnt: '4', lunSal: '1', saldo: '3', active: true },
+  { no: 8, prod: 'Harina de Trigo', lunEnt: '15', lunSal: '5', saldo: '10', active: true },
+  { no: 9, prod: 'Plátano Tabasco', lunEnt: '10', lunSal: '3', saldo: '7', active: true },
+  { no: 10, prod: 'Mora Azul', lunEnt: '6', lunSal: '2', saldo: '4', active: true }
 ];
+
 
 const SIM_STEPS = {
   pedidos: [
@@ -470,6 +490,7 @@ const SIM_STEPS = {
         simActiveTab = 'pedido';
         simPedidosData = JSON.parse(JSON.stringify(INITIAL_PEDIDOS));
         simIsSorted = false;
+        simSurtidoUnlocked = false;
         renderSimTabs();
         renderSimTable();
       },
@@ -530,7 +551,7 @@ const SIM_STEPS = {
         simActiveTab = 'pedido';
         renderSimTable();
         setTimeout(() => {
-          const input = document.getElementById('input-pedir-6');
+          const input = document.getElementById('input-pedir-8');
           if (input) {
             input.focus();
             input.select();
@@ -547,7 +568,7 @@ const SIM_STEPS = {
       title: "5. Surtido Rápido & Resumen",
       desc: `
         <p class="mb-3">¡Exacto! Al agregar Nutella a destiempo, el sistema generó automáticamente la alerta <strong>🚨 ADICIÓN</strong> en color naranja.</p>
-        <p class="mb-3">Ahora simulemos la recepción. Activa el checkbox <strong>🚚 Surtido</strong> en la <strong>fila 2</strong> de la hoja para abrir el modo de conciliación en celular.</p>
+        <p class="mb-3">Ahora simulemos la recepción. Activa el checkbox <strong>🚚 Surtido</strong> en la <strong>fila 2</strong> de la hoja. Al hacerlo, aparecerá y se activará automáticamente la pestaña <strong>🚚 SURTIDO RÁPIDO</strong> al fondo del libro de cálculo (la cual permanece oculta por defecto para evitar confusiones hasta que se inicie el surtido).</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
           <p class="text-text-muted">El checkbox '🚚 Surtido' despliega de inmediato la pestaña de Surtido Rápido, ideal para conciliar la entrega a pie de camión.</p>
@@ -810,7 +831,7 @@ window.handleSimInputChange = function(no, field, value) {
         if (nextBtn) nextBtn.classList.add('animate-bounce');
       }
       
-      if (simCurrentStep === 3 && no === 6 && parseFloat(value) > 0) {
+      if (simCurrentStep === 3 && no === 8 && parseFloat(value) > 0) {
         row.alerta = '🚨 ADICIÓN';
         renderSimTable();
         const nextBtn = document.getElementById('sim-btn-next');
@@ -853,12 +874,18 @@ window.handleSimCheckOrdenar = function(checked) {
 
 window.handleSimCheckSurtido = function(checked) {
   if (checked) {
+    simSurtidoUnlocked = true;
     simActiveTab = 'surtido';
     renderSimTabs();
     renderSimTable();
     if (simCurrentStep === 4) {
       simStepNext();
     }
+  } else {
+    simSurtidoUnlocked = false;
+    simActiveTab = 'pedido';
+    renderSimTabs();
+    renderSimTable();
   }
 };
 
@@ -959,21 +986,9 @@ window.closeSimDialog = function(confirm) {
 };
 
 function updateSimKPIs() {
-  const completeCount = simPedidosData.filter(r => r.recibido === 'completo' && r.active && parseFloat(r.pedir) > 0).length;
-  const partialCount = simPedidosData.filter(r => parseFloat(r.pedir) > 0 && r.active && !r.recibido).length;
-  const nonexistentCount = simPedidosData.filter(r => r.recibido === 'inexistente' && r.active && parseFloat(r.pedir) > 0).length;
-  const additionCount = simPedidosData.filter(r => r.alerta === '🚨 ADICIÓN' && r.active).length;
-  
   const titleBar = document.getElementById('sim-sheet-title');
   if (titleBar) {
-    titleBar.innerHTML = `
-      <div class="flex justify-between items-center w-full">
-        <span>Libro de Cálculo - MISE Simulator</span>
-        <span class="bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 px-2 py-0.5 rounded text-[10px] font-bold font-mono">
-          📊 C: ${completeCount} | P: ${partialCount} | N: ${nonexistentCount} | A: ${additionCount}
-        </span>
-      </div>
-    `;
+    titleBar.innerHTML = `@ MISE - Pedidos`;
   }
 }
 
@@ -986,9 +1001,11 @@ function renderSimTabs() {
   let tabs = [];
   if (simRole === 'pedidos') {
     tabs = [
-      { id: 'pedido', label: '📋 PEDIDO DIARIO' },
-      { id: 'surtido', label: '🚚 SURTIDO RÁPIDO' }
+      { id: 'pedido', label: '📋 PEDIDO DIARIO' }
     ];
+    if (simSurtidoUnlocked) {
+      tabs.push({ id: 'surtido', label: '🚚 SURTIDO RÁPIDO' });
+    }
   } else {
     tabs = [
       { id: 'maestro', label: '📋 MAESTRO' },
@@ -1047,18 +1064,18 @@ function renderSimTable() {
       </tr>
       <tr class="bg-surface border-b border-border">
         <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
-        <td colspan="2" class="px-3 py-1.5 text-left font-bold">
-          <label class="flex items-center gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400">
-            <input type="checkbox" id="sim-check-ordenar" ${simIsSorted ? 'checked' : ''} onchange="handleSimCheckOrdenar(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro">
+        <td colspan="2" class="p-0 text-left font-bold border-r border-border">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400 w-full h-full px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
+            <input type="checkbox" id="sim-check-ordenar" ${simIsSorted ? 'checked' : ''} onchange="handleSimCheckOrdenar(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
             <span>⚙️ Ordenar</span>
           </label>
         </td>
-        <td colspan="2" class="px-3 py-1.5 text-center font-bold text-text-muted font-mono">
+        <td colspan="2" class="px-3 py-2 text-center font-bold text-text-muted font-mono border-r border-border">
           <span>FECHA:</span> <span class="text-oro font-bold">${getFormattedDate()}</span>
         </td>
-        <td colspan="3" class="px-3 py-1.5 text-right font-bold">
-          <label class="flex items-center justify-end gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400">
-            <input type="checkbox" id="sim-check-surtido" ${simActiveTab === 'surtido' ? 'checked' : ''} onchange="handleSimCheckSurtido(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro">
+        <td colspan="3" class="p-0 text-right font-bold">
+          <label class="flex items-center justify-end gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400 w-full h-full px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
+            <input type="checkbox" id="sim-check-surtido" ${simActiveTab === 'surtido' ? 'checked' : ''} onchange="handleSimCheckSurtido(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
             <span>🚚 Surtido</span>
           </label>
         </td>
@@ -1216,13 +1233,13 @@ function renderSimTable() {
         <td class="text-center font-bold bg-surface-2">
           <input type="text" class="sim-cell-input text-center font-bold text-text-muted" disabled value="${recVal}" placeholder="-">
         </td>
-        <td class="text-center">
+        <td class="text-center cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/10" onclick="toggleSimSurtidoCheckbox(${row.no}, 'completo')">
           <input type="checkbox" ${row.recibido === 'completo' ? 'checked' : ''} 
-            onclick="toggleSimSurtidoCheckbox(${row.no}, 'completo')" class="w-4 h-4 border-border rounded text-verde focus:ring-verde">
+            class="w-4 h-4 border-border rounded text-verde focus:ring-verde pointer-events-none cursor-pointer">
         </td>
-        <td class="text-center">
+        <td class="text-center cursor-pointer hover:bg-red-50 dark:hover:bg-red-950/10" onclick="toggleSimSurtidoCheckbox(${row.no}, 'inexistente')">
           <input type="checkbox" ${row.recibido === 'inexistente' ? 'checked' : ''} 
-            onclick="toggleSimSurtidoCheckbox(${row.no}, 'inexistente')" class="w-4 h-4 border-border rounded text-red-600 focus:ring-red-600">
+            class="w-4 h-4 border-border rounded text-red-600 focus:ring-red-600 pointer-events-none cursor-pointer">
         </td>
         <td class="bg-surface-2 border-l border-r border-border"></td>
         ${resumeLabelCell}
@@ -1289,8 +1306,8 @@ function renderSimTable() {
         </td>
         <td class="text-center">${row.min}</td>
         <td class="text-center">${row.max}</td>
-        <td class="text-center">
-          <input type="checkbox" ${row.selected ? 'checked' : ''} onclick="toggleSimMaestroSelect(${row.no})" class="w-4 h-4 border-border rounded text-oro focus:ring-oro">
+        <td class="text-center cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/10" onclick="toggleSimMaestroSelect(${row.no})">
+          <input type="checkbox" ${row.selected ? 'checked' : ''} class="w-4 h-4 border-border rounded text-oro focus:ring-oro pointer-events-none cursor-pointer">
         </td>
       `;
       bodyEl.appendChild(tr);

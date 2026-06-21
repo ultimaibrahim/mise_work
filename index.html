@@ -197,7 +197,7 @@
             <div class="bg-surface-2 px-4 py-2 border-b border-border flex justify-between items-center text-[11px] md:text-xs">
               <div class="flex items-center gap-3">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                <span class="font-bold text-text" id="sim-sheet-title">Libro de Cálculo - MISE Simulator</span>
+                <span class="font-bold text-text" id="sim-sheet-title">@ MISE - Pedidos</span>
               </div>
               <div class="flex gap-1.5">
                 <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
@@ -207,7 +207,7 @@
             </div>
             
             <!-- Custom Google Sheets Menu Bar -->
-            <div class="bg-surface border-b border-border px-3 py-1.5 flex gap-4 text-[11px] font-medium text-text-muted overflow-x-auto select-none relative">
+            <div class="bg-surface border-b border-border px-3 py-1.5 flex gap-3 md:gap-4 text-[11px] font-medium text-text-muted overflow-visible z-30 select-none relative">
               <span class="hover:text-text cursor-pointer">Archivo</span>
               <span class="hover:text-text cursor-pointer">Editar</span>
               <span class="hover:text-text cursor-pointer">Ver</span>
@@ -283,11 +283,14 @@
           <div class="h-full bg-oro transition-all duration-500" id="sim-progress-bar" style="width: 0%;"></div>
         </div>
 
-        <div class="p-6 border-b border-border bg-surface-2 flex justify-between items-start">
+        <div class="p-6 border-b border-border bg-surface-2 flex justify-between items-center gap-2">
           <div>
             <span class="text-[10px] font-bold uppercase tracking-wider text-oro" id="sim-step-progress">Paso 1 de 5</span>
             <h3 class="text-lg font-bold font-serif text-verde dark:text-crema mt-1 leading-tight" id="sim-step-title">Bienvenido al Tutorial</h3>
           </div>
+          <button onclick="toggleSimGuide()" class="p-2 rounded-full hover:bg-surface transition-colors text-text-muted hover:text-oro flex items-center justify-center shrink-0" title="Ocultar Guía">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
         </div>
 
         <div class="flex-1 overflow-y-auto p-6 space-y-4 text-sm" id="sim-step-desc">

@@ -584,7 +584,35 @@ strong {
   .content-header {
     padding: 0 1.2rem;
   }
+  
+  /* Overlay Guide Panel on Mobile/Tablet */
+  #sim-guide-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 100% !important;
+    max-width: 380px;
+    z-index: 40;
+    border-left: 1px solid var(--border);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.25);
+  }
+  #sim-guide-panel.guide-collapsed {
+    transform: translateX(100%);
+    width: 100% !important;
+    margin-left: 0;
+    opacity: 0;
+    pointer-events: none;
+    border-left: none;
+  }
 }
+
+@media (max-width: 480px) {
+  #sim-guide-panel {
+    max-width: 100% !important;
+  }
+}
+
 
 /* --- COLLAPSIBLE GUIDE PANEL FOR SIMULATOR --- */
 #sim-guide-panel {
