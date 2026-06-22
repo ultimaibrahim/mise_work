@@ -624,7 +624,7 @@ const SIM_STEPS = {
         <p class="mb-3">A la izquierda tienes la hoja interactiva <strong>📋 PEDIDO DIARIO</strong>. Observa que en la <strong>fila 2</strong> se indica hoy: <span class="text-oro font-bold font-mono">${getFormattedDate()}</span>.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
-          <p class="text-text-muted">La tabla está congelada hasta la columna C (Producto) para facilitar el scroll horizontal en dispositivos móviles.</p>
+          <p class="text-text-muted">La tabla muestra los productos activos para facilitar el levantamiento de stock en dispositivos móviles.</p>
         </div>
         <p class="text-oro font-semibold mt-3">Presiona "Siguiente" para iniciar.</p>
       `,
@@ -639,12 +639,12 @@ const SIM_STEPS = {
       verify: () => true
     },
     {
-      title: "2. Capturar Pedidos (Flotantes)",
+      title: "2. Capturar Pedidos",
       desc: `
-        <p class="mb-3">Vamos a simular el levantamiento de stock. Escribe en la celda amarilla <strong>CANT. A PEDIR (F4)</strong> para la fila de <strong>Jamón de pavo Lala</strong> e introduce la cantidad <strong>1.5</strong>.</p>
+        <p class="mb-3">Vamos a simular el levantamiento de stock. Escribe en la celda amarilla <strong>CANT. A PEDIR (F4)</strong> para la fila de <strong>Jamón de pavo Lala</strong> e introduce la cantidad entera <strong>2</strong>.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
-          <p class="text-text-muted">El sistema de pedidos de LCP permite el ingreso de números decimales de hasta 4 posiciones. Esto es vital para mermas en gramos.</p>
+          <p class="text-text-muted">El sistema de pedidos de LCP permite el ingreso de cantidades exactas para cada producto en su respectiva unidad de medida.</p>
         </div>
       `,
       init: () => {
@@ -661,33 +661,15 @@ const SIM_STEPS = {
       },
       verify: () => {
         const val = parseFloat(simPedidosData.find(r => r.prod === 'Jamón de pavo Lala').pedir);
-        return !isNaN(val) && val > 0;
+        return !isNaN(val) && val === 2;
       },
-      errorMsg: "Ingresa un número válido mayor a 0 (ej. 1.5) en la celda CANT. A PEDIR de Jamón de pavo Lala (F4)."
+      errorMsg: "Ingresa la cantidad entera 2 en la celda CANT. A PEDIR de Jamón de pavo Lala (F4)."
     },
     {
-      title: "3. Ordenamiento por Categorías",
+      title: "3. Alertas de Adiciones",
       desc: `
         <p class="mb-3">¡Excelente! Observa cómo la fila se iluminó de amarillo confirmando la selección.</p>
-        <p class="mb-3">Para agilizar el surtido por pasillo, activa la casilla de verificación <strong>⚙️ Ordenar</strong> en la <strong>fila 2</strong> de la hoja para reorganizar el pedido.</p>
-        <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
-          <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
-          <p class="text-text-muted">Al ordenar la hoja, el script agrupa físicamente los productos por pasillo y empuja las solicitudes activas hacia arriba, simplificando la ruta del picker.</p>
-        </div>
-      `,
-      init: () => {
-        renderSimTable();
-      },
-      verify: () => {
-        return simIsSorted;
-      },
-      errorMsg: "Activa el checkbox '⚙️ Ordenar' en la fila 2 de la hoja interactiva a la izquierda."
-    },
-    {
-      title: "4. Alertas de Adiciones",
-      desc: `
-        <p class="mb-3">¡La lista se ha agrupado por categorías colocando tu orden al principio!</p>
-        <p class="mb-3">Si agregas una cantidad extra después de haber ordenado y enviado el archivo, el sistema lo marcará como adición. Captura la cantidad <strong>1</strong> en la celda <strong>CANT. A PEDIR de Nutella (F7)</strong>.</p>
+        <p class="mb-3">Si agregas una cantidad extra después de haber enviado el pedido o activado el surtido, el sistema lo marcará como adición. Captura la cantidad <strong>1</strong> en la celda <strong>CANT. A PEDIR de Nutella (F7)</strong>.</p>
       `,
       init: () => {
         simActiveTab = 'pedido';
@@ -707,13 +689,13 @@ const SIM_STEPS = {
       errorMsg: "Introduce la cantidad 1 en la celda de Nutella (F7) para simular la adición."
     },
     {
-      title: "5. Surtido Rápido & Resumen",
+      title: "4. Surtido Rápido & Resumen",
       desc: `
         <p class="mb-3">¡Exacto! Al agregar Nutella a destiempo, el sistema generó automáticamente la alerta <strong>🚨 ADICIÓN</strong> en color naranja.</p>
-        <p class="mb-3">Ahora simulemos la recepción. Activa el checkbox <strong>🚚 Surtido</strong> en la <strong>fila 2</strong> de la hoja. Al hacerlo, aparecerá y se activará automáticamente la pestaña <strong>🚚 SURTIDO RÁPIDO</strong> al fondo del libro de cálculo (la cual permanece oculta por defecto para evitar confusiones hasta que se inicie el surtido).</p>
+        <p class="mb-3">Ahora simulemos la recepción. Activa el checkbox <strong>🚚 Surtido</strong> en la <strong>fila 2</strong> de la hoja. Al hacerlo, aparecerá y se activará automáticamente la pestaña <strong>🚚 SURTIDO RÁPIDO</strong> al fondo del libro de cálculo.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
-          <p class="text-text-muted">El checkbox '🚚 Surtido' despliega de inmediato la pestaña de Surtido Rápido, ideal para conciliar la entrega a pie de camión.</p>
+          <p class="text-text-muted">El checkbox '🚚 Surtido' despliega de inmediato la pestaña de Surtido Rápido, facilitando la marcación de mercancía de forma más sencilla.</p>
         </div>
       `,
       init: () => {
@@ -725,10 +707,10 @@ const SIM_STEPS = {
       errorMsg: "Activa el checkbox '🚚 Surtido' en la fila 2 de la hoja interactiva a la izquierda."
     },
     {
-      title: "6. Conciliación en Móvil",
+      title: "5. Conciliación en Móvil",
       desc: `
         <p class="mb-3">¡Ya estamos en la hoja <strong>🚚 SURTIDO RÁPIDO</strong>! Nota que la <strong>fila 2</strong> tiene las instrucciones operativas.</p>
-        <p class="mb-3">Marca la casilla de <strong>✅ COMPLETO (E4)</strong> de <strong>Jamón de pavo Lala</strong>. Observa cómo cambia la fila a verde y se actualiza el panel <strong>RESUMEN SURTIDO</strong> a la derecha.</p>
+        <p class="mb-3">Marca la casilla de <strong>✅ COMPLETO (<span id="dyn-jamon-cell">E4</span>)</strong> de <strong>Jamón de pavo Lala</strong>. Observa cómo cambia la fila a verde y se actualiza el panel <strong>RESUMEN SURTIDO</strong> a la derecha.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
           <p class="text-text-muted">El panel 'RESUMEN SURTIDO' se calcula automáticamente a partir de las casillas marcadas, dando un conteo preciso al instante.</p>
@@ -738,16 +720,28 @@ const SIM_STEPS = {
         simActiveTab = 'surtido';
         renderSimTabs();
         renderSimTable();
+
+        // Detect cell position dynamically
+        const filteredRows = simPedidosData.filter(r => parseFloat(r.pedir) > 0 && r.active);
+        const jamonIdx = filteredRows.findIndex(r => r.prod === 'Jamón de pavo Lala');
+        const targetRow = jamonIdx !== -1 ? (4 + jamonIdx) : 4;
+        const span = document.getElementById('dyn-jamon-cell');
+        if (span) span.textContent = `E${targetRow}`;
       },
       verify: () => {
         return simPedidosData.find(r => r.prod === 'Jamón de pavo Lala').recibido === 'completo';
       },
-      errorMsg: "Marca la casilla de ✅ COMPLETO para Jamón de pavo Lala en la columna E de la tabla."
+      errorMsg: () => {
+        const filteredRows = simPedidosData.filter(r => parseFloat(r.pedir) > 0 && r.active);
+        const jamonIdx = filteredRows.findIndex(r => r.prod === 'Jamón de pavo Lala');
+        const targetRow = jamonIdx !== -1 ? (4 + jamonIdx) : 4;
+        return `Marca la casilla de ✅ COMPLETO para Jamón de pavo Lala en la columna E (fila ${targetRow}) de la tabla.`;
+      }
     },
     {
-      title: "7. ¡Simulación de Tienda Completada!",
+      title: "6. ¡Simulación de Tienda Completada!",
       desc: `
-        <p class="mb-3">¡Excelente! Has aprendido a levantar pedidos con decimales, ordenar por pasillos, gestionar adiciones y conciliar en móvil.</p>
+        <p class="mb-3">¡Excelente! Has aprendido a levantar pedidos, gestionar adiciones y conciliar en móvil de forma sencilla.</p>
         <div class="flex flex-col gap-2 pt-2">
           <button onclick="navigateTo('manual')" class="btn-ob text-xs justify-center font-bold">Abrir el Manual v2.0</button>
           <button onclick="switchSimulatorRole('bodega')" class="btn-ob primary text-xs justify-center font-bold">Probar Rol de Bodeguero</button>
@@ -1028,49 +1022,44 @@ window.handleSimInputChange = function(no, field, value) {
       updateSimKPIs();
       
       // Auto triggers for tutorial helpers
-      if (simCurrentStep === 1 && no === 4 && parseFloat(value) > 0) {
+      if (simCurrentStep === 1 && no === 4 && parseFloat(value) === 2) {
         const nextBtn = document.getElementById('sim-btn-next');
         if (nextBtn) nextBtn.classList.add('animate-bounce');
       }
       
-      if (simCurrentStep === 3 && no === 8 && parseFloat(value) > 0) {
+      if (simCurrentStep === 2 && no === 7 && parseFloat(value) > 0) {
         row.alerta = '🚨 ADICIÓN';
         renderSimTable();
+        showSimToast("🚨 ADICIÓN: Insumo pedido de última hora registrado.", "warning");
         const nextBtn = document.getElementById('sim-btn-next');
         if (nextBtn) nextBtn.classList.add('animate-bounce');
       }
+
+      // General addition trigger outside of tutorial sequence
+      if (field === 'pedir' && parseFloat(value) > 0 && simSurtidoUnlocked) {
+        if (!row.alerta || row.alerta === '-') {
+          row.alerta = '🚨 ADICIÓN';
+          renderSimTable();
+          showSimToast("🚨 ADICIÓN: Insumo pedido de última hora registrado.", "warning");
+        }
+      }
     }
   }
 };
 
-window.simRunSort = function() {
-  if (simRole === 'pedidos') {
-    simPedidosData.sort((a, b) => {
-      if (a.cat !== b.cat) {
-        return a.cat.localeCompare(b.cat);
-      }
-      const aPedir = parseFloat(a.pedir) || 0;
-      const bPedir = parseFloat(b.pedir) || 0;
-      if (aPedir !== bPedir) {
-        return bPedir - aPedir;
-      }
-      return a.no - b.no;
-    });
-    
-    simIsSorted = true;
-    renderSimTable();
-    if (simCurrentStep === 2) {
-      simStepNext();
-    }
-  }
-};
-
-window.handleSimCheckOrdenar = function(checked) {
+window.handleSimCheckReset = function(checked) {
   if (checked) {
-    simRunSort();
-  } else {
-    simIsSorted = false;
+    simPedidosData.forEach(row => {
+      row.pedir = '';
+      row.recibido = '';
+      row.alerta = '-';
+    });
     renderSimTable();
+    showSimToast("Pedido reseteado ✓", "success");
+    setTimeout(() => {
+      const chk = document.getElementById('sim-check-reset');
+      if (chk) chk.checked = false;
+    }, 150);
   }
 };
 
@@ -1080,7 +1069,7 @@ window.handleSimCheckSurtido = function(checked) {
     simActiveTab = 'surtido';
     renderSimTabs();
     renderSimTable();
-    if (simCurrentStep === 4) {
+    if (simCurrentStep === 3) {
       simStepNext();
     }
   } else {
@@ -1103,7 +1092,7 @@ window.toggleSimSurtidoCheckbox = function(no, type) {
       renderSimTable();
       updateSimKPIs();
       
-      if (simCurrentStep === 5 && no === 4 && row.recibido === 'completo') {
+      if (simCurrentStep === 4 && row.prod === 'Jamón de pavo Lala' && row.recibido === 'completo') {
         const nextBtn = document.getElementById('sim-btn-next');
         if (nextBtn) nextBtn.classList.add('animate-bounce');
       }
@@ -1257,34 +1246,33 @@ function renderSimTable() {
         <th class="text-center font-bold text-[10px] text-text-muted">F</th>
         <th class="text-center font-bold text-[10px] text-text-muted">G</th>
         <th class="text-center font-bold text-[10px] text-text-muted">H</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">I</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">J</th>
       </tr>
       <tr class="bg-emerald-950/20 border-b border-border">
         <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
-        <th colspan="9" class="py-2 text-center font-bold text-crema bg-verde uppercase tracking-wider font-serif">
+        <th colspan="7" class="py-2 text-center font-bold text-crema bg-verde uppercase tracking-wider font-serif">
           MISE — PEDIDO DIARIO | B-Andares | La Crêpe Parisienne
         </th>
       </tr>
       <tr class="bg-surface border-b border-border">
         <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
-        <td colspan="2" class="p-0 text-left font-bold border-r border-border" style="position: sticky; left: 40px; z-index: 20; background-color: var(--surface);">
-          <label class="flex items-center gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400 w-full h-full px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
-            <input type="checkbox" id="sim-check-ordenar" ${simIsSorted ? 'checked' : ''} onchange="handleSimCheckOrdenar(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
-            <span>Ordenar</span>
-          </label>
-        </td>
-        <td colspan="2" class="px-3 py-2 text-center font-bold text-text-muted font-mono border-r border-border">
-        </td>
-        <td colspan="2" class="px-3 py-2 text-center font-bold text-text-muted font-mono border-r border-border bg-emerald-950/10 dark:bg-emerald-950/30">
+        <td colspan="2" class="px-3 py-2 text-left font-bold text-text-muted font-mono border-r border-border select-none">
           <span>FECHA:</span> <span class="text-oro font-bold">${getFormattedDate()}</span>
+          <span class="text-text-muted ml-2">| 🗑 Reset →</span>
         </td>
-        <td colspan="3" class="p-0 text-right font-bold bg-amber-500/10 dark:bg-amber-500/20">
-          <label class="flex items-center justify-end gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400 w-full h-full px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
-            <input type="checkbox" id="sim-check-surtido" ${simActiveTab === 'surtido' ? 'checked' : ''} onchange="handleSimCheckSurtido(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
-            <span>🚚 Surtido</span>
+        <td class="p-0 text-center font-bold border-r border-border">
+          <label class="flex items-center justify-center w-full h-full px-2 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 cursor-pointer select-none">
+            <input type="checkbox" id="sim-check-reset" onchange="handleSimCheckReset(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
           </label>
         </td>
+        <td class="px-3 py-2 text-right font-bold text-text-muted font-mono border-r border-border select-none">
+          <span>🚚 Surtido →</span>
+        </td>
+        <td class="p-0 text-center font-bold bg-amber-500/10 dark:bg-amber-500/20">
+          <label class="flex items-center justify-center w-full h-full px-2 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 cursor-pointer select-none">
+            <input type="checkbox" id="sim-check-surtido" ${simActiveTab === 'surtido' ? 'checked' : ''} onchange="handleSimCheckSurtido(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
+          </label>
+        </td>
+        <td colspan="2" class="border-l border-border bg-surface"></td>
       </tr>
       <tr class="bg-surface-2 border-b border-border text-[10px] text-text-muted">
         <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">3</th>
@@ -1295,8 +1283,6 @@ function renderSimTable() {
         <th class="w-24 bg-yellow-50/50 dark:bg-yellow-950/20">CANT. A PEDIR</th>
         <th class="w-24 bg-blue-50/50 dark:bg-sky-950/20">CANT. RECIBIDA</th>
         <th class="w-20">DIFERENCIA</th>
-        <th class="w-24">ESTADO</th>
-        <th>ALERTAS SURTIDO</th>
       </tr>
     `;
     
@@ -1319,15 +1305,27 @@ function renderSimTable() {
       tr.className = rowClass;
       
       const hasPedir = parseFloat(row.pedir) > 0;
-      const recVal = row.recibido === 'completo' ? row.pedir : (row.recibido === 'inexistente' ? '0' : '0');
-      const diffVal = hasPedir ? (parseFloat(recVal) - parseFloat(row.pedir)) : '-';
+      let recVal = '';
+      if (row.recibido === 'completo') {
+        recVal = row.pedir;
+      } else if (row.recibido === 'inexistente') {
+        recVal = '0';
+      } else if (row.recibido !== undefined && row.recibido !== null && row.recibido !== '') {
+        recVal = String(row.recibido);
+      }
+      
+      let diffVal = '';
+      if (hasPedir) {
+        const numRec = recVal !== '' ? parseFloat(recVal) : 0;
+        diffVal = String(numRec - parseFloat(row.pedir));
+      }
       
       tr.innerHTML = `
         <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
         <td class="sticky-col-b font-bold text-emerald-800 dark:text-emerald-400">${row.cat}</td>
         <td class="sticky-col-c font-bold cursor-pointer hover:underline" onclick="selectSimCell('C${rowIndex}', '${row.prod}')">${row.prod}</td>
         <td class="text-center">${row.unit}</td>
-        <td class="text-center bg-blue-50/30 dark:bg-sky-950/10 font-bold">${hasPedir ? '0' : '0'}</td>
+        <td class="text-center bg-blue-50/30 dark:bg-sky-950/10 font-bold">0</td>
         <td class="edit-cell text-center font-bold bg-yellow-50/30 dark:bg-yellow-950/10">
           <input type="text" class="sim-cell-input text-center font-bold" id="input-pedir-${row.no}" 
             value="${row.pedir}" 
@@ -1335,13 +1333,7 @@ function renderSimTable() {
             oninput="handleSimInputChange(${row.no}, 'pedir', this.value)">
         </td>
         <td class="text-center bg-blue-50/30 dark:bg-sky-950/10 font-bold">${hasPedir ? recVal : '0'}</td>
-        <td class="text-center font-bold text-text-muted">${diffVal}</td>
-        <td class="text-center font-bold ${hasPedir ? 'text-amber-600' : 'text-text-muted'}">
-          ${hasPedir ? '⏳ PENDIENTE' : '-'}
-        </td>
-        <td class="text-center font-bold ${row.alerta === '🚨 ADICIÓN' ? 'text-orange-600' : 'text-text-muted'}">
-          ${row.alerta}
-        </td>
+        <td class="text-center font-bold text-text-muted">${hasPedir ? diffVal : '-'}</td>
       `;
       bodyEl.appendChild(tr);
       rowIndex++;
