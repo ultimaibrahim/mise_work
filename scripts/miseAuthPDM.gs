@@ -790,14 +790,14 @@ function _aplicarFormatosCondicionales(sheet) {
   
   // Regla 1: Alerta adición de última hora (naranja brillante)
   const ruleAdicion = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; \'🚚 SURTIDO RÁPIDO\'!C:H; 6; FALSE); "")="🚨 ADICIÓN")')
+    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:H"); 6; FALSE); "")="🚨 ADICIÓN")')
     .setBackground("#FFD54F")
     .setRanges([range])
     .build();
      
   // Regla 1.5: Inactivos (gris)
   const ruleInactivo = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=VLOOKUP($C4; \'' + SHEET_SYNC + '\'!C:I; 7; FALSE)="NO"')
+    .whenFormulaSatisfied('=VLOOKUP($C4; INDIRECT("\'' + SHEET_SYNC + '\'!C:I"); 7; FALSE)="NO"')
     .setBackground("#EEEEEE")
     .setFontColor("#9E9E9E")
     .setItalic(true)
@@ -806,21 +806,21 @@ function _aplicarFormatosCondicionales(sheet) {
      
   // Regla 2: Completos
   const ruleCompleto = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; \'🚚 SURTIDO RÁPIDO\'!C:E; 3; FALSE); 0)=$F4)')
+    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)=$F4)')
     .setBackground(COLORS.completo)
     .setRanges([range])
     .build();
      
   // Regla 3: Parciales
   const ruleParcial = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; \'🚚 SURTIDO RÁPIDO\'!C:E; 3; FALSE); 0)>0; IFERROR(VLOOKUP($C4; \'🚚 SURTIDO RÁPIDO\'!C:E; 3; FALSE); 0)<$F4)')
+    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)<$F4)')
     .setBackground(COLORS.parcial)
     .setRanges([range])
     .build();
      
   // Regla 4: Pendientes
   const rulePendiente = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; \'🚚 SURTIDO RÁPIDO\'!C:E; 3; FALSE); 0)=0)')
+    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)=0)')
     .setBackground(COLORS.pendiente)
     .setRanges([range])
     .build();
