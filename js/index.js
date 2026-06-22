@@ -431,6 +431,20 @@ function updateReopenButtonVisibility() {
 }
 window.updateReopenButtonVisibility = updateReopenButtonVisibility;
 
+// SYNC SPREADSHEET WRAPPER MARGIN WITH GUIDE PANEL STATE
+function syncGuideActiveState() {
+  const panel = document.getElementById('sim-guide-panel');
+  const wrapper = document.getElementById('sim-spreadsheet-wrapper');
+  if (panel && wrapper) {
+    if (panel.classList.contains('guide-collapsed')) {
+      wrapper.classList.remove('guide-active');
+    } else {
+      wrapper.classList.add('guide-active');
+    }
+  }
+}
+window.syncGuideActiveState = syncGuideActiveState;
+
 // COLLAPSE TUTORIAL PANEL
 window.toggleSimGuide = function() {
   const panel = document.getElementById('sim-guide-panel');
@@ -450,48 +464,102 @@ window.toggleSimGuide = function() {
       }
       if (typeof lucide !== 'undefined') lucide.createIcons();
     }
+    syncGuideActiveState();
     updateReopenButtonVisibility();
   }
 };
 
 const INITIAL_PEDIDOS = [
-  { no: 4, cat: '1. REFRIGERADOS', prod: 'Harina Crepas (Domo)', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 5, cat: '1. REFRIGERADOS', prod: 'Queso Mozzarella', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 6, cat: '1. REFRIGERADOS', prod: 'Mantequilla Gloria', unit: 'barra', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 7, cat: '1. REFRIGERADOS', prod: 'Crema Lyncott', unit: 'litro', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 8, cat: '2. ABARROTES', prod: 'Nutella', unit: 'bote', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 9, cat: '2. ABARROTES', prod: 'Azúcar Refinada', unit: 'bulto', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 10, cat: '2. ABARROTES', prod: 'Cajeta Coronado', unit: 'bote', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 11, cat: '2. ABARROTES', prod: 'Harina de Trigo', unit: 'bulto', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 12, cat: '3. FRUTAS Y VERDURAS', prod: 'Fresa Entera', unit: 'caja', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: false },
-  { no: 13, cat: '3. FRUTAS Y VERDURAS', prod: 'Plátano Tabasco', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
-  { no: 14, cat: '3. FRUTAS Y VERDURAS', prod: 'Mora Azul', unit: 'caja', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true }
+  // REFRIGERADOS
+  { no: 4, cat: 'REFRIGERADOS', prod: 'Jamón de pavo Lala', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 5, cat: 'REFRIGERADOS', prod: 'Queso mozzarella CDK', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 6, cat: 'REFRIGERADOS', prod: 'Crema batida', unit: 'g', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  // ABARROTES
+  { no: 7, cat: 'ABARROTES', prod: 'Nutella', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 8, cat: 'ABARROTES', prod: 'Azúcar blanca', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 9, cat: 'ABARROTES', prod: 'Café en grano Postales', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  // BEBIDAS
+  { no: 10, cat: 'BEBIDAS', prod: 'Agua Epura', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 11, cat: 'BEBIDAS', prod: 'Agua mineral Canada Dry', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 12, cat: 'BEBIDAS', prod: 'Pepsi Regular', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  // DESECHABLES
+  { no: 13, cat: 'DESECHABLES', prod: 'Cono crepa individual', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 14, cat: 'DESECHABLES', prod: 'Guantes nitrilo chico', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 15, cat: 'DESECHABLES', prod: 'Vaso 20 oz frío', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  // FRUTAS Y VERDURAS
+  { no: 16, cat: 'FRUTAS Y VERDURAS', prod: 'Fresa', unit: 'kg', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: false },
+  { no: 17, cat: 'FRUTAS Y VERDURAS', prod: 'Limón', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 18, cat: 'FRUTAS Y VERDURAS', prod: 'Plátano', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  // JARCERÍA
+  { no: 19, cat: 'JARCERÍA', prod: 'Fibra esponja Scotch', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 20, cat: 'JARCERÍA', prod: 'Gel sanitizante', unit: 'lt', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 21, cat: 'JARCERÍA', prod: 'Microfibra amarilla', unit: 'pza', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  // LÁCTEOS
+  { no: 22, cat: 'LÁCTEOS', prod: 'Leche almendra', unit: 'lt', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 23, cat: 'LÁCTEOS', prod: 'Leche entera Lala Bar', unit: 'lt', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true },
+  { no: 24, cat: 'LÁCTEOS', prod: 'Leche deslactosada Lala Bar', unit: 'lt', pedir: '', recibido: '', estado: '⏳ PENDIENTE', alerta: '-', active: true }
 ];
 
 const INITIAL_MAESTRO = [
-  { no: 1, id: 'REF-001', prod: 'Jamón Lala Pechuga', pres: 'BOL 1 kg', unit: 'kg', activo: 'SÍ', min: 5, max: 20, selected: true },
-  { no: 2, id: 'REF-002', prod: 'Queso Mozzarella', pres: 'BOL 2 kg', unit: 'kg', activo: 'SÍ', min: 10, max: 40, selected: false },
-  { no: 3, id: 'ABA-001', prod: 'Nutella', pres: 'BOTE 3 kg', unit: 'bote', activo: 'SÍ', min: 1, max: 5, selected: false },
-  { no: 4, id: 'FYV-001', prod: 'Fresa Entera', pres: 'CAJA 2 kg', unit: 'caja', activo: 'NO', min: 2, max: 10, selected: false },
-  { no: 5, id: 'REF-003', prod: 'Mantequilla Gloria', pres: 'CAJA 5 kg', unit: 'barra', activo: 'SÍ', min: 2, max: 8, selected: false },
-  { no: 6, id: 'REF-004', prod: 'Crema Lyncott', pres: 'BOTE 1 L', unit: 'litro', activo: 'SÍ', min: 3, max: 12, selected: false },
-  { no: 7, id: 'ABA-002', prod: 'Cajeta Coronado', pres: 'BOTE 4 kg', unit: 'bote', activo: 'SÍ', min: 1, max: 4, selected: false },
-  { no: 8, id: 'ABA-003', prod: 'Harina de Trigo', pres: 'SACO 10 kg', unit: 'bulto', activo: 'SÍ', min: 5, max: 15, selected: false },
-  { no: 9, id: 'FYV-002', prod: 'Plátano Tabasco', pres: 'CAJA 10 kg', unit: 'kg', activo: 'SÍ', min: 4, max: 10, selected: false },
-  { no: 10, id: 'FYV-003', prod: 'Mora Azul', pres: 'CAJA 1.5 kg', unit: 'caja', activo: 'SÍ', min: 2, max: 6, selected: false }
+  // REFRIGERADOS
+  { no: 1, id: 'REF-001', prod: 'Jamón de pavo Lala', pres: 'Caja 5 kg', unit: 'kg', activo: 'SÍ', min: 5, max: 20, selected: true },
+  { no: 2, id: 'REF-002', prod: 'Queso mozzarella CDK', pres: 'Bol 2 kg', unit: 'kg', activo: 'SÍ', min: 10, max: 40, selected: false },
+  { no: 3, id: 'REF-003', prod: 'Crema batida', pres: 'Bote 1 kg', unit: 'g', activo: 'SÍ', min: 2, max: 8, selected: false },
+  // ABARROTES
+  { no: 4, id: 'ABA-001', prod: 'Nutella', pres: 'Bote 3 kg', unit: 'kg', activo: 'SÍ', min: 1, max: 5, selected: false },
+  { no: 5, id: 'ABA-002', prod: 'Azúcar blanca', pres: 'Bulto 50 kg', unit: 'kg', activo: 'SÍ', min: 5, max: 15, selected: false },
+  { no: 6, id: 'ABA-003', prod: 'Café en grano Postales', pres: 'Bolsa 1 kg', unit: 'kg', activo: 'SÍ', min: 2, max: 10, selected: false },
+  // BEBIDAS
+  { no: 7, id: 'BEB-001', prod: 'Agua Epura', pres: 'Pza 600 ml', unit: 'pza', activo: 'SÍ', min: 12, max: 48, selected: false },
+  { no: 8, id: 'BEB-002', prod: 'Agua mineral Canada Dry', pres: 'Pza 355 ml', unit: 'pza', activo: 'SÍ', min: 12, max: 36, selected: false },
+  { no: 9, id: 'BEB-003', prod: 'Pepsi Regular', pres: 'Pza 355 ml', unit: 'pza', activo: 'SÍ', min: 24, max: 72, selected: false },
+  // DESECHABLES
+  { no: 10, id: 'DES-001', prod: 'Cono crepa individual', pres: 'Paq 100 pza', unit: 'pza', activo: 'SÍ', min: 100, max: 500, selected: false },
+  { no: 11, id: 'DES-002', prod: 'Guantes nitrilo chico', pres: 'Caja 100 pza', unit: 'pza', activo: 'SÍ', min: 1, max: 5, selected: false },
+  { no: 12, id: 'DES-003', prod: 'Vaso 20 oz frío', pres: 'Paq 50 pza', unit: 'pza', activo: 'SÍ', min: 2, max: 10, selected: false },
+  // FRUTAS Y VERDURAS
+  { no: 13, id: 'FYV-001', prod: 'Fresa', pres: 'Caja 2 kg', unit: 'kg', activo: 'NO', min: 2, max: 10, selected: false },
+  { no: 14, id: 'FYV-002', prod: 'Limón', pres: 'Bolsa 5 kg', unit: 'pza', activo: 'SÍ', min: 10, max: 50, selected: false },
+  { no: 15, id: 'FYV-003', prod: 'Plátano', pres: 'Caja 10 kg', unit: 'pza', activo: 'SÍ', min: 15, max: 60, selected: false },
+  // JARCERÍA
+  { no: 16, id: 'JAR-001', prod: 'Fibra esponja Scotch', pres: 'Pza', unit: 'pza', activo: 'SÍ', min: 2, max: 10, selected: false },
+  { no: 17, id: 'JAR-002', prod: 'Gel sanitizante', pres: 'Envase 1 L', unit: 'lt', activo: 'SÍ', min: 1, max: 5, selected: false },
+  { no: 18, id: 'JAR-003', prod: 'Microfibra amarilla', pres: 'Pza', unit: 'pza', activo: 'SÍ', min: 2, max: 8, selected: false },
+  // LÁCTEOS
+  { no: 19, id: 'LAC-001', prod: 'Leche almendra', pres: 'Litro', unit: 'lt', activo: 'SÍ', min: 6, max: 24, selected: false },
+  { no: 20, id: 'LAC-002', prod: 'Leche entera Lala Bar', pres: 'Litro', unit: 'lt', activo: 'SÍ', min: 12, max: 48, selected: false },
+  { no: 21, id: 'LAC-003', prod: 'Leche deslactosada Lala Bar', pres: 'Litro', unit: 'lt', activo: 'SÍ', min: 12, max: 48, selected: false }
 ];
 
 const INITIAL_KARDEX = [
-  { no: 1, prod: 'Jamón Lala Pechuga', lunEnt: '15', lunSal: '2', saldo: '13', active: true },
-  { no: 2, prod: 'Queso Mozzarella', lunEnt: '20', lunSal: '5', saldo: '15', active: true },
-  { no: 3, prod: 'Nutella', lunEnt: '5', lunSal: '1', saldo: '4', active: true },
-  { no: 4, prod: 'Fresa Entera', lunEnt: '10', lunSal: '3', saldo: '7', active: true },
-  { no: 5, prod: 'Mantequilla Gloria', lunEnt: '8', lunSal: '2', saldo: '6', active: true },
-  { no: 6, prod: 'Crema Lyncott', lunEnt: '12', lunSal: '4', saldo: '8', active: true },
-  { no: 7, prod: 'Cajeta Coronado', lunEnt: '4', lunSal: '1', saldo: '3', active: true },
-  { no: 8, prod: 'Harina de Trigo', lunEnt: '15', lunSal: '5', saldo: '10', active: true },
-  { no: 9, prod: 'Plátano Tabasco', lunEnt: '10', lunSal: '3', saldo: '7', active: true },
-  { no: 10, prod: 'Mora Azul', lunEnt: '6', lunSal: '2', saldo: '4', active: true }
+  // REFRIGERADOS
+  { no: 1, cat: 'REFRIGERADOS', prod: 'Jamón de pavo Lala', lunEnt: '15', lunSal: '2', saldo: '13', active: true },
+  { no: 2, cat: 'REFRIGERADOS', prod: 'Queso mozzarella CDK', lunEnt: '20', lunSal: '5', saldo: '15', active: true },
+  { no: 3, cat: 'REFRIGERADOS', prod: 'Crema batida', lunEnt: '8', lunSal: '2', saldo: '6', active: true },
+  // ABARROTES
+  { no: 4, cat: 'ABARROTES', prod: 'Nutella', lunEnt: '5', lunSal: '1', saldo: '4', active: true },
+  { no: 5, cat: 'ABARROTES', prod: 'Azúcar blanca', lunEnt: '15', lunSal: '5', saldo: '10', active: true },
+  { no: 6, cat: 'ABARROTES', prod: 'Café en grano Postales', lunEnt: '10', lunSal: '3', saldo: '7', active: true },
+  // BEBIDAS
+  { no: 7, cat: 'BEBIDAS', prod: 'Agua Epura', lunEnt: '24', lunSal: '8', saldo: '16', active: true },
+  { no: 8, cat: 'BEBIDAS', prod: 'Agua mineral Canada Dry', lunEnt: '12', lunSal: '4', saldo: '8', active: true },
+  { no: 9, cat: 'BEBIDAS', prod: 'Pepsi Regular', lunEnt: '36', lunSal: '12', saldo: '24', active: true },
+  // DESECHABLES
+  { no: 10, cat: 'DESECHABLES', prod: 'Cono crepa individual', lunEnt: '200', lunSal: '50', saldo: '150', active: true },
+  { no: 11, cat: 'DESECHABLES', prod: 'Guantes nitrilo chico', lunEnt: '3', lunSal: '1', saldo: '2', active: true },
+  { no: 12, cat: 'DESECHABLES', prod: 'Vaso 20 oz frío', lunEnt: '5', lunSal: '2', saldo: '3', active: true },
+  // FRUTAS Y VERDURAS
+  { no: 13, cat: 'FRUTAS Y VERDURAS', prod: 'Fresa', lunEnt: '10', lunSal: '3', saldo: '7', active: true },
+  { no: 14, cat: 'FRUTAS Y VERDURAS', prod: 'Limón', lunEnt: '25', lunSal: '5', saldo: '20', active: true },
+  { no: 15, cat: 'FRUTAS Y VERDURAS', prod: 'Plátano', lunEnt: '30', lunSal: '10', saldo: '20', active: true },
+  // JARCERÍA
+  { no: 16, cat: 'JARCERÍA', prod: 'Fibra esponja Scotch', lunEnt: '5', lunSal: '1', saldo: '4', active: true },
+  { no: 17, cat: 'JARCERÍA', prod: 'Gel sanitizante', lunEnt: '2', lunSal: '1', saldo: '1', active: true },
+  { no: 18, cat: 'JARCERÍA', prod: 'Microfibra amarilla', lunEnt: '4', lunSal: '1', saldo: '3', active: true },
+  // LÁCTEOS
+  { no: 19, cat: 'LÁCTEOS', prod: 'Leche almendra', lunEnt: '12', lunSal: '4', saldo: '8', active: true },
+  { no: 20, cat: 'LÁCTEOS', prod: 'Leche entera Lala Bar', lunEnt: '24', lunSal: '8', saldo: '16', active: true },
+  { no: 21, cat: 'LÁCTEOS', prod: 'Leche deslactosada Lala Bar', lunEnt: '24', lunSal: '8', saldo: '16', active: true }
 ];
 
 
@@ -504,7 +572,7 @@ const SIM_STEPS = {
         <p class="mb-3">A la izquierda tienes la hoja interactiva <strong>📋 PEDIDO DIARIO</strong>. Observa que en la <strong>fila 2</strong> se indica hoy: <span class="text-oro font-bold font-mono">${getFormattedDate()}</span>.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
-          <p class="text-text-muted">Si la pantalla de tu celular es muy pequeña, usa el botón <i data-lucide="sidebar-open" class="w-3.5 h-3.5 inline text-oro"></i> en la cabecera para ocultar esta guía y enfocar la hoja de cálculo completa.</p>
+          <p class="text-text-muted">La tabla está congelada hasta la columna C (Producto) para facilitar el scroll horizontal en dispositivos móviles.</p>
         </div>
         <p class="text-oro font-semibold mt-3">Presiona "Siguiente" para iniciar.</p>
       `,
@@ -521,7 +589,7 @@ const SIM_STEPS = {
     {
       title: "2. Capturar Pedidos (Flotantes)",
       desc: `
-        <p class="mb-3">Vamos a simular el levantamiento de stock. Escribe en la celda amarilla <strong>PEDIR (F4)</strong> para la fila de <strong>Harina Crepas</strong> e introduce la cantidad <strong>1.5</strong>.</p>
+        <p class="mb-3">Vamos a simular el levantamiento de stock. Escribe en la celda amarilla <strong>CANT. A PEDIR (F4)</strong> para la fila de <strong>Jamón de pavo Lala</strong> e introduce la cantidad <strong>1.5</strong>.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
           <p class="text-text-muted">El sistema de pedidos de LCP permite el ingreso de números decimales de hasta 4 posiciones. Esto es vital para mermas en gramos.</p>
@@ -540,10 +608,10 @@ const SIM_STEPS = {
         }, 100);
       },
       verify: () => {
-        const val = parseFloat(simPedidosData[0].pedir);
+        const val = parseFloat(simPedidosData.find(r => r.prod === 'Jamón de pavo Lala').pedir);
         return !isNaN(val) && val > 0;
       },
-      errorMsg: "Ingresa un número válido mayor a 0 (ej. 1.5) en la celda PEDIR de Harina Crepas (F4)."
+      errorMsg: "Ingresa un número válido mayor a 0 (ej. 1.5) en la celda CANT. A PEDIR de Jamón de pavo Lala (F4)."
     },
     {
       title: "3. Ordenamiento por Categorías",
@@ -567,13 +635,13 @@ const SIM_STEPS = {
       title: "4. Alertas de Adiciones",
       desc: `
         <p class="mb-3">¡La lista se ha agrupado por categorías colocando tu orden al principio!</p>
-        <p class="mb-3">Si agregas una cantidad extra después de haber ordenado y enviado el archivo, el sistema lo marcará como adición. Captura la cantidad <strong>1</strong> en la celda <strong>PEDIR de Nutella (F5)</strong>.</p>
+        <p class="mb-3">Si agregas una cantidad extra después de haber ordenado y enviado el archivo, el sistema lo marcará como adición. Captura la cantidad <strong>1</strong> en la celda <strong>CANT. A PEDIR de Nutella (F7)</strong>.</p>
       `,
       init: () => {
         simActiveTab = 'pedido';
         renderSimTable();
         setTimeout(() => {
-          const input = document.getElementById('input-pedir-8');
+          const input = document.getElementById('input-pedir-7');
           if (input) {
             input.focus();
             input.select();
@@ -584,7 +652,7 @@ const SIM_STEPS = {
         const val = parseFloat(simPedidosData.find(r => r.prod === 'Nutella').pedir);
         return !isNaN(val) && val > 0;
       },
-      errorMsg: "Introduce la cantidad 1 en la celda de Nutella (F5) para simular la adición."
+      errorMsg: "Introduce la cantidad 1 en la celda de Nutella (F7) para simular la adición."
     },
     {
       title: "5. Surtido Rápido & Resumen",
@@ -608,7 +676,7 @@ const SIM_STEPS = {
       title: "6. Conciliación en Móvil",
       desc: `
         <p class="mb-3">¡Ya estamos en la hoja <strong>🚚 SURTIDO RÁPIDO</strong>! Nota que la <strong>fila 2</strong> tiene las instrucciones operativas.</p>
-        <p class="mb-3">Marca la casilla de <strong>Completo (E4)</strong> de la Harina Crepas. Observa cómo cambia la fila a verde y se actualiza el panel <strong>RESUMEN SURTIDO</strong> a la derecha.</p>
+        <p class="mb-3">Marca la casilla de <strong>✅ COMPLETO (E4)</strong> de <strong>Jamón de pavo Lala</strong>. Observa cómo cambia la fila a verde y se actualiza el panel <strong>RESUMEN SURTIDO</strong> a la derecha.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL ENCARGADO:</span>
           <p class="text-text-muted">El panel 'RESUMEN SURTIDO' se calcula automáticamente a partir de las casillas marcadas, dando un conteo preciso al instante.</p>
@@ -620,9 +688,9 @@ const SIM_STEPS = {
         renderSimTable();
       },
       verify: () => {
-        return simPedidosData.find(r => r.prod === 'Harina Crepas (Domo)').recibido === 'completo';
+        return simPedidosData.find(r => r.prod === 'Jamón de pavo Lala').recibido === 'completo';
       },
-      errorMsg: "Marca la casilla de Completo para la Harina Crepas en la columna E de la tabla."
+      errorMsg: "Marca la casilla de ✅ COMPLETO para Jamón de pavo Lala en la columna E de la tabla."
     },
     {
       title: "7. ¡Simulación de Tienda Completada!",
@@ -661,7 +729,7 @@ const SIM_STEPS = {
     {
       title: "2. Administración de Catálogo",
       desc: `
-        <p class="mb-3">La <strong>Fresa Entera</strong> está inactiva (ACTIVO = NO). Vamos a habilitarla para las tiendas haciendo clic en su celda <strong>NO (F4)</strong>.</p>
+        <p class="mb-3">La <strong>Fresa</strong> está inactiva (ACTIVO = NO). Vamos a habilitarla para las tiendas haciendo clic en su celda <strong>NO (F16)</strong>.</p>
         <div class="p-3 bg-verde/10 rounded-md border border-border text-xs space-y-1">
           <span class="font-bold text-oro">💡 TIP DEL BODEGUERO:</span>
           <p class="text-text-muted">Al cambiar un producto a SÍ, los encargados de tienda lo verán en caliente en su hoja de pedidos diarios en la siguiente sincronización.</p>
@@ -672,9 +740,9 @@ const SIM_STEPS = {
         renderSimTable();
       },
       verify: () => {
-        return simMaestroData[3].activo === 'SÍ';
+        return simMaestroData.find(r => r.prod === 'Fresa').activo === 'SÍ';
       },
-      errorMsg: "Haz clic en la celda NO de Fresa Entera para cambiar su estado a SÍ."
+      errorMsg: "Haz clic en la celda NO de Fresa en la columna F de la fila 16 para cambiar su estado a SÍ."
     },
     {
       title: "3. Registro de Kardex",
@@ -850,6 +918,7 @@ function initStep() {
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();
   }
+  syncGuideActiveState();
 }
 
 window.simStepNext = function() {
@@ -876,6 +945,7 @@ window.simStepNext = function() {
     if (panel) {
       panel.classList.add('guide-collapsed');
     }
+    syncGuideActiveState();
     updateReopenButtonVisibility();
     navigateTo('manual');
   }
@@ -1003,7 +1073,7 @@ window.toggleSimMaestroActivo = function(no) {
       
       renderSimTable();
       
-      if (simCurrentStep === 1 && row.prod === 'Fresa Entera' && row.activo === 'SÍ') {
+      if (simCurrentStep === 1 && row.prod === 'Fresa' && row.activo === 'SÍ') {
         simStepNext();
       }
     }
@@ -1127,33 +1197,37 @@ function renderSimTable() {
     // ROW A, B, C... Letters row
     headEl.innerHTML = `
       <tr class="bg-surface-2 border-b border-border">
-        <th class="w-10 bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
-        <th class="text-center font-bold text-[10px] text-text-muted">A</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">B</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">C</th>
+        <th class="sticky-col-idx bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
+        <th class="sticky-col-b text-center font-bold text-[10px] text-text-muted">B</th>
+        <th class="sticky-col-c text-center font-bold text-[10px] text-text-muted">C</th>
         <th class="text-center font-bold text-[10px] text-text-muted">D</th>
         <th class="text-center font-bold text-[10px] text-text-muted">E</th>
         <th class="text-center font-bold text-[10px] text-text-muted">F</th>
         <th class="text-center font-bold text-[10px] text-text-muted">G</th>
+        <th class="text-center font-bold text-[10px] text-text-muted">H</th>
+        <th class="text-center font-bold text-[10px] text-text-muted">I</th>
+        <th class="text-center font-bold text-[10px] text-text-muted">J</th>
       </tr>
       <tr class="bg-emerald-950/20 border-b border-border">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
-        <th colspan="7" class="py-2 text-center font-bold text-verde dark:text-emerald-400 uppercase tracking-wider font-serif">
-          MISE — PEDIDO DIARIO (B-Andares)
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
+        <th colspan="9" class="py-2 text-center font-bold text-crema bg-verde uppercase tracking-wider font-serif">
+          MISE — PEDIDO DIARIO | B-Andares | La Crêpe Parisienne
         </th>
       </tr>
       <tr class="bg-surface border-b border-border">
-        <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
-        <td colspan="2" class="p-0 text-left font-bold border-r border-border">
+        <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
+        <td colspan="2" class="p-0 text-left font-bold border-r border-border" style="position: sticky; left: 40px; z-index: 20; background-color: var(--surface);">
           <label class="flex items-center gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400 w-full h-full px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
             <input type="checkbox" id="sim-check-ordenar" ${simIsSorted ? 'checked' : ''} onchange="handleSimCheckOrdenar(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
-            <span>⚙️ Ordenar</span>
+            <span>Ordenar</span>
           </label>
         </td>
         <td colspan="2" class="px-3 py-2 text-center font-bold text-text-muted font-mono border-r border-border">
+        </td>
+        <td colspan="2" class="px-3 py-2 text-center font-bold text-text-muted font-mono border-r border-border bg-emerald-950/10 dark:bg-emerald-950/30">
           <span>FECHA:</span> <span class="text-oro font-bold">${getFormattedDate()}</span>
         </td>
-        <td colspan="3" class="p-0 text-right font-bold">
+        <td colspan="3" class="p-0 text-right font-bold bg-amber-500/10 dark:bg-amber-500/20">
           <label class="flex items-center justify-end gap-1.5 cursor-pointer select-none text-emerald-800 dark:text-emerald-400 w-full h-full px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
             <input type="checkbox" id="sim-check-surtido" ${simActiveTab === 'surtido' ? 'checked' : ''} onchange="handleSimCheckSurtido(this.checked)" class="w-3.5 h-3.5 border-border rounded text-oro focus:ring-oro cursor-pointer">
             <span>🚚 Surtido</span>
@@ -1161,20 +1235,22 @@ function renderSimTable() {
         </td>
       </tr>
       <tr class="bg-surface-2 border-b border-border text-[10px] text-text-muted">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">3</th>
-        <th>No</th>
-        <th>CATEGORÍA</th>
-        <th>PRODUCTO</th>
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">3</th>
+        <th class="sticky-col-b">CATEGORÍA</th>
+        <th class="sticky-col-c">PRODUCTO</th>
         <th>UNIDAD</th>
-        <th class="w-20">PEDIR</th>
+        <th class="w-24 bg-blue-50/50 dark:bg-sky-950/20">SALDO TEÓRICO</th>
+        <th class="w-24 bg-yellow-50/50 dark:bg-yellow-950/20">CANT. A PEDIR</th>
+        <th class="w-24 bg-blue-50/50 dark:bg-sky-950/20">CANT. RECIBIDA</th>
+        <th class="w-20">DIFERENCIA</th>
         <th class="w-24">ESTADO</th>
-        <th>ALERTAS</th>
+        <th>ALERTAS SURTIDO</th>
       </tr>
     `;
     
     let rowIndex = 4;
     simPedidosData.forEach(row => {
-      if (row.prod === 'Fresa Entera' && !row.active) {
+      if (row.prod === 'Fresa' && !row.active) {
         return;
       }
       
@@ -1189,20 +1265,27 @@ function renderSimTable() {
       
       const tr = document.createElement('tr');
       tr.className = rowClass;
+      
+      const hasPedir = parseFloat(row.pedir) > 0;
+      const recVal = row.recibido === 'completo' ? row.pedir : (row.recibido === 'inexistente' ? '0' : '0');
+      const diffVal = hasPedir ? (parseFloat(recVal) - parseFloat(row.pedir)) : '-';
+      
       tr.innerHTML = `
-        <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
-        <td class="text-center font-bold">${row.no}</td>
-        <td class="font-bold text-emerald-800 dark:text-emerald-400">${row.cat}</td>
-        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('C${rowIndex}', '${row.prod}')">${row.prod}</td>
+        <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
+        <td class="sticky-col-b font-bold text-emerald-800 dark:text-emerald-400">${row.cat}</td>
+        <td class="sticky-col-c font-bold cursor-pointer hover:underline" onclick="selectSimCell('C${rowIndex}', '${row.prod}')">${row.prod}</td>
         <td class="text-center">${row.unit}</td>
-        <td class="edit-cell text-center font-bold">
-          <input type="text" class="sim-cell-input" id="input-pedir-${row.no}" 
+        <td class="text-center bg-blue-50/30 dark:bg-sky-950/10 font-bold">${hasPedir ? '0' : '0'}</td>
+        <td class="edit-cell text-center font-bold bg-yellow-50/30 dark:bg-yellow-950/10">
+          <input type="text" class="sim-cell-input text-center font-bold" id="input-pedir-${row.no}" 
             value="${row.pedir}" 
-            onfocus="selectSimCell('E${rowIndex}', '${row.pedir}')"
+            onfocus="selectSimCell('F${rowIndex}', '${row.pedir}')"
             oninput="handleSimInputChange(${row.no}, 'pedir', this.value)">
         </td>
-        <td class="text-center font-bold ${parseFloat(row.pedir) > 0 ? 'text-amber-600' : 'text-text-muted'}">
-          ${parseFloat(row.pedir) > 0 ? '⏳ PENDIENTE' : '-'}
+        <td class="text-center bg-blue-50/30 dark:bg-sky-950/10 font-bold">${hasPedir ? recVal : '0'}</td>
+        <td class="text-center font-bold text-text-muted">${diffVal}</td>
+        <td class="text-center font-bold ${hasPedir ? 'text-amber-600' : 'text-text-muted'}">
+          ${hasPedir ? '⏳ PENDIENTE' : '-'}
         </td>
         <td class="text-center font-bold ${row.alerta === '🚨 ADICIÓN' ? 'text-orange-600' : 'text-text-muted'}">
           ${row.alerta}
@@ -1221,19 +1304,19 @@ function renderSimTable() {
 
     headEl.innerHTML = `
       <tr class="bg-surface-2 border-b border-border">
-        <th class="w-10 bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
-        <th class="text-center font-bold text-[10px] text-text-muted">A</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">B</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">C</th>
+        <th class="sticky-col-idx bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
+        <th class="sticky-col-b text-center font-bold text-[10px] text-text-muted">B</th>
+        <th class="sticky-col-c text-center font-bold text-[10px] text-text-muted">C</th>
         <th class="text-center font-bold text-[10px] text-text-muted">D</th>
         <th class="text-center font-bold text-[10px] text-text-muted">E</th>
-        <th class="w-4 bg-surface-2 border-l border-r border-border text-center text-text-muted"></th>
         <th class="text-center font-bold text-[10px] text-text-muted">F</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">G</th>
+        <th class="w-4 bg-surface-2 border-l border-r border-border text-center text-text-muted"></th>
+        <th class="text-center font-bold text-[10px] text-text-muted">H</th>
+        <th class="text-center font-bold text-[10px] text-text-muted">I</th>
       </tr>
       <tr class="bg-emerald-950/20 border-b border-border">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
-        <th colspan="5" class="py-2 text-center font-bold text-verde dark:text-emerald-400 uppercase tracking-wider font-serif">
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
+        <th colspan="5" class="py-2 text-center font-bold text-crema bg-verde uppercase tracking-wider font-serif">
           MISE — SURTIDO RÁPIDO (B-Andares)
         </th>
         <th class="bg-surface-2 border-l border-r border-border"></th>
@@ -1242,7 +1325,7 @@ function renderSimTable() {
         </th>
       </tr>
       <tr class="bg-surface border-b border-border">
-        <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
+        <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
         <td colspan="5" class="px-3 py-1.5 text-xs text-text-muted font-light text-center">
           Instrucciones: Marca ✅ si llegó completo o ❌ si no hay. Cantidad manual si llegó parcial.
         </td>
@@ -1251,9 +1334,9 @@ function renderSimTable() {
         <td class="px-3 py-1 text-xs font-bold bg-emerald-50 dark:bg-emerald-950/10 text-center border-b border-border text-emerald-800 dark:text-emerald-400">${completeCount}</td>
       </tr>
       <tr class="bg-surface-2 border-b border-border text-[10px] text-text-muted">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">3</th>
-        <th>PRODUCTO</th>
-        <th class="w-16">CANT. PEDIDA</th>
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">3</th>
+        <th class="sticky-col-b">PRODUCTO</th>
+        <th class="sticky-col-c w-16">CANT. PEDIDA</th>
         <th class="w-16">CANT. RECIBIDA</th>
         <th class="w-20">✅ COMPLETO</th>
         <th class="w-20">❌ INEXISTENTE</th>
@@ -1307,9 +1390,9 @@ function renderSimTable() {
       }
       
       tr.innerHTML = `
-        <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
-        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('A${rowIndex}', '${row.prod}')">${row.prod}</td>
-        <td class="text-center font-bold">${row.pedir}</td>
+        <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
+        <td class="sticky-col-b font-bold cursor-pointer hover:underline" onclick="selectSimCell('B${rowIndex}', '${row.prod}')">${row.prod}</td>
+        <td class="sticky-col-c text-center font-bold">${row.pedir}</td>
         <td class="text-center font-bold bg-surface-2">
           <input type="text" class="sim-cell-input text-center font-bold text-text-muted" disabled value="${recVal}" placeholder="-">
         </td>
@@ -1332,10 +1415,9 @@ function renderSimTable() {
   else if (simActiveTab === 'maestro') {
     headEl.innerHTML = `
       <tr class="bg-surface-2 border-b border-border">
-        <th class="w-10 bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
-        <th class="text-center font-bold text-[10px] text-text-muted">A</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">B</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">C</th>
+        <th class="sticky-col-idx bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
+        <th class="sticky-col-b text-center font-bold text-[10px] text-text-muted">B</th>
+        <th class="sticky-col-c text-center font-bold text-[10px] text-text-muted">C</th>
         <th class="text-center font-bold text-[10px] text-text-muted">D</th>
         <th class="text-center font-bold text-[10px] text-text-muted">E</th>
         <th class="text-center font-bold text-[10px] text-text-muted">F</th>
@@ -1344,16 +1426,15 @@ function renderSimTable() {
         <th class="text-center font-bold text-[10px] text-text-muted">I</th>
       </tr>
       <tr class="bg-emerald-950/20 border-b border-border">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
-        <th colspan="9" class="py-2 text-center font-bold text-verde dark:text-emerald-400 uppercase tracking-wider font-serif">
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
+        <th colspan="8" class="py-2 text-center font-bold text-crema bg-verde uppercase tracking-wider font-serif">
           MISE — CATÁLOGO MAESTRO (Bodega Central)
         </th>
       </tr>
       <tr class="bg-surface-2 border-b border-border text-[10px] text-text-muted">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</th>
-        <th>No</th>
-        <th>ID_FAMILIA</th>
-        <th>PRODUCTO</th>
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</th>
+        <th class="sticky-col-b">ID_FAMILIA</th>
+        <th class="sticky-col-c">PRODUCTO</th>
         <th>PRESENTACION</th>
         <th>UNIDAD</th>
         <th class="w-20">ACTIVO</th>
@@ -1375,10 +1456,9 @@ function renderSimTable() {
       const tr = document.createElement('tr');
       tr.className = rowClass;
       tr.innerHTML = `
-        <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
-        <td class="text-center font-bold">${row.no}</td>
-        <td class="text-center font-mono">${row.id}</td>
-        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('D${rowIndex}', '${row.prod}')">${row.prod}</td>
+        <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
+        <td class="sticky-col-b text-center font-mono">${row.id}</td>
+        <td class="sticky-col-c font-bold cursor-pointer hover:underline" onclick="selectSimCell('C${rowIndex}', '${row.prod}')">${row.prod}</td>
         <td>${row.pres}</td>
         <td class="text-center">${row.unit}</td>
         <td class="edit-cell text-center font-bold" onclick="toggleSimMaestroActivo(${row.no})">
@@ -1397,29 +1477,29 @@ function renderSimTable() {
   else if (simActiveTab === 'kardex') {
     headEl.innerHTML = `
       <tr class="bg-surface-2 border-b border-border">
-        <th class="w-10 bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
-        <th class="text-center font-bold text-[10px] text-text-muted">A</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">B</th>
-        <th class="text-center font-bold text-[10px] text-text-muted">C</th>
+        <th class="sticky-col-idx bg-surface-2 border-r border-border text-center text-text-muted font-bold"></th>
+        <th class="sticky-col-b text-center font-bold text-[10px] text-text-muted">B</th>
+        <th class="sticky-col-c text-center font-bold text-[10px] text-text-muted">C</th>
         <th class="text-center font-bold text-[10px] text-text-muted">D</th>
         <th class="text-center font-bold text-[10px] text-text-muted">E</th>
+        <th class="text-center font-bold text-[10px] text-text-muted">F</th>
       </tr>
       <tr class="bg-emerald-950/20 border-b border-border">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
-        <th colspan="5" class="py-2 text-center font-bold text-verde dark:text-emerald-400 uppercase tracking-wider font-serif">
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">1</th>
+        <th colspan="5" class="py-2 text-center font-bold text-crema bg-verde uppercase tracking-wider font-serif">
           MISE — REGISTRO KARDEX (B-Andares)
         </th>
       </tr>
       <tr class="bg-surface border-b border-border">
-        <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
+        <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">2</td>
         <td colspan="5" class="px-3 py-1.5 text-center font-bold text-text-muted font-mono">
           <span>KARDEX ACTIVO DESDE LUNES:</span> <span class="text-oro font-bold">${getFormattedDate()}</span>
         </td>
       </tr>
       <tr class="bg-surface-2 border-b border-border text-[10px] text-text-muted">
-        <th class="text-center font-bold bg-surface-2 border-r border-border text-text-muted">3</th>
-        <th>No</th>
-        <th>PRODUCTO</th>
+        <th class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted">3</th>
+        <th class="sticky-col-b">CATEGORÍA</th>
+        <th class="sticky-col-c">PRODUCTO</th>
         <th class="w-24">LUN (ENT)</th>
         <th class="w-24">LUN (SAL)</th>
         <th class="w-24">SALDO ACTUAL</th>
@@ -1430,22 +1510,22 @@ function renderSimTable() {
     simKardexData.forEach(row => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
-        <td class="text-center font-bold">${row.no}</td>
-        <td class="font-bold cursor-pointer hover:underline" onclick="selectSimCell('B${rowIndex}', '${row.prod}')">${row.prod}</td>
+        <td class="sticky-col-idx text-center font-bold bg-surface-2 border-r border-border text-text-muted select-none">${rowIndex}</td>
+        <td class="sticky-col-b font-bold text-emerald-800 dark:text-emerald-400">${row.cat}</td>
+        <td class="sticky-col-c font-bold cursor-pointer hover:underline" onclick="selectSimCell('C${rowIndex}', '${row.prod}')">${row.prod}</td>
         <td class="text-center bg-emerald-50 dark:bg-emerald-950/10">
           <input type="text" class="sim-cell-input text-emerald-800 dark:text-emerald-400 font-bold" 
             value="${row.lunEnt}" 
-            onfocus="selectSimCell('C${rowIndex}', '${row.lunEnt}')"
+            onfocus="selectSimCell('D${rowIndex}', '${row.lunEnt}')"
             oninput="handleKardexInputChange(${row.no}, 'lunEnt', this.value)">
         </td>
         <td class="text-center bg-red-50 dark:bg-red-950/10">
           <input type="text" class="sim-cell-input text-red-800 dark:text-red-400 font-bold" 
             value="${row.lunSal}" 
-            onfocus="selectSimCell('D${rowIndex}', '${row.lunSal}')"
+            onfocus="selectSimCell('E${rowIndex}', '${row.lunSal}')"
             oninput="handleKardexInputChange(${row.no}, 'lunSal', this.value)">
         </td>
-        <td class="text-center font-bold text-oro" onclick="selectSimCell('E${rowIndex}', '${row.saldo}')">
+        <td class="text-center font-bold text-oro" onclick="selectSimCell('F${rowIndex}', '${row.saldo}')">
           ${row.saldo}
         </td>
       `;

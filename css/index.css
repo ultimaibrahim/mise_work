@@ -610,6 +610,13 @@ strong {
   pointer-events: none;
 }
 
+#sim-spreadsheet-wrapper {
+  transition: margin-bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#sim-spreadsheet-wrapper.guide-active {
+  margin-bottom: 260px;
+}
+
 /* --- ROLE SWITCHING FADE TRANSITION --- */
 .role-fade-container {
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1356,11 +1363,15 @@ html[data-theme="dark"] .main-title {
 
 /* Sheets Simulator Styles */
 .sim-table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
 }
 .sim-table th, .sim-table td {
-  border: 1px solid var(--border);
-  padding: 0.5rem 0.6rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
   text-align: left;
   vertical-align: middle;
 }
@@ -1370,22 +1381,86 @@ html[data-theme="dark"] .main-title {
   font-weight: 600;
   text-align: center;
   user-select: none;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid transparent;
 }
+.sim-table td {
+  border-left: 1px solid transparent;
+}
+/* Frozen columns sticky styles */
+.sticky-col-idx {
+  position: sticky !important;
+  left: 0 !important;
+  z-index: 10;
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  background-color: var(--surface-2) !important;
+  border-right: 1px solid var(--border) !important;
+  border-left: 1px solid var(--border) !important;
+  text-align: center !important;
+}
+.sticky-col-b {
+  position: sticky !important;
+  left: 40px !important;
+  z-index: 10;
+  width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  background-color: var(--surface) !important;
+}
+.sticky-col-c {
+  position: sticky !important;
+  left: 160px !important;
+  z-index: 10;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  background-color: var(--surface) !important;
+  border-right: 2px solid var(--verde) !important; /* Thick vertical line for frozen pane */
+}
+/* Theme overrides for frozen columns */
+html.dark .sticky-col-b,
+html.dark .sticky-col-c {
+  background-color: var(--surface) !important;
+}
+/* Table headers sticky */
+.sim-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.sim-table thead th.sticky-col-idx { z-index: 35; }
+.sim-table thead th.sticky-col-b { z-index: 35; }
+.sim-table thead th.sticky-col-c { z-index: 35; }
+
 .sim-table tr {
   transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 .sim-table tr.active-row {
-  background-color: rgba(184, 144, 47, 0.12);
+  background-color: rgba(184, 144, 47, 0.08);
+}
+.sim-table tr.active-row td {
+  background-color: rgba(184, 144, 47, 0.08) !important;
 }
 .sim-table tr.success-row {
-  background-color: rgba(61, 138, 95, 0.15) !important;
+  background-color: rgba(61, 138, 95, 0.12) !important;
+}
+.sim-table tr.success-row td {
+  background-color: rgba(61, 138, 95, 0.12) !important;
 }
 .sim-table tr.addition-row {
-  background-color: rgba(239, 108, 0, 0.15) !important;
+  background-color: rgba(239, 108, 0, 0.1) !important;
+}
+.sim-table tr.addition-row td {
+  background-color: rgba(239, 108, 0, 0.1) !important;
 }
 .sim-table tr.inactive-row {
   opacity: 0.45;
   background-color: var(--surface-2);
+}
+.sim-table tr.inactive-row td {
+  background-color: var(--surface-2) !important;
 }
 .sim-table td.edit-cell {
   background-color: var(--accent-glow);
