@@ -175,9 +175,10 @@
         <h2 class="text-xs md:text-sm font-bold font-serif text-oro">Simulador de Operaciones MISE</h2>
       </div>
       <div class="flex items-center gap-2 md:gap-4">
-        <div class="text-[10px] font-bold bg-surface-2 px-2.5 py-1.5 rounded-md border border-border text-oro font-mono tracking-wider transition-colors duration-300" id="sim-role-badge">
-          ROL: SIN SELECCIONAR
-        </div>
+        <button id="sim-role-badge" class="flex items-center gap-1.5 text-[10px] font-bold bg-surface-2 px-2.5 py-1.5 rounded-md border border-border text-oro font-mono tracking-wider transition-colors duration-300 hover:bg-surface hover:text-amber" title="Haz clic para cambiar de Rol">
+          <i data-lucide="repeat" class="w-3.5 h-3.5 text-oro"></i>
+          <span id="sim-role-text">SIN SELECCIONAR</span>
+        </button>
         <button id="sim-theme-toggle" class="theme-toggle-btn p-1.5 rounded-full hover:bg-surface-2 transition-colors" title="Cambiar tema">
           <i data-lucide="sun" class="w-5 h-5 text-oro"></i>
         </button>

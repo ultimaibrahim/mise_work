@@ -416,6 +416,58 @@ function getFormattedDate() {
   return `${day}/${month}/${year}`;
 }
 
+// SHOW CUSTOM TOAST NOTIFICATION THAT FADES OUT IN 5 SECONDS
+function showSimToast(message, type = 'error') {
+  let container = document.getElementById('sim-toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'sim-toast-container';
+    container.className = 'fixed bottom-24 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none w-full max-w-sm px-4';
+    document.body.appendChild(container);
+  }
+  
+  const toast = document.createElement('div');
+  toast.className = 'px-4 py-3 bg-surface border border-border rounded-lg shadow-xl text-xs md:text-sm font-semibold flex items-center gap-2.5 transition-all duration-500 transform translate-y-2 opacity-0 pointer-events-auto max-w-full';
+  
+  let iconName = 'alert-triangle';
+  let borderClass = 'border-l-4 border-l-red-500';
+  let iconColor = 'text-red-500';
+  
+  if (type === 'success') {
+    iconName = 'check-circle';
+    borderClass = 'border-l-4 border-l-emerald-500';
+    iconColor = 'text-emerald-500';
+  } else if (type === 'info') {
+    iconName = 'info';
+    borderClass = 'border-l-4 border-l-oro';
+    iconColor = 'text-oro';
+  }
+  
+  toast.className += ' ' + borderClass;
+  toast.innerHTML = `
+    <i data-lucide="${iconName}" class="w-4 h-4 ${iconColor} shrink-0"></i>
+    <span class="text-text leading-snug flex-1">${message}</span>
+    <button class="text-text-muted hover:text-oro ml-auto shrink-0 transition-colors" onclick="this.parentElement.remove()">
+      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+    </button>
+  `;
+  
+  container.appendChild(toast);
+  if (typeof lucide !== 'undefined') lucide.createIcons({ node: toast });
+  
+  setTimeout(() => {
+    toast.classList.remove('translate-y-2', 'opacity-0');
+  }, 10);
+  
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-[-10px]');
+    setTimeout(() => {
+      toast.remove();
+    }, 500);
+  }, 5000);
+}
+window.showSimToast = showSimToast;
+
 // UPDATE FLOATING REOPEN BUTTON VISIBILITY
 function updateReopenButtonVisibility() {
   const btn = document.getElementById('sim-guide-reopen-btn');
@@ -806,9 +858,9 @@ window.initSimulator = function() {
     simRole = 'pedidos';
   }
   
-  const badge = document.getElementById('sim-role-badge');
-  if (badge) {
-    badge.textContent = `ROL: ${simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO'}`;
+  const roleText = document.getElementById('sim-role-text');
+  if (roleText) {
+    roleText.textContent = simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO';
   }
   updateMenuVisibility();
   
@@ -862,9 +914,9 @@ window.switchSimulatorRole = function(role) {
     simWeekAdvanced = false;
     simTutorialCompleted = false;
     
-    const badge = document.getElementById('sim-role-badge');
-    if (badge) {
-      badge.textContent = `ROL: ${simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO'}`;
+    const roleText = document.getElementById('sim-role-text');
+    if (roleText) {
+      roleText.textContent = simRole === 'pedidos' ? 'ENCARGADO' : 'BODEGUERO';
     }
     updateMenuVisibility();
     
@@ -931,7 +983,7 @@ window.simStepNext = function() {
   }
   
   if (step.verify && !step.verify()) {
-    alert(step.errorMsg || "Por favor, completa la acción requerida antes de continuar.");
+    showSimToast(step.errorMsg || "Por favor, completa la acción requerida antes de continuar.", 'error');
     return;
   }
   
@@ -1108,12 +1160,12 @@ window.simTriggerMenu = function(action) {
   if (action === 'avanzar') {
     document.getElementById('sim-dialog-overlay').classList.remove('hidden');
   } else if (action === 'setup') {
-    alert("Ejecutando Setup Completo en el libro de cálculo...");
+    showSimToast("Ejecutando Setup Completo en el libro de cálculo...", 'info');
   } else if (action === 'sincronizar') {
     if (simRole === 'pedidos' && simCurrentStep === 2) {
       simRunSort();
     } else {
-      alert("Sincronización y enlace de catálogos completada.");
+      showSimToast("Sincronización y enlace de catálogos completada.", 'success');
     }
   }
 };
@@ -1130,7 +1182,7 @@ window.closeSimDialog = function(confirm) {
       renderSimTable();
       simStepNext();
     } else {
-      alert("Operación confirmada.");
+      showSimToast("Operación confirmada.", 'success');
     }
   }
 };

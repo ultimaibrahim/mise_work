@@ -1387,11 +1387,8 @@ html[data-theme="dark"] .main-title {
 .sim-table td {
   border-left: 1px solid transparent;
 }
-/* Frozen columns sticky styles */
+/* Column styles (horizontal freeze disabled) */
 .sticky-col-idx {
-  position: sticky !important;
-  left: 0 !important;
-  z-index: 10;
   width: 40px;
   min-width: 40px;
   max-width: 40px;
@@ -1401,38 +1398,29 @@ html[data-theme="dark"] .main-title {
   text-align: center !important;
 }
 .sticky-col-b {
-  position: sticky !important;
-  left: 40px !important;
-  z-index: 10;
   width: 120px;
   min-width: 120px;
   max-width: 120px;
   background-color: var(--surface) !important;
 }
 .sticky-col-c {
-  position: sticky !important;
-  left: 160px !important;
-  z-index: 10;
   width: 200px;
   min-width: 200px;
   max-width: 200px;
   background-color: var(--surface) !important;
-  border-right: 2px solid var(--verde) !important; /* Thick vertical line for frozen pane */
+  border-right: 1px solid var(--border) !important;
 }
-/* Theme overrides for frozen columns */
+/* Theme overrides for columns */
 html.dark .sticky-col-b,
 html.dark .sticky-col-c {
   background-color: var(--surface) !important;
 }
-/* Table headers sticky */
+/* Table headers sticky vertically */
 .sim-table thead {
   position: sticky;
   top: 0;
   z-index: 30;
 }
-.sim-table thead th.sticky-col-idx { z-index: 35; }
-.sim-table thead th.sticky-col-b { z-index: 35; }
-.sim-table thead th.sticky-col-c { z-index: 35; }
 
 .sim-table tr {
   transition: background-color 0.3s ease, opacity 0.3s ease;
