@@ -55,20 +55,26 @@ const ESTADO = {
 
 // ── MENÚ ────────────────────────────────────────────────────────────────────
 function onOpen() {
-  _checkAutoResetNuevoDia();
-  _actualizarAvisoPedido();
-  SpreadsheetApp.getUi()
-    .createMenu("⚙️ Mise")
-    .addItem("🚀 Setup completo", "setupCompleto")
-    .addSeparator()
-    .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
-    .addSeparator()
-    .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
-    .addSeparator()
-    .addItem("🎲 Generar datos de prueba",               "generarDatosPrueba")
-    .addSeparator()
-    .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
-    .addToUi();
+  try {
+    _checkAutoResetNuevoDia();
+  } catch(e) {}
+  try {
+    _actualizarAvisoPedido();
+  } catch(e) {}
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu("⚙️ Mise")
+      .addItem("🚀 Setup completo", "setupCompleto")
+      .addSeparator()
+      .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
+      .addSeparator()
+      .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
+      .addSeparator()
+      .addItem("🎲 Generar datos de prueba",               "generarDatosPrueba")
+      .addSeparator()
+      .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
+      .addToUi();
+  } catch(e) {}
 }
 
 // ── AVISO DE CONEXIÓN / POBLAR DATOS ──────────────────────────────────────────
