@@ -651,8 +651,21 @@ function _buildVista(key) {
   const ss     = SpreadsheetApp.getActiveSpreadsheet();
 
   let sheet = ss.getSheetByName(bodega.vista);
-  if (sheet) ss.deleteSheet(sheet);
-  sheet = ss.insertSheet(bodega.vista);
+  if (sheet) {
+    sheet.clear();
+    sheet.clearConditionalFormatRules();
+    sheet.setGridlines(true);
+    sheet.setFrozenRows(0);
+    const maxRows = sheet.getMaxRows();
+    const maxCols = sheet.getMaxColumns();
+    if (maxRows > 0 && maxCols > 0) {
+      try {
+        sheet.getRange(1, 1, maxRows, maxCols).breakAtMerge();
+      } catch(e) {}
+    }
+  } else {
+    sheet = ss.insertSheet(bodega.vista);
+  }
 
   // Header — 9 cols (incluye CATEGORÍA y ACTIVO)
   sheet.getRange(1, 1, 1, 9).merge()
