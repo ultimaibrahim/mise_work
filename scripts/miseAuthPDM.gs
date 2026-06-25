@@ -23,7 +23,7 @@
 
 // ── BODEGA ──────────────────────────────────────────────────────────────────
 const BODEGA_KEY    = "BM";
-const BODEGA_NOMBRE = "B-Mercado";
+const BODEGA_NOMBRE = "Mercado";
 const VISTA_MOVIL   = "VISTA_MOVIL_BM";
 const SHEET_SYNC    = "_SYNC_BM";
 
@@ -32,19 +32,22 @@ const SHEET_PEDIDO   = "📋 PEDIDO DIARIO";
 const SHEET_MOVIL    = "📊 VISTA_MÓVIL";
 const SHEET_LOG      = "🗒 LOG";
 const COL_CANT_PEDIR = 6;   // F — CANT. A PEDIR
+const COL_RECIBIDA   = 8;   // H — CANT. RECIBIDA (oculta)
+const COL_ESTADO     = 9;   // I — ESTADO (oculta)
 const DATA_START_ROW = 4;
-const NUM_COLS       = 9;
+const NUM_COLS       = 10;
 
 // Colores institucionales
 const COLORS = {
-  completo:  "#B9F6CA",
-  parcial:   "#FFE0B2",
-  pendiente: "#FFFDE7",
-  yellow:    "#FFFCD0",
-  blue:      "#D0E8FF",
-  neutral_a: "#FAFAFA",
-  neutral_b: "#FFFFFF",
-  logHeader: "#3D5A47"
+  completo:    "#B9F6CA",
+  parcial:     "#FFE0B2",
+  pendiente:   "#FFFDE7",
+  inexistente: "#FFCDD2", // Rojo para cuando es 0 recibido
+  yellow:      "#FFFCD0",
+  blue:        "#D0E8FF",
+  neutral_a:   "#FAFAFA",
+  neutral_b:   "#FFFFFF",
+  logHeader:   "#3D5A47"
 };
 
 const ESTADO = {
@@ -131,7 +134,7 @@ function _actualizarAvisoPedido() {
     return;
   }
 
-  const colA = [], colC = [], colD = [], colE = [], colH = [], colI = [], colJ = [];
+  const colA = [], colC = [], colD = [], colE = [], colG = [], colH = [], colI = [], colJ = [];
   const colB = [];
   const bgs = [];
   
@@ -144,15 +147,15 @@ function _actualizarAvisoPedido() {
     colB.push(['=' + sRef + '!B' + sr]);
     colC.push(['=' + sRef + '!C' + sr]);
     colD.push(['=' + sRef + '!D' + sr]);
-    colE.push(['=' + sRef + '!E' + sr]);
-    colH.push(['=IF(F' + r + '=""; ""; G' + r + '-F' + r + ')']);
-    colI.push(['=IF(' + sRef + '!I' + sr + '="NO"; "🚫 INACTIVO"; IF(F' + r + '="";"—";IF(G' + r + '=0;"⏳ PENDIENTE";IF(G' + r + '>=F' + r + ';"✅ COMPLETO";"⚠️ PARCIAL"))))']);
-    colJ.push(['=IF(F' + r + '=""; ""; IF(G' + r + '<F' + r + '; "⚠️ INCOMPLETO"; ""))']);
+    colE.push(['=IFERROR(' + sRef + '!E' + sr + '*1, 0) & IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "", IF(' + sRef + '!E' + sr + '<' + sRef + '!J' + sr + ', " (-" & (' + sRef + '!J' + sr + '-' + sRef + '!E' + sr + ') & ")", IF(' + sRef + '!E' + sr + '>' + sRef + '!K' + sr + ', " (+" & (' + sRef + '!E' + sr + '-' + sRef + '!K' + sr + ') & ")", " (-)")))']);
+    colG.push(['=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')']);
+    colH.push([""]);
+    colI.push([""]);
+    colJ.push([""]);
 
     const rowBg = Array(NUM_COLS).fill(bg);
-    rowBg[COL_CANT_PEDIR - 1] = COLORS.yellow;
-    rowBg[COL_RECIBIDA - 1]   = COLORS.blue;
-    rowBg[4]                  = COLORS.blue;
+    rowBg[COL_CANT_PEDIR - 1] = COLORS.yellow; // Col F
+    rowBg[4]                  = COLORS.blue;   // Col E
     bgs.push(rowBg);
   }
 
@@ -161,14 +164,15 @@ function _actualizarAvisoPedido() {
   pedido.getRange(DR, 1, count, NUM_COLS).setBackgrounds(bgs);
 
   // Escribir valores y fórmulas por columnas separadas para evitar sobreescritura accidental
-  pedido.getRange(DR, 2, count, 1).setFormulas(colB);
   pedido.getRange(DR, 1, count, 1).setValues(colA);
+  pedido.getRange(DR, 2, count, 1).setFormulas(colB);
   pedido.getRange(DR, 3, count, 1).setFormulas(colC);
   pedido.getRange(DR, 4, count, 1).setFormulas(colD);
   pedido.getRange(DR, 5, count, 1).setFormulas(colE);
-  pedido.getRange(DR, 8, count, 1).setFormulas(colH);
-  pedido.getRange(DR, 9, count, 1).setFormulas(colI);
-  pedido.getRange(DR, 10, count, 1).setFormulas(colJ);
+  pedido.getRange(DR, 7, count, 1).setFormulas(colG);
+  pedido.getRange(DR, 8, count, 1).setValues(colH);
+  pedido.getRange(DR, 9, count, 1).setValues(colI);
+  pedido.getRange(DR, 10, count, 1).setValues(colJ);
 
   pedido.getRange(DR, 1, count, NUM_COLS)
     .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle");
@@ -177,9 +181,8 @@ function _actualizarAvisoPedido() {
   pedido.getRange(DR, 3, count, 1).setHorizontalAlignment("left");   
   pedido.getRange(DR, 4, count, 1).setHorizontalAlignment("center"); 
   pedido.getRange(DR, 5, count, 1).setHorizontalAlignment("right");  
-  pedido.getRange(DR, 9, count, 1).setHorizontalAlignment("center"); 
-  pedido.getRange(DR, 10, count, 1).setHorizontalAlignment("center").setFontWeight("bold").setFontColor("#C62828"); 
-
+  pedido.getRange(DR, 7, count, 1).setHorizontalAlignment("center"); 
+  
   _aplicarAnchosColumnas(pedido);
   _aplicarFormatosCondicionales(pedido);
   
@@ -189,7 +192,7 @@ function _actualizarAvisoPedido() {
     pedido.showColumns(2);
     let filter = pedido.getFilter();
     if (filter) filter.remove();
-    pedido.getRange(3, 2, count + 1, 9).createFilter(); // B3:J (Headers Row 3 to last product Row)
+    pedido.getRange(3, 2, count + 1, 6).createFilter(); // B3:G (Headers Row 3 to last product Row)
   } catch(err) {}
 }
 
@@ -203,6 +206,7 @@ function _aplicarAnchosColumnas(sheet) {
   sheet.setColumnWidth(7, 100);  // DIFERENCIA
   sheet.setColumnWidth(8, 120);  // H - Surtido label
   sheet.setColumnWidth(9, 60);   // I - Checkbox
+  sheet.setColumnWidth(10, 40);  // J - Alerta Adición (oculto)
 }
 
 function _getProductCount() {
@@ -231,6 +235,30 @@ function onEdit(e) {
     if (row < 4) return;
 
     const cantPedir = parseFloat(sheet.getRange(row, 4).getValue()) || 0;
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const pSheet = ss.getSheetByName(SHEET_PEDIDO);
+    if (!pSheet) return;
+
+    // Obtener información del renglón actual
+    const prodNo = sheet.getRange(row, 1).getValue();
+    const prodName = sheet.getRange(row, 3).getValue();
+
+    // Buscar la fila correspondiente en SHEET_PEDIDO buscando por "PRODUCTO" (Col C) o "No" (Col A)
+    const lrP = pSheet.getLastRow();
+    const pData = pSheet.getRange(DATA_START_ROW, 1, lrP - DATA_START_ROW + 1, 3).getValues();
+    let rowInPedido = -1;
+    for (let i = 0; i < pData.length; i++) {
+      if (pData[i][0] === prodNo || String(pData[i][2]).trim() === String(prodName).trim()) {
+        rowInPedido = DATA_START_ROW + i;
+        break;
+      }
+    }
+
+    if (rowInPedido === -1) {
+      try { ss.toast("No se encontró el producto en el pedido diario.", "❌ Error", 4); } catch(err) {}
+      return;
+    }
+
     const lock = LockService.getScriptLock();
     if (!lock.tryLock(10000)) return;
 
@@ -241,8 +269,12 @@ function onEdit(e) {
         if (valCheck === true) {
           sheet.getRange(row, 7).setValue(false); // Inexistente = false
           sheet.getRange(row, 5).setValue(cantPedir); // Recibida = cantPedir
+          pSheet.getRange(rowInPedido, COL_RECIBIDA).setValue(cantPedir); // Sincronizar con pedido diario
+          pSheet.getRange(rowInPedido, COL_ESTADO).setValue("COMPLETO");
         } else {
           sheet.getRange(row, 5).setValue("");
+          pSheet.getRange(rowInPedido, COL_RECIBIDA).setValue("");
+          pSheet.getRange(rowInPedido, COL_ESTADO).setValue("");
         }
       }
       // 3. Columna G: ❌ INEXISTENTE
@@ -251,8 +283,12 @@ function onEdit(e) {
         if (valCheck === true) {
           sheet.getRange(row, 6).setValue(false); // Completo = false
           sheet.getRange(row, 5).setValue(0); // Recibida = 0
+          pSheet.getRange(rowInPedido, COL_RECIBIDA).setValue(0); // Sincronizar con pedido diario
+          pSheet.getRange(rowInPedido, COL_ESTADO).setValue("INEXISTENTE");
         } else {
           sheet.getRange(row, 5).setValue("");
+          pSheet.getRange(rowInPedido, COL_RECIBIDA).setValue("");
+          pSheet.getRange(rowInPedido, COL_ESTADO).setValue("");
         }
       }
       // 4. Columna E: CANT. RECIBIDA (Manual)
@@ -272,23 +308,32 @@ function onEdit(e) {
             e.range.clearContent();
             sheet.getRange(row, 6).setValue(false);
             sheet.getRange(row, 7).setValue(false);
+            pSheet.getRange(rowInPedido, COL_RECIBIDA).setValue("");
+            pSheet.getRange(rowInPedido, COL_ESTADO).setValue("");
             return;
           }
+
+          pSheet.getRange(rowInPedido, COL_RECIBIDA).setValue(checkVal);
 
           if (checkVal === cantPedir) {
             sheet.getRange(row, 6).setValue(true);
             sheet.getRange(row, 7).setValue(false);
+            pSheet.getRange(rowInPedido, COL_ESTADO).setValue("COMPLETO");
           } else if (checkVal === 0) {
             sheet.getRange(row, 6).setValue(false);
             sheet.getRange(row, 7).setValue(true);
+            pSheet.getRange(rowInPedido, COL_ESTADO).setValue("INEXISTENTE");
           } else {
             sheet.getRange(row, 6).setValue(false);
             sheet.getRange(row, 7).setValue(false);
+            pSheet.getRange(rowInPedido, COL_ESTADO).setValue("PARCIAL");
           }
         } else {
           // Si borran la celda
           sheet.getRange(row, 6).setValue(false);
           sheet.getRange(row, 7).setValue(false);
+          pSheet.getRange(rowInPedido, COL_RECIBIDA).setValue("");
+          pSheet.getRange(rowInPedido, COL_ESTADO).setValue("");
         }
       }
     } finally {
@@ -300,9 +345,9 @@ function onEdit(e) {
   // B. Manejo de la pestaña de Pedido Diario
   if (name !== SHEET_PEDIDO) return;
 
-  // 1. Botones Interactivos Móviles (Fila 2) en columnas visibles C-I
+  // 1. Botones Interactivos Móviles (Fila 2) en columnas visibles C-G
   if (row === 2) {
-    if (col === 9) { // I2 - Surtido Rápido (antes L2)
+    if (col === 5) { // E2 - Surtido Rápido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         generarSurtidoRapido();
@@ -315,50 +360,47 @@ function onEdit(e) {
 
   // 2. Validaciones rápidas de entrada (F)
   if (col === COL_CANT_PEDIR) {
-    let rawVal = e.value;
-    if (rawVal !== undefined && rawVal !== null) {
-      const strVal = String(rawVal).trim();
-      const cleanVal = strVal.replace(',', '.');
+    let val = e.range.getValue();
+
+    // Si la celda está vacía o es null, limpiamos la alerta de adición y terminamos
+    if (val === "" || val === null || val === undefined) {
+      sheet.getRange(row, 10).clearContent();
+      return;
+    }
+
+    if (Object.prototype.toString.call(val) === '[object Date]') {
+      e.range.clearContent();
+      sheet.getRange(row, 10).clearContent();
+      try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo (no se permiten fechas).", "❌ Mise", 5); } catch(err) {}
+      return;
+    }
+
+    if (typeof val === "string") {
+      const cleanVal = val.replace(',', '.').trim();
       const num = Number(cleanVal);
-      if (!isNaN(num) && num >= 0) {
+      if (!isNaN(num)) {
         e.range.setValue(num);
+        val = num;
       }
     }
 
-    let val = e.range.getValue();
-    if (val !== "") {
-      if (Object.prototype.toString.call(val) === '[object Date]') {
-        e.range.clearContent();
-        try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo (no se permiten fechas).", "❌ Mise", 5); } catch(err) {}
-        return;
-      }
-      if (typeof val === "string") {
-        const cleanVal = val.replace(',', '.').trim();
-        const num = Number(cleanVal);
-        if (!isNaN(num) && num >= 0) {
-          e.range.setValue(num);
-          val = num;
-        }
-      }
-      const checkVal = Number(val);
-      if (isNaN(checkVal) || checkVal < 0) {
-        e.range.clearContent();
-        try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
-        return;
-      }
+    const checkVal = Number(val);
+    if (isNaN(checkVal) || checkVal < 0) {
+      e.range.clearContent();
+      sheet.getRange(row, 10).clearContent();
+      try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
+      return;
+    }
 
-      // Si es la columna de pedir, manejar alerta de adición (pintar fondo de PRODUCTO en naranja)
-      if (checkVal > 0) {
-        const props = PropertiesService.getScriptProperties();
-        const isSorted = props.getProperty("IS_ORDER_SORTED") === "true";
-        const isSurtidoActive = props.getProperty("IS_SURTIDO_ACTIVE") === "true";
-        if (isSorted || isSurtidoActive) {
-          sheet.getRange(row, 3).setBackground("#FFD54F"); // Fondo naranja en Col C
-        }
-      } else {
-        // Restaurar fondo normal si se vacía la cantidad
-        const bg = (row - DATA_START_ROW) % 2 === 0 ? COLORS.neutral_a : COLORS.neutral_b;
-        sheet.getRange(row, 3).setBackground(bg);
+    if (checkVal === 0) {
+      sheet.getRange(row, 10).clearContent();
+    } else {
+      // checkVal > 0
+      const props = PropertiesService.getScriptProperties();
+      const isSorted = props.getProperty("IS_ORDER_SORTED") === "true";
+      const isSurtidoActive = props.getProperty("IS_SURTIDO_ACTIVE") === "true";
+      if (isSorted || isSurtidoActive) {
+        sheet.getRange(row, 10).setValue("🚨 ADICIÓN"); // Columna J
       }
     }
   }
@@ -382,9 +424,9 @@ function sincronizarEstados() {
   const formula = sync.getRange(4, 1).getFormula();
   if (formula) {
     sync.getRange(4, 1).clearContent();
-    SpreadsheetApp.flush();
+    try { SpreadsheetApp.flush(); } catch(e) {}
     sync.getRange(4, 1).setFormula(formula);
-    SpreadsheetApp.flush();
+    try { SpreadsheetApp.flush(); } catch(e) {}
   } else {
     const props = PropertiesService.getScriptProperties();
     const url = props.getProperty(`BODEGA_URL_${BODEGA_KEY}`);
@@ -419,11 +461,12 @@ function sincronizarEstados() {
         '=' + sRef + '!B' + sr,                       // Col B (CATEGORÍA)
         '=' + sRef + '!C' + sr,                       // Col C (PRODUCTO)
         '=' + sRef + '!D' + sr,                       // Col D (UNIDAD)
-        '=' + sRef + '!E' + sr,                       // Col E (SALDO TEÓRICO)
+        '=IFERROR(' + sRef + '!E' + sr + '*1, 0) & IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "", IF(' + sRef + '!E' + sr + '<' + sRef + '!J' + sr + ', " (-" & (' + sRef + '!J' + sr + '-' + sRef + '!E' + sr + ') & ")", IF(' + sRef + '!E' + sr + '>' + sRef + '!K' + sr + ', " (+" & (' + sRef + '!E' + sr + '-' + sRef + '!K' + sr + ') & ")", " (-)")))', // Col E (SALDO TEÓRICO)
         "",                                           // Col F (CANT. A PEDIR)
-        '=IF(F' + r + '=""; ""; IFERROR(VLOOKUP(C' + r + '; \'🚚 SURTIDO RÁPIDO\'!C:E; 3; FALSE); 0) - F' + r + ')', // Col G (DIFERENCIA)
+        '=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')', // Col G (DIFERENCIA)
         "",                                           // Col H
-        ""                                            // Col I
+        "",                                           // Col I
+        ""                                            // Col J (ADICIÓN)
       ]);
 
       const rowBg = Array(NUM_COLS).fill(highlightColor);
@@ -449,6 +492,7 @@ function sincronizarEstados() {
     // Mostrar Categoría (Col B) y ocultar No (Col A) para permitir filtrado móvil
     try {
       sheet.hideColumns(1);
+      sheet.hideColumns(10);
       sheet.showColumns(2);
       let filter = sheet.getFilter();
       if (filter) filter.remove();
@@ -555,11 +599,12 @@ function ordenarPedido() {
       '=' + sRef + '!B' + sr,                       // Col B (CATEGORÍA)
       '=' + sRef + '!C' + sr,                       // Col C (PRODUCTO)
       '=' + sRef + '!D' + sr,                       // Col D (UNIDAD)
-      '=' + sRef + '!E' + sr,                       // Col E (SALDO TEÓRICO)
+      '=IFERROR(' + sRef + '!E' + sr + '*1, 0) & IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "", IF(' + sRef + '!E' + sr + '<' + sRef + '!J' + sr + ', " (-" & (' + sRef + '!J' + sr + '-' + sRef + '!E' + sr + ') & ")", IF(' + sRef + '!E' + sr + '>' + sRef + '!K' + sr + ', " (+" & (' + sRef + '!E' + sr + '-' + sRef + '!K' + sr + ') & ")", " (-)")))', // Col E (SALDO TEÓRICO)
       items[i].vals[5],                             // Col F (CANT. A PEDIR)
-      '=IF(F' + r + '=""; ""; IFERROR(VLOOKUP(C' + r + '; \'🚚 SURTIDO RÁPIDO\'!C:E; 3; FALSE); 0) - F' + r + ')', // Col G (DIFERENCIA)
-      "",                                           // Col H
-      ""                                            // Col I
+      '=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')', // Col G (DIFERENCIA)
+      items[i].vals[7] === "" ? "" : items[i].vals[7], // Col H (CANT. RECIBIDA)
+      items[i].vals[8] || "",                       // Col I (ESTADO)
+      items[i].vals[9] || ""                        // Col J (ADICIÓN)
     ]);
   }
 
@@ -580,6 +625,7 @@ function ordenarPedido() {
 
   _aplicarFormatosCondicionales(sheet);
   _actualizarVisibilidadInactivos(sheet);
+  sheet.hideColumns(10);
 
   PropertiesService.getScriptProperties().setProperty("IS_ORDER_SORTED", "true");
   try {
@@ -624,13 +670,13 @@ function _setupSync(bodegaUrl) {
     syncSheet = ss.insertSheet(SHEET_SYNC);
     syncSheet.hideSheet();
     syncSheet.getRange(1, 1).setValue(`⚙️ SINCRONIZACIÓN ${BODEGA_NOMBRE} — NO EDITAR`);
-    syncSheet.getRange(3, 1, 1, 9).setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO","🚦","ENT_HOY","SAL_HOY","ACTIVO"]]);
+    syncSheet.getRange(3, 1, 1, 11).setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO","🚦","ENT_HOY","SAL_HOY","ACTIVO","MÍN","MÁX"]]);
   }
   const lastRow = Math.max(syncSheet.getLastRow(), 4);
-  if (lastRow >= 4) syncSheet.getRange(4, 1, lastRow - 3, 9).clearContent();
-  const formula = '=IMPORTRANGE("' + url + '";"'  + VISTA_MOVIL + '!A4:I")';
+  if (lastRow >= 4) syncSheet.getRange(4, 1, lastRow - 3, 11).clearContent();
+  const formula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
   syncSheet.getRange(4, 1).setFormula(formula);
-  SpreadsheetApp.flush();
+  try { SpreadsheetApp.flush(); } catch(e) {}
 }
 
 function instalarTriggers() {
@@ -663,11 +709,13 @@ function resetearPedido() {
 }
 
 function _resetearPedidoSilencioso() {
-  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_PEDIDO);
   if (!sheet) return;
   const count = _getProductCount();
   sheet.getRange(DATA_START_ROW, COL_CANT_PEDIR, count, 1).clearContent();
+  sheet.getRange(DATA_START_ROW, COL_RECIBIDA, count, 2).clearContent(); // Limpiar Col H (Cant. Recibida) y Col I (Estado)
+  sheet.getRange(DATA_START_ROW, 10, count, 1).clearContent(); // Limpiar Columna J (Adición)
   
   const bgs = [];
   for (let i = 0; i < count; i++) {
@@ -678,22 +726,23 @@ function _resetearPedidoSilencioso() {
   }
   sheet.getRange(DATA_START_ROW, 1, count, NUM_COLS).setBackgrounds(bgs);
 
-  // Limpiar fondos de adiciones en la columna C (PRODUCTO)
-  const colCBgs = [];
-  for (let i = 0; i < count; i++) {
-    colCBgs.push([i % 2 === 0 ? COLORS.neutral_a : COLORS.neutral_b]);
-  }
-  sheet.getRange(DATA_START_ROW, 3, count, 1).setBackgrounds(colCBgs);
-
-  // Eliminar la pestaña de Surtido Rápido si existe para reiniciar recepción
+  // Limpiar la pestaña de Surtido Rápido si existe para reiniciar recepción sin romper fórmulas
   const surtido = ss.getSheetByName("🚚 SURTIDO RÁPIDO");
   if (surtido) {
-    try { ss.deleteSheet(surtido); } catch(e) {}
+    const lastRow = surtido.getLastRow();
+    if (lastRow >= 4) {
+      try {
+        surtido.getRange(4, 1, lastRow - 3, surtido.getMaxColumns()).clearContent().clearDataValidations();
+        const protections = surtido.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+        protections.forEach(p => { if (p.canEdit()) p.remove(); });
+      } catch(e) {}
+    }
   }
 
   // Re-aplicar formatos condicionales y visibilidad de inactivos
   _aplicarFormatosCondicionales(sheet);
   _actualizarVisibilidadInactivos(sheet);
+  sheet.hideColumns(10); // Asegurar que Columna J esté oculta
 
   // Resetear los flags de ordenamiento y surtido activo
   PropertiesService.getScriptProperties().setProperty("IS_ORDER_SORTED", "false");
@@ -726,13 +775,57 @@ function setupCompleto() {
   const resp = ui.alert("🚀 Setup completo","¿Deseas reconstruir la arquitectura desde cero?", ui.ButtonSet.YES_NO);
   if (resp !== ui.Button.YES) return;
   PropertiesService.getScriptProperties().deleteAllProperties();
-  SpreadsheetApp.flush();
+  try { SpreadsheetApp.flush(); } catch(e) {}
+  
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
-  const temp = ss.insertSheet("__temp__");
-  ss.getSheets().forEach(s => { if (s.getName() !== "__temp__") { try { ss.deleteSheet(s); } catch(e) {} } });
-  const pedido = ss.insertSheet(SHEET_PEDIDO);
+  // Forzar configuración regional de México para evitar errores de análisis de fórmula (Inglés + comas)
+  try {
+    ss.setSpreadsheetLocale('es_MX');
+    SpreadsheetApp.flush();
+  } catch(e) {}
+  
+  let temp = ss.getSheetByName("__temp__");
+  if (!temp) {
+    temp = ss.insertSheet("__temp__");
+  } else {
+    temp.clear();
+  }
+  
+  // Hojas del sistema que queremos conservar
+  const systemSheetNames = [SHEET_PEDIDO, SHEET_SYNC];
+  ss.getSheets().forEach(s => {
+    const name = s.getName();
+    if (name !== "__temp__" && !systemSheetNames.includes(name)) {
+      try { ss.deleteSheet(s); } catch(e) {}
+    }
+  });
+
+  // Reutilizar o crear SHEET_PEDIDO
+  let pedido = ss.getSheetByName(SHEET_PEDIDO);
+  if (pedido) {
+    pedido.clear();
+    pedido.clearConditionalFormatRules();
+    pedido.setHiddenGridlines(false);
+    pedido.setFrozenRows(0);
+    pedido.setFrozenColumns(0);
+    try { pedido.showSheet(); } catch(e) {}
+    const maxRows = pedido.getMaxRows();
+    const maxCols = pedido.getMaxColumns();
+    if (maxRows > 0 && maxCols > 0) {
+      try { pedido.getRange(1, 1, maxRows, maxCols).breakAtMerge(); } catch(e) {}
+      try { pedido.getRange(1, 1, maxRows, maxCols).writeDataValidation(null); } catch(e) {}
+    }
+  } else {
+    pedido = ss.insertSheet(SHEET_PEDIDO);
+  }
+
   _buildPedidoDiario(pedido);
-  const t = ss.getSheetByName("__temp__"); if (t) ss.deleteSheet(t);
+
+  // Eliminar hoja temporal
+  const t = ss.getSheetByName("__temp__");
+  if (t) {
+    try { ss.deleteSheet(t); } catch(e) {}
+  }
 }
 
 function _buildPedidoDiario(sheet) {
@@ -754,13 +847,13 @@ function _buildPedidoDiario(sheet) {
   sheet.getRange("F2").setValue("FECHA:").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("G2").setFormula('=TODAY()').setBackground("#FFFCD0").setFontColor("#333333").setNumberFormat("DD/MMM/YYYY").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
 
-  sheet.getRange("H2").setValue("🚚 Surtido").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("I2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
+  sheet.getRange("D2").setValue("🚚").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("E2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
   sheet.setRowHeight(2, 24);
 
-  // Fila 3: Headers estables tradicionales (9 columns)
+  // Fila 3: Headers estables tradicionales (10 columns)
   sheet.getRange(3, 1, 1, NUM_COLS)
-    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","",""]])
+    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","","",""]])
     .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(3, 34);
   
@@ -774,8 +867,10 @@ function _buildPedidoDiario(sheet) {
   _actualizarVisibilidadInactivos(sheet);
 
   _aplicarAnchosColumnas(sheet);
-  sheet.hideColumns(1); // Ocultar No
-  sheet.showColumns(2); // Mostrar Categoría
+  sheet.hideColumns(1);  // Ocultar No
+  sheet.hideColumns(COL_RECIBIDA, 2); // Ocultar Cant. Recibida (H) y Estado (I)
+  sheet.hideColumns(10); // Ocultar Alerta Adición (Col J)
+  sheet.showColumns(2);  // Mostrar Categoría
   
   // Crear filtro
   try {
@@ -793,45 +888,77 @@ function _aplicarFormatosCondicionales(sheet) {
   const count = _getProductCount();
   if (count < 1) return;
   const range = sheet.getRange(DATA_START_ROW, 1, count, NUM_COLS);
+  const rangeE = sheet.getRange(DATA_START_ROW, 5, count, 1);
+  const syncName = SHEET_SYNC;
   
   // Regla 1: Alerta adición de última hora (naranja brillante)
   const ruleAdicion = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:H"); 6; FALSE); "")="🚨 ADICIÓN")')
+    .whenFormulaSatisfied('=$J4="🚨 ADICIÓN"')
     .setBackground("#FFD54F")
     .setRanges([range])
     .build();
-     
+      
   // Regla 1.5: Inactivos (gris)
   const ruleInactivo = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=VLOOKUP($C4; INDIRECT("\'' + SHEET_SYNC + '\'!C:I"); 7; FALSE)="NO"')
+    .whenFormulaSatisfied('=VLOOKUP($C4, INDIRECT("\'' + SHEET_SYNC + '\'!C:I"), 7, FALSE)="NO"')
     .setBackground("#EEEEEE")
     .setFontColor("#9E9E9E")
     .setItalic(true)
     .setRanges([range])
     .build();
-     
+      
   // Regla 2: Completos
   const ruleCompleto = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)=$F4)')
+    .whenFormulaSatisfied('=AND($F4>0, IFERROR(VLOOKUP($C4, INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:G"), 4, FALSE), FALSE))')
     .setBackground(COLORS.completo)
     .setRanges([range])
     .build();
-     
-  // Regla 3: Parciales
+
+  // Regla 3: Inexistente / 0 Recibido (Rojo suave)
+  const ruleInexistente = SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied('=AND($F4>0, IFERROR(VLOOKUP($C4, INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:G"), 5, FALSE), FALSE))')
+    .setBackground(COLORS.inexistente)
+    .setRanges([range])
+    .build();
+      
+  // Regla 4: Parciales
   const ruleParcial = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)<$F4)')
+    .whenFormulaSatisfied('=AND($F4>0, IFERROR(VLOOKUP($C4, INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:G"), 3, FALSE), 0)>0, IFERROR(VLOOKUP($C4, INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:G"), 3, FALSE), 0)<$F4)')
     .setBackground(COLORS.parcial)
     .setRanges([range])
     .build();
-     
-  // Regla 4: Pendientes
+      
+  // Regla 5: Pendientes (si la cant recibida no tiene valor/null)
   const rulePendiente = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=AND($F4>0; IFERROR(VLOOKUP($C4; INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:E"); 3; FALSE); 0)=0)')
+    .whenFormulaSatisfied('=AND($F4>0, NOT(IFERROR(VLOOKUP($C4, INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:G"), 4, FALSE), FALSE)), NOT(IFERROR(VLOOKUP($C4, INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:G"), 5, FALSE), FALSE)), IFERROR(VLOOKUP($C4, INDIRECT("\'🚚 SURTIDO RÁPIDO\'!C:G"), 3, FALSE), 0)=0)')
     .setBackground(COLORS.pendiente)
     .setRanges([range])
     .build();
-     
-  sheet.setConditionalFormatRules([ruleCompleto, ruleParcial, ruleAdicion, rulePendiente, ruleInactivo]);
+
+  const rules = [ruleCompleto, ruleParcial, ruleAdicion, ruleInexistente, rulePendiente, ruleInactivo];
+  
+  // Reglas Semáforo en Columna E (SALDO TEÓRICO)
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(`=AND(INDIRECT("'${syncName}'!J" & ROW())>0, INDIRECT("'${syncName}'!E" & ROW()) < 0.5*INDIRECT("'${syncName}'!J" & ROW()))`)
+    .setBackground("#FFCDD2").setFontColor("#B71C1C").setRanges([rangeE]).build());
+    
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(`=AND(INDIRECT("'${syncName}'!J" & ROW())>0, INDIRECT("'${syncName}'!E" & ROW()) < INDIRECT("'${syncName}'!J" & ROW()), INDIRECT("'${syncName}'!E" & ROW()) >= 0.5*INDIRECT("'${syncName}'!J" & ROW()))`)
+    .setBackground("#FFE0B2").setFontColor("#BF360C").setRanges([rangeE]).build());
+    
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(`=AND(OR(INDIRECT("'${syncName}'!J" & ROW())>0, INDIRECT("'${syncName}'!K" & ROW())>0), INDIRECT("'${syncName}'!E" & ROW()) >= INDIRECT("'${syncName}'!J" & ROW()), INDIRECT("'${syncName}'!E" & ROW()) <= INDIRECT("'${syncName}'!K" & ROW()))`)
+    .setBackground("#C8E6C9").setFontColor("#1B5E20").setRanges([rangeE]).build());
+    
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(`=AND(INDIRECT("'${syncName}'!K" & ROW())>0, INDIRECT("'${syncName}'!E" & ROW()) > INDIRECT("'${syncName}'!K" & ROW()))`)
+    .setBackground("#B3E5FC").setFontColor("#0D47A1").setRanges([rangeE]).build());
+    
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenFormulaSatisfied(`=AND(INDIRECT("'${syncName}'!J" & ROW())=0, INDIRECT("'${syncName}'!K" & ROW())=0)`)
+    .setBackground("#CFD8DC").setFontColor("#37474F").setRanges([rangeE]).build());
+      
+  sheet.setConditionalFormatRules(rules);
 }
 
 function acercaDe() {
@@ -899,28 +1026,7 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     return;
   }
 
-  // Preservar cantidades recibidas y estados existentes de 🚚 SURTIDO RÁPIDO
-  const existingSurtido = {};
-  const oldSSheet = ss.getSheetByName("🚚 SURTIDO RÁPIDO");
-  if (oldSSheet) {
-    const oldLr = oldSSheet.getLastRow();
-    if (oldLr >= 4) {
-      // Leer columnas: C (PRODUCTO), E (CANT. RECIBIDA), F (✅ COMPLETO), G (❌ INEXISTENTE)
-      const oldVals = oldSSheet.getRange(4, 3, oldLr - 3, 5).getValues();
-      for (let i = 0; i < oldVals.length; i++) {
-        const prod = String(oldVals[i][0]).trim();
-        if (prod) {
-          existingSurtido[prod] = {
-            cantRecibida: oldVals[i][2], // Col E
-            completo: oldVals[i][3],     // Col F
-            inexistente: oldVals[i][4]   // Col G
-          };
-        }
-      }
-    }
-  }
-
-  // Leer todos los datos del pedido (No, CATEGORÍA, PRODUCTO, UNIDAD, SALDO, CANT. PEDIR, DIFERENCIA)
+  // Leer todos los datos del pedido (10 columnas: No, CATEGORÍA, PRODUCTO, UNIDAD, SALDO, CANT. PEDIR, DIFERENCIA, H, I, J)
   const dataRange = pSheet.getRange(DATA_START_ROW, 1, lr - DATA_START_ROW + 1, NUM_COLS);
   const data = dataRange.getValues();
   const backgrounds = pSheet.getRange(DATA_START_ROW, 3, lr - DATA_START_ROW + 1, 1).getBackgrounds(); // Col C background
@@ -931,21 +1037,22 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     if (!isNaN(cantPedir) && cantPedir > 0) {
       const no = data[i][0];
       const cat = data[i][1];
-      const prod = data[i][2];
+      const prod = String(data[i][2]).trim();
       const bgColC = String(backgrounds[i][0] || "").toLowerCase();
 
-      // Consultar si ya existe información previa guardada en memoria
-      const prev = existingSurtido[prod];
-      const cantRecibida = prev ? prev.cantRecibida : "";
-      const completo = prev ? prev.completo === true : false;
-      const inexistente = prev ? prev.inexistente === true : false;
+      // Consultar información directamente desde el pedido diario (columnas ocultas H e I)
+      const cantRecibida = data[i][COL_RECIBIDA - 1]; // Col H (index 7)
+      const estado = String(data[i][COL_ESTADO - 1] || "").trim(); // Col I (index 8)
+      
+      const completo = (estado === "COMPLETO");
+      const inexistente = (estado === "INEXISTENTE");
 
-      // Detect highlight color (Adición si Col C background es naranja)
+      // Detect highlight color (Adición si Col J tiene "🚨 ADICIÓN", o morado si Col C background es morado)
       let highlightBg = null;
-      if (bgColC === "#e8eaf6" || bgColC === "rgb(232, 234, 246)") {
-        highlightBg = "#E8EAF6"; // Lavender
-      } else if (bgColC === "#ffd54f" || bgColC === "rgb(255, 213, 79)") {
+      if (data[i][9] === "🚨 ADICIÓN") {
         highlightBg = "#FFD54F"; // Orange addition alert
+      } else if (bgColC === "#e8eaf6" || bgColC === "rgb(232, 234, 246)") {
+        highlightBg = "#E8EAF6"; // Lavender
       }
 
       filtered.push({
@@ -1103,7 +1210,7 @@ function _generarSurtidoRapidoInternal(activateSheet) {
       .build();
 
     const ruleSIncompleto = SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=AND($E4>0; $E4<$D4; $F4=FALSE; $G4=FALSE)')
+      .whenFormulaSatisfied('=AND($E4>0, $E4<$D4, $F4=FALSE, $G4=FALSE)')
       .setBackground("#FFE0B2") // light orange
       .setRanges([rangeS])
       .build();
@@ -1125,16 +1232,16 @@ function _generarSurtidoRapidoInternal(activateSheet) {
   sSheet.setRowHeight(3, 28);
     
   sSheet.getRange("I4").setValue("✅ Completos");
-  sSheet.getRange("J4").setFormula("=COUNTIF(F4:F" + (3 + rows) + "; TRUE)");
+  sSheet.getRange("J4").setFormula("=COUNTIF(F4:F" + (3 + rows) + ", TRUE)");
   
   sSheet.getRange("I5").setValue("⚠️ Incompletos");
-  sSheet.getRange("J5").setFormula("=COUNTIFS(D4:D" + (3 + rows) + "; \">0\"; E4:E" + (3 + rows) + "; \">0\"; F4:F" + (3 + rows) + "; FALSE; G4:G" + (3 + rows) + "; FALSE)");
+  sSheet.getRange("J5").setFormula("=COUNTIFS(D4:D" + (3 + rows) + ", \">0\", E4:E" + (3 + rows) + ", \">0\", F4:F" + (3 + rows) + ", FALSE, G4:G" + (3 + rows) + ", FALSE)");
   
   sSheet.getRange("I6").setValue("❌ Inexistentes");
-  sSheet.getRange("J6").setFormula("=COUNTIF(G4:G" + (3 + rows) + "; TRUE)");
+  sSheet.getRange("J6").setFormula("=COUNTIF(G4:G" + (3 + rows) + ", TRUE)");
   
   sSheet.getRange("I7").setValue("🚨 Adiciones");
-  sSheet.getRange("J7").setFormula("=COUNTIF(H4:H" + (3 + rows) + "; \"🚨 ADICIÓN\")");
+  sSheet.getRange("J7").setFormula("=COUNTIF(H4:H" + (3 + rows) + ", \"🚨 ADICIÓN\")");
 
   sSheet.getRange("I4:J4").setBackground("#E8F5E9");
   sSheet.getRange("I5:J5").setBackground("#FFF3E0");

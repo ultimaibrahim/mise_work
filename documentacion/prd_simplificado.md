@@ -4,7 +4,7 @@
 ---
 
 ## 1. Resumen de Negocio
-La suite MISE v1.0 (que consolida y reemplaza la serie de prototipos de prueba v0.5.3) digitaliza por completo el control de inventario de insumos en bodega y automatiza la generación de pedidos diarios para las sucursales de La Crêpe Parisienne (B-Andares y B-Mercado). Antes de MISE, no existía un sistema estructurado para esta operación. MISE optimiza el proceso reduciendo las diferencias entre lo pedido y lo entregado, alertando sobre adiciones tardías y ocultando del catálogo operativo todo producto dado de baja en Bodega.
+La suite MISE v1.0 (que consolida y reemplaza la serie de prototipos de prueba v0.5.3) digitaliza por completo el control de inventario de insumos en bodega y automatiza la generación de pedidos diarios para las sucursales de La Crêpe Parisienne (Andares y Mercado). Antes de MISE, no existía un sistema estructurado para esta operación. MISE optimiza el proceso reduciendo las diferencias entre lo pedido y lo entregado, alertando sobre adiciones tardías y ocultando del catálogo operativo todo producto dado de baja en Bodega.
 
 ---
 

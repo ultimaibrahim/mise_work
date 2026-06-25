@@ -4,7 +4,7 @@
 ---
 
 ## 1. Propósito General del Sistema
-La suite **MISE v1.0** (que consolida y reemplaza la serie de prototipos de prueba v0.5.3) es un ecosistema operativo diseñado para digitalizar y automatizar por completo el flujo de inventario, control de stock y el ciclo diario de abastecimiento de las sucursales de La Crêpe Parisienne (B-Andares y B-Mercado). 
+La suite **MISE v1.0** (que consolida y reemplaza la serie de prototipos de prueba v0.5.3) es un ecosistema operativo diseñado para digitalizar y automatizar por completo el flujo de inventario, control de stock y el ciclo diario de abastecimiento de las sucursales de La Crêpe Parisienne (Andares y Mercado). 
 
 Antes de MISE, no existía ningún sistema ni control estructurado: las solicitudes se hacían en papeles mojados o a través de mensajes de WhatsApp que se traspapelaban, provocando errores al surtir e incertidumbre sobre las existencias reales. MISE elimina por completo estas fricciones operativas eliminando los errores de dedo al levantar pedidos, ordenando automáticamente los insumos según el recorrido de la bodega física, y asegurando tiempos de respuesta instantáneos sin trabar las computadoras o tablets del personal.
 
@@ -13,8 +13,8 @@ Antes de MISE, no existía ningún sistema ni control estructurado: las solicitu
 ## 2. Arquitectura de Datos y Componentes
 El sistema se compone de tres libros independientes de Google Sheets interconectados:
 1. **Bodegas (BDG):** El libro maestro que reside en el servidor o cuenta de bodega. Controla el catálogo unificado, las entradas/salidas diarias de insumos y los saldos reales de stock.
-2. **Pedidos Andares (PDA):** Libro operativo de la sucursal B-Andares para realizar pedidos diarios.
-3. **Pedidos Mercado (PDM):** Libro operativo de la sucursal B-Mercado para realizar pedidos diarios.
+2. **Pedidos Andares (PDA):** Libro operativo de la sucursal Andares para realizar pedidos diarios.
+3. **Pedidos Mercado (PDM):** Libro operativo de la sucursal Mercado para realizar pedidos diarios.
 
 ```
                   ┌──────────────────────────────┐
@@ -35,13 +35,15 @@ El sistema se compone de tres libros independientes de Google Sheets interconect
 
 ### Hojas Internas y Estructura en Bodega (`Bodegas`):
 * **`MAESTRO`:** Registro maestro del catálogo de insumos. Columnas:
-  * `No`: Identificador único y correlativo incremental (`N`).
+  * `No`: Identificador único y correlativo incremental.
   * `ID_FAMILIA`: Código de categoría e insumo (ej: `REF-001`, `FYV-002`).
+  * `CATEGORÍA`: Nombre descriptivo de la categoría.
   * `PRODUCTO`: Nombre legible.
   * `PRESENTACION`: Detalle del empaque (ej: `BOL 500 g`).
   * `UNIDAD`: Medida operativa (`kg`, `lt`, `pza`, etc.).
   * `ACTIVO`: Control de estado (`SÍ` o `NO`).
-  * `MÍN` / `MÁX`: Niveles de control de stock.
+  * `MÍN_BA` / `MÁX_BA` / `STOCK_BA`: Niveles de control de stock y saldos actuales de Andares.
+  * `MÍN_BM` / `MÁX_BM` / `STOCK_BM`: Niveles de control de stock y saldos actuales de Mercado.
   * `SELECCIONAR`: Casilla de verificación para acciones en lote.
 * **`KARDEX_BA` y `KARDEX_BM`:** Hojas de movimientos semanales. El bodeguero captura Entradas (`ENT`) y Salidas (`SAL`) para cada día de la semana. Los saldos se calculan automáticamente (`SLD = Saldo Anterior + ENT - SAL`). Poseen semáforos dinámicos de caducidad por fórmula vinculados a la fecha de vencimiento ingresada en el lote.
 * **`VISTA_MOVIL_BA` y `VISTA_MOVIL_BM`:** Pestañas de solo lectura optimizadas. Contienen el consolidado de datos requeridos por las sucursales, incluyendo el saldo actual y el estado de activación. Es la fuente origen del `IMPORTRANGE` hacia los libros de pedidos.
@@ -49,14 +51,14 @@ El sistema se compone de tres libros independientes de Google Sheets interconect
 
 ### Hojas Internas y Estructura en Pedidos (`Pedidos Andares` / `Pedidos Mercado`):
 * **`📋 PEDIDO DIARIO`:** Interfaz principal para el supervisor y el bodeguero surtidor. Columnas:
-  * `No`: Valor estático (conserva el orden absoluto del catálogo).
-  * `CATEGORÍA`: Prefijo de traducción para ordenamiento (ej. `1. REFRIGERADOS`, `2. FRUTAS Y VERDURAS`).
-  * `PRODUCTO` / `UNIDAD` / `SALDO TEÓRICO`: Cargados dinámicamente desde la hoja de sincronización.
-  * `CANT. A PEDIR`: Celda editable (supervisor ingresa lo necesario).
-  * `CANT. RECIBIDA`: Celda editable (bodeguero captura al entregar).
-  * `DIFERENCIA`: Fórmula automática (`Recibido - Pedido`).
-  * `ESTADO`: Fórmula dinámica que calcula el estatus (`✅ COMPLETO`, `⚠️ PARCIAL`, `⏳ PENDIENTE` o `🚫 INACTIVO`).
-  * `ALERTAS SURTIDO`: Columna inteligente para alertar si falta stock o si es una adición fuera de horario (`🚨 ADICIÓN`).
+  * `No` (Columna A): Valor estático (conserva el orden absoluto del catálogo, oculta).
+  * `CATEGORÍA` (Columna B): Prefijo de traducción para ordenamiento.
+  * `PRODUCTO` (Columna C) / `UNIDAD` (Columna D) / `SALDO TEÓRICO` (Columna E): Cargados dinámicamente desde la hoja de sincronización.
+  * `CANT. A PEDIR` (Columna F): Celda editable (supervisor ingresa lo necesario).
+  * `DIFERENCIA` (Columna G): Fórmula automática (`Recibido - Pedido`).
+  * `CANT. RECIBIDA` (Columna H, oculta): Celda editable (bodeguero captura al entregar).
+  * `ESTADO` (Columna I, oculta): Fórmula dinámica que calcula el estatus (`✅ COMPLETO`, `⚠️ PARCIAL`, `⏳ PENDIENTE` o `🚫 INACTIVO`).
+  * `ALERTAS SURTIDO` (Columna J, oculta): Columna inteligente para alertar si falta stock o si es una adición fuera de horario (`🚨 ADICIÓN`).
 * **`_SYNC_BA` / `_SYNC_BM`:** Hoja oculta que importa en bruto la información de la bodega mediante la fórmula `=IMPORTRANGE()`. Es el puente de datos desacoplado.
 
 ---
