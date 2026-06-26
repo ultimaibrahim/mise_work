@@ -72,3 +72,13 @@ Para visualizarlo localmente, abra `index.html` en su navegador o sírvalo utili
 - **HTML5, Vanilla CSS3 y Javascript Moderno**: Estructuras limpias y estilos premium (diseño alineado con la guía visual oficial de *Reviews LCP GDL*).
 - **Lucide Icons**: Biblioteca de iconos SVG ligeros y consistentes.
 
+---
+
+## ⚠️ Reglas de Desarrollo Críticas
+
+### 1. Fórmulas en Google Sheets (Apps Script)
+Al inyectar fórmulas dinámicas en celdas desde código Apps Script mediante `.setFormula()` o `.setFormulas()`:
+- **Idioma**: Las fórmulas deben escribirse siempre en **inglés** (ej: `IFERROR`, `VLOOKUP`, `AND`, `OR`), incluso si el libro de cálculo del usuario final está configurado en español.
+- **Separadores**: Los parámetros de las fórmulas deben estar separados obligatoriamente por **comas (`,`)**, nunca por puntos y comas (`;`), independientemente de la configuración regional de la hoja de cálculo del usuario.
+- **Detección Automática**: Se incluye un script de prueba local `check_syntax.js` para validar la sintaxis y detectar de forma preventiva el uso de palabras clave en español o separadores de punto y coma en las cadenas de fórmulas.
+
