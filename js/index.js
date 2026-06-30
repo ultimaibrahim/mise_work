@@ -25,6 +25,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (searchInput) {
     searchInput.addEventListener('input', handleManualSearch);
   }
+
+  // Hamburger Menu Drawer Events
+  const menuBtn = document.getElementById('menu-btn');
+  const menuCloseBtn = document.getElementById('menu-close-btn');
+  const menuDrawer = document.getElementById('menu-drawer');
+  const backdrop = document.getElementById('drawer-backdrop');
+
+  if (menuBtn && menuDrawer) {
+    menuBtn.addEventListener('click', openMenuDrawer);
+  }
+  if (menuCloseBtn) {
+    menuCloseBtn.addEventListener('click', closeMenuDrawer);
+  }
+  if (backdrop) {
+    backdrop.addEventListener('click', closeMenuDrawer);
+  }
 });
 
 // --- THEME STATE & TOGGLE ---
@@ -69,9 +85,37 @@ function syncThemeIcons() {
   }
 }
 
+// --- HAMBURGER DRAWER LÓGICA ---
+function openMenuDrawer() {
+  const drawer = document.getElementById('menu-drawer');
+  if (drawer) {
+    drawer.classList.remove('hidden');
+    setTimeout(() => {
+      const inner = drawer.querySelector('.relative');
+      if (inner) inner.classList.remove('-translate-x-full');
+    }, 10);
+  }
+}
+
+function closeMenuDrawer() {
+  const drawer = document.getElementById('menu-drawer');
+  if (drawer) {
+    const inner = drawer.querySelector('.relative');
+    if (inner) inner.classList.add('-translate-x-full');
+    setTimeout(() => {
+      drawer.classList.add('hidden');
+    }, 300);
+  }
+}
+
+window.drawerNavigate = function(viewId) {
+  closeMenuDrawer();
+  switchMainView(viewId);
+};
+
 // --- VIEW NAVIGATION ---
 window.switchMainView = function(viewId) {
-  const views = ['landing', 'manual', 'manual-pedidos', 'manual-bodega', 'about'];
+  const views = ['landing', 'manual', 'manual-pedidos', 'manual-bodega', 'tips', 'about'];
   if (!views.includes(viewId)) viewId = 'landing';
 
   // Toggle views
@@ -89,7 +133,7 @@ window.switchMainView = function(viewId) {
   // Update URL hash
   window.location.hash = `#/${viewId}`;
 
-  // Update navigation buttons active state (highlight Manual button when in sub-pages)
+  // Update navigation buttons active state
   const buttons = document.querySelectorAll('nav button');
   buttons.forEach(btn => {
     const onclickStr = btn.getAttribute('onclick') || '';
@@ -159,41 +203,41 @@ const CONTEXT_HELP = {
   pedidos: {
     'pedir': {
       title: 'Columna PEDIR (Cantidad de Pedido)',
-      desc: 'Celda rellenable por el encargado de tienda. Permite ingresar cantidades de insumos. La fila se resalta automáticamente en amarillo suave para verificar visualmente qué productos han sido seleccionados.'
+      desc: 'Celda editable por el encargado de tienda. Registra las cantidades deseadas para reabastecer el punto de venta. Al capturar, la fila completa se sombrea en amarillo suave para corroborar visualmente la lista.'
     },
     'adicion': {
       title: 'Alerta de Adición Tardía',
-      desc: 'Si agregas o modificas una cantidad en la tienda después de que el pedido fue mandado a bodega, la celda de estatus cambia de forma automática a naranja con la alerta "🚨 ADICIÓN". Indica al surtidor de bodega que es un pedido de último minuto.'
+      desc: 'Si agregas o modificas una cantidad en la tienda después de que el pedido fue consolidado, la celda de estatus cambia de forma automática a naranja con la alerta "🚨 ADICIÓN". Indica al surtidor de bodega que es un pedido de último minuto.'
     },
     'surtido-check-complete': {
       title: 'Check Completo (Surtido)',
-      desc: 'Casilla táctil para el encargado. Se marca si la cantidad de insumos que llegó en el camión coincide exactamente con lo pedido. Colorea la fila de verde de forma automática.'
+      desc: 'Casilla táctil para marcar si la cantidad de insumos recibida coincide al 100% con lo solicitado originalmente. Rellena la cantidad real recibida de forma automática y cambia el estatus de la fila a verde.'
     },
     'surtido-check-missing': {
       title: 'Check Inexistente (Surtido)',
-      desc: 'Casilla táctil para registrar que el insumo no fue entregado por bodega. El sistema descuenta el valor del pedido activo.'
+      desc: 'Casilla táctil para indicar que el producto no fue entregado por bodega. Registra automáticamente existencias de recepción en cero para auditoría de faltantes.'
     }
   },
   bodegas: {
     'activo-check': {
-      title: 'Casilla Activo (Control de Catálogo)',
-      desc: 'Define si un insumo está habilitado para pedidos. Si cambia a NO, el producto se oculta de inmediato de las pantallas de las tiendas, previniendo pedidos erróneos de productos agotados.'
+      title: 'Casilla Activo (Catálogo Maestro)',
+      desc: 'Controla si el insumo está disponible para los pedidos de las tiendas. Al cambiar a NO, el producto se oculta de inmediato de las pantallas de los encargados, evitando pedidos erróneos de insumos agotados.'
     },
     'min-max': {
-      title: 'Niveles de Mínimo y Máximo',
-      desc: 'Establece los niveles de inventario de seguridad y sobrestock para la sucursal. Estos límites regulan el semáforo inteligente de inventario.'
+      title: 'Niveles Mínimo y Máximo',
+      desc: 'Rangos de stock requeridos para la sucursal. Estos parámetros son la base para calcular las alertas del semáforo inteligente de compras.'
     },
     'acciones-check': {
-      title: 'Checkboxes de Selección Masiva',
-      desc: 'Permite seleccionar múltiples productos de la hoja MAESTRO para aplicar cambios masivos desde el menú superior (como activar, desactivar o eliminar del catálogo en lote).'
+      title: 'Checkbox de Selección Masiva',
+      desc: 'Casilla que permite al administrador seleccionar productos específicos del catálogo para aplicar cambios en lote usando el menú superior "⚙️ Mise" (como dar de baja o eliminar varios productos juntos).'
     },
     'descontinuado': {
       title: 'Producto Descontinuado',
-      desc: 'Cuando un producto se desactiva (Activo = NO), su fila se atenúa en gris para mantener el histórico de forma visual sin sobrecargar el catálogo activo de las tiendas.'
+      desc: 'Cuando un producto se inactiva, su fila se atenúa en color gris. Permite conservar el registro histórico en bodega central sin entorpecer la operación diaria de las tiendas.'
     },
     'saldo-real': {
-      title: 'Saldo en Kardex',
-      desc: 'Muestra el stock físico resultante calculado con la fórmula: (Inventario Inicial + Entradas por compras - Salidas hacia tiendas). Garantiza coincidencia física y digital.'
+      title: 'Saldo Real (Kardex)',
+      desc: 'Existencia física teórica calculada de forma dinámica mediante la fórmula: (Inventario Inicial + Entradas por compras - Salidas enviadas a tiendas). Asegura un inventario libre de descuadres.'
     }
   }
 };

@@ -56,14 +56,86 @@
     
     <!-- HEADER -->
     <header class="w-full flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-bg/85 backdrop-blur-md z-30">
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-bold font-serif tracking-tight text-verde dark:text-crema">MISE</h1>
-        <span class="text-[9px] font-bold tracking-wider uppercase bg-oro/10 text-oro px-2 py-0.5 rounded-full">Guía Oficial</span>
+      <div class="flex items-center gap-3">
+        <!-- Hamburger Menu Button -->
+        <button id="menu-btn" class="p-1.5 rounded hover:bg-surface-2 transition-colors duration-200" title="Abrir Índice">
+          <i data-lucide="menu" class="w-6 h-6 text-verde dark:text-crema"></i>
+        </button>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold font-serif tracking-tight text-verde dark:text-crema">MISE</h1>
+          <span class="text-[9px] font-bold tracking-wider uppercase bg-oro/10 text-oro px-2 py-0.5 rounded-full">Guía Oficial</span>
+        </div>
       </div>
       <button id="theme-toggle" class="p-2 rounded-full hover:bg-surface-2 transition-colors duration-200" title="Cambiar tema">
         <i data-lucide="sun" class="w-5 h-5 text-oro"></i>
       </button>
     </header>
+
+    <!-- ==================== SLIDE-OUT HAMBURGER MENU DRAWER ==================== -->
+    <div id="menu-drawer" class="fixed inset-0 z-50 flex justify-start hidden">
+      <!-- Dark overlay backdrop -->
+      <div id="drawer-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"></div>
+      
+      <!-- Drawer Content -->
+      <div class="relative w-80 max-w-[85%] h-full bg-surface border-r border-border shadow-2xl flex flex-col p-6 space-y-8 z-10 transition-transform duration-300 transform -translate-x-full">
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between">
+          <div class="space-y-0.5">
+            <span class="text-[9px] font-bold text-oro uppercase tracking-widest font-mono">Suite Atelier</span>
+            <div class="text-2xl font-bold font-serif text-verde dark:text-crema">Índice General</div>
+          </div>
+          <button id="menu-close-btn" class="p-1 rounded-full hover:bg-surface-2 transition-colors">
+            <i data-lucide="x" class="w-5 h-5 text-text-muted"></i>
+          </button>
+        </div>
+
+        <!-- Menu Navigation Items -->
+        <ul class="space-y-3 flex-1 overflow-y-auto text-xs select-none">
+          <li>
+            <button onclick="drawerNavigate('landing')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+              <i data-lucide="home" class="w-4 h-4 text-oro"></i> Inicio
+            </button>
+          </li>
+          <li>
+            <button onclick="drawerNavigate('manual')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+              <i data-lucide="book-open" class="w-4 h-4 text-oro"></i> Manual General
+            </button>
+          </li>
+          <li class="border-t border-border pt-3">
+            <span class="px-3 text-[9px] font-bold uppercase tracking-wider text-text-muted font-mono">Manuales por Módulo</span>
+          </li>
+          <li>
+            <button onclick="drawerNavigate('manual-pedidos')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium pl-6">
+              <i data-lucide="store" class="w-4 h-4 text-verde dark:text-sage"></i> Módulo de Pedidos (Tienda)
+            </button>
+          </li>
+          <li>
+            <button onclick="drawerNavigate('manual-bodega')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium pl-6">
+              <i data-lucide="warehouse" class="w-4 h-4 text-verde dark:text-sage"></i> Módulo de Bodega (Central)
+            </button>
+          </li>
+          <li class="border-t border-border pt-3">
+            <span class="px-3 text-[9px] font-bold uppercase tracking-wider text-text-muted font-mono">Consejos Operativos</span>
+          </li>
+          <li>
+            <button onclick="drawerNavigate('tips')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+              <i data-lucide="lightbulb" class="w-4 h-4 text-oro"></i> Tips & Tricks de Hojas
+            </button>
+          </li>
+          <li class="border-t border-border pt-3">
+            <button onclick="drawerNavigate('about')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+              <i data-lucide="info" class="w-4 h-4 text-oro"></i> Acerca de la Guía
+            </button>
+          </li>
+        </ul>
+
+        <!-- Drawer Footer -->
+        <div class="border-t border-border pt-4 text-[10px] text-text-muted space-y-1">
+          <div>La Crêpe Parisienne — Guadalajara</div>
+          <div class="font-mono">Versión 2.0 Estable</div>
+        </div>
+      </div>
+    </div>
 
     <!-- ==================== VIEW 1: PORTAL (INICIO) ==================== -->
     <div id="landing-view" class="view-container px-6 py-8 space-y-8 animate-fade-in">
@@ -82,7 +154,7 @@
         </p>
       </div>
 
-      <!-- SIMPLIFIED SYSTEM FLOW (CLOUD ARCHITECTURE PREVIOUSLY IN MANUAL) -->
+      <!-- SIMPLIFIED SYSTEM FLOW -->
       <div class="bg-surface border border-border p-5 rounded-lg space-y-4 shadow-sm">
         <h3 class="text-xs font-bold uppercase tracking-wider text-oro flex items-center gap-1.5">
           <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> ¿Cómo funciona MISE?
@@ -214,7 +286,7 @@
         </div>
 
         <!-- Pedido Diario Mock Table -->
-        <div id="sub-table-ped-diario" class="overflow-x-auto w-full">
+        <div id="sub-table-ped-diario" class="overflow-x-auto w-full scroll-hint">
           <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
               <th class="p-2 border-r border-border">PRODUCTO</th>
@@ -242,7 +314,7 @@
         </div>
 
         <!-- Surtido Rápido Mock Table -->
-        <div id="sub-table-sur-rapido" class="overflow-x-auto w-full hidden">
+        <div id="sub-table-sur-rapido" class="overflow-x-auto w-full hidden scroll-hint">
           <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
               <th class="p-2 border-r border-border">PRODUCTO</th>
@@ -275,39 +347,57 @@
         </p>
       </div>
 
-      <!-- DETAILED GUIDELINES -->
+      <!-- DUMMIES INTERACTIVE MANUAL TABLES -->
       <div class="space-y-4">
+        <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Tabla de Control de Pedidos (Dummies)</h3>
         
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-2">
-          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">¿Cómo levantar tu pedido?</h3>
-          <p class="text-xs text-text-muted leading-relaxed">
-            El encargado recorre la sucursal con el celular en mano. Al abrir la pestaña <strong>📋 PEDIDO DIARIO</strong>, introduce la cantidad justa de stock requerida en la columna <strong>PEDIR</strong>. La fila correspondiente se ilumina en amarillo para facilitar el control de captura.
-          </p>
-        </div>
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-surface border-b border-border text-text font-bold">
+              <th class="p-3 border-r border-border w-[35%]">Feature / Casilla</th>
+              <th class="p-3">Sección y Funcionamiento Detallado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">Fila 2: Casilla Surtido Rápido (E2)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Pedido Diario</strong>. Al marcar este checkbox, la hoja genera y te redirecciona a la pestaña optimizada de <strong>Surtido Rápido</strong>, ocultando el resto de celdas innecesarias para facilitar el conteo desde el celular.
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">Columna: PEDIR</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Pedido Diario</strong>. Celda donde escribes la cantidad de insumos requerida. La fila se ilumina en amarillo para confirmar la selección.
+              </td>
+            </tr>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">Indicador: ADICIÓN (Naranja)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Alertas Tardías</strong>. Si escribes una cantidad después de la hora de bloqueo de pedidos, la celda se pinta de naranja y muestra el aviso de <strong>🚨 ADICIÓN</strong> para avisar a Bodega.
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">Casilla: ✅ COMPLETO</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Surtido Rápido (Móvil)</strong>. Al marcar este check, el sistema asume que llegó el 100% de lo pedido, rellenando la columna "Recibido" con la cantidad de pedido de forma automática.
+              </td>
+            </tr>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">Casilla: ❌ INEXISTENTE</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Surtido Rápido (Móvil)</strong>. Al marcar este check, registras que la mercancía no llegó (cero absoluto), desmarcando la casilla de completo automáticamente.
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-2">
-          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Conciliación de Entregas</h3>
+        <!-- FAQ AND OPERATIONAL FLOWS -->
+        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Reinicio de Pedidos Diario</h3>
           <p class="text-xs text-text-muted leading-relaxed">
-            Al arribar el repartidor, el encargado activa la pestaña <strong>🚚 SURTIDO RÁPIDO</strong>. En lugar de escribir números, utiliza checkboxes simples:
+            La hoja cuenta con un **Reinicio Diario Automático**. Todas las mañanas, al abrir el archivo de la tienda, la columna de PEDIR se borra y se restablece a cero de manera automática. Esto evita que los insumos pedidos ayer se dupliquen o se vuelvan a despachar por error hoy.
           </p>
-          <ul class="list-disc pl-4 text-xs text-text-muted space-y-1.5">
-            <li><strong>Casilla COMPLETO:</strong> Se marca si la mercancía recibida coincide exactamente con el pedido original. Colorea la fila de verde automáticamente.</li>
-            <li><strong>Casilla INEXISTENTE:</strong> Se marca si el producto no fue entregado por bodega (calculando existencias en cero).</li>
-          </ul>
-        </div>
-
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-2">
-          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Preguntas y Eventos Críticos</h3>
-          <ul class="space-y-3 text-xs text-text-muted leading-relaxed">
-            <li>
-              <strong class="text-oro block">¿Qué pasa si olvidé pedir algo y lo agrego después?</strong>
-              Si editas el pedido después de que fue enviado/bloqueado, la celda se pintará de naranja mostrando el estatus <strong>🚨 ADICIÓN</strong>. El surtidor de bodega sabrá de inmediato que debe preparar un pedido extra de última hora.
-            </li>
-            <li>
-              <strong class="text-oro block">¿Cómo se resetea la hoja para el día siguiente?</strong>
-              La hoja cuenta con un <strong>Reinicio Diario automático</strong>. Cada mañana, al abrir la hoja de pedidos de la tienda por primera vez, el sistema detecta el cambio de fecha y borra automáticamente todas las cantidades escritas en la columna de pedidos del día anterior para iniciar la jornada limpia.
-            </li>
-          </ul>
         </div>
 
         <!-- SEMAPHORE AT THE BOTTOM (TIENDA CONTEXT) -->
@@ -387,7 +477,7 @@
         </div>
 
         <!-- Maestro Sub-Table -->
-        <div id="sub-table-maestro" class="overflow-x-auto w-full">
+        <div id="sub-table-maestro" class="overflow-x-auto w-full scroll-hint">
           <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[380px]">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
               <th class="p-2 border-r border-border text-center">PRODUCTO</th>
@@ -422,7 +512,7 @@
         </div>
 
         <!-- Kardex Sub-Table -->
-        <div id="sub-table-kardex" class="overflow-x-auto w-full hidden">
+        <div id="sub-table-kardex" class="overflow-x-auto w-full hidden scroll-hint">
           <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
               <th class="p-2 border-r border-border text-center">PRODUCTO</th>
@@ -451,55 +541,122 @@
         </p>
       </div>
 
-      <!-- DETAILED GUIDELINES -->
+      <!-- DUMMIES BODEGA TABLES -->
       <div class="space-y-4">
         
-        <!-- MENU ⚙️ MISE DETAILS -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-4">
-          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Menú Superior Custom "⚙️ Mise"</h3>
-          <p class="text-xs text-text-muted leading-relaxed">
-            Este menú especial incrustado en la barra de Google Sheets permite al administrador ejecutar tareas automatizadas clave sin escribir código:
-          </p>
+        <!-- TABLE 1: MENU ACTIONS -->
+        <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Menú Superior ⚙️ Mise (Bodega)</h3>
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-surface border-b border-border text-text font-bold">
+              <th class="p-3 border-r border-border w-[35%]">Acción del Menú</th>
+              <th class="p-3">Funcionamiento Detallado (Paso a Paso)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">🚀 Setup completo</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                Genera la estructura de pestañas (`MAESTRO`, `KARDEX`, etc.), inyecta validaciones y formatea desde cero. <strong>Solo se ejecuta al iniciar el libro maestro por primera vez.</strong>
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">📅 Configurar semana</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                Establece la fecha del lunes del Kardex. Abre un diálogo para elegir entre:
+                <ul class="list-disc pl-4 mt-1 space-y-1">
+                  <li><strong>Automática:</strong> El sistema detecta y escribe la fecha de la semana corriente.</li>
+                  <li><strong>Manual:</strong> El usuario escribe manualmente una fecha que debe coincidir con lunes para auditoría.</li>
+                </ul>
+              </td>
+            </tr>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">📅 Avanzar semana</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Cierre de Sábado</strong>. Copia consumos totales en la base histórica, borra entradas y salidas diarias del Kardex, y traslada los saldos de cierre como stock de inicio del lunes siguiente.
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">📊 Recrear Vista Móvil</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                Reconstruye el enlace e `IMPORTRANGE` que leen las tiendas en caso de que un usuario lo borre por error.
+              </td>
+            </tr>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">➕ Agregar productos</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                Genera la hoja temporal <code>➕ AGREGAR_MÚLTIPLES</code> para escribir insumos nuevos. Al verificar el check "Confirmar", se importan en lote y se elimina la hoja temporal.
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">📝 Editar productos</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                Crea la hoja temporal <code>✏️ EDITAR_PRODUCTOS</code> trayendo solo los insumos que tienen el check "Seleccionar". Permite modificar sus datos y guardarlos de golpe.
+              </td>
+            </tr>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">🗑 Eliminar productos</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                Remueve de forma definitiva de todas las hojas los insumos marcados con el check de selección.
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-          <div class="space-y-3 text-xs text-text-muted">
-            <div class="border-l-2 border-oro pl-3 py-0.5 space-y-1">
-              <strong class="text-text block">Configurar Semana (Método Doble)</strong>
-              <p>Establece el lunes inicial en las celdas del Kardex. Se puede hacer de dos formas:</p>
-              <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-[11px]">
-                <li><strong>Automático:</strong> El sistema detecta la semana actual y escribe la fecha del lunes correspondiente de forma automática.</li>
-                <li><strong>Manual:</strong> Permite ingresar por cuadro de texto una fecha específica (validando que sea lunes) para registros históricos.</li>
-              </ul>
-            </div>
+        <!-- TABLE 2: CHECKBOXES ACTIONABLE -->
+        <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Checkboxes en Bodega</h3>
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-surface border-b border-border text-text font-bold">
+              <th class="p-3 border-r border-border w-[35%]">Casilla / Celda</th>
+              <th class="p-3">Acción y Efecto en la Hoja</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">Fila 2: Casillas de Selección (D2, F2, H2, J2)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Hoja MAESTRO</strong>. Permiten ejecutar acciones sobre los productos seleccionados en lote: desactivar (`D2`), activar (`F2`), eliminar (`H2`) o limpiar las selecciones (`J2`) con un solo clic.
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">Columna: SELECCIONAR (Check)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Hoja MAESTRO</strong>. Permite marcar productos específicos para que el sistema sepa a cuáles aplicar la edición o eliminación grupal.
+              </td>
+            </tr>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">Columna: ACTIVO (SÍ/NO)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Hoja MAESTRO</strong>. Al seleccionar NO, el sistema oculta inmediatamente la fila en las hojas Kardex y en las tiendas. Al seleccionar SÍ, el producto vuelve a ser visible en todos los módulos.
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">Casilla: Avanzar Semana (N4)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Hoja KARDEX</strong>. Alternativa directa en celda para ejecutar el cierre semanal y respaldar inventarios los sábados.
+              </td>
+            </tr>
+            <tr class="border-b border-border bg-surface/50">
+              <td class="p-3 border-r border-border font-bold text-oro">Casilla: Recrear Vista (Q4)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Hoja KARDEX</strong>. Alternativa en celda para reparar y restaurar la conexión de visualización remota con la tienda.
+              </td>
+            </tr>
+            <tr class="border-b border-border">
+              <td class="p-3 border-r border-border font-bold text-oro">Casillas: Confirmar (J3 / I3)</td>
+              <td class="p-3 leading-relaxed text-text-muted">
+                <strong>Hojas Temporales</strong>. Checks especiales para confirmar y consolidar la Carga Masiva o la Edición Masiva de productos de forma segura.
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-            <div class="border-l-2 border-oro pl-3 py-0.5">
-              <strong class="text-text block">Avanzar Semana (Cierre de Sábado)</strong>
-              <p>Toma el saldo final del Kardex activo, lo guarda como historial histórico y limpia las celdas diarias de entradas y salidas, cargando el saldo final como el nuevo stock inicial para el lunes siguiente.</p>
-            </div>
-
-            <div class="border-l-2 border-oro pl-3 py-0.5">
-              <strong class="text-text block">Agregar, Editar y Borrar Productos</strong>
-              <ul class="list-disc pl-4 mt-0.5 space-y-0.5 text-[11px]">
-                <li><strong>Agregar:</strong> Registra un nuevo insumo y lo añade al final del catálogo y de todos los Kardex de tiendas.</li>
-                <li><strong>Editar:</strong> Abre una hoja temporal para modificar rápidamente los nombres o presentaciones de insumos en lote.</li>
-                <li><strong>Borrar:</strong> Remueve productos de forma masiva de las bases de datos activas.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- BODEGA CHECKBOXES -->
+        <!-- PRODUCT BEHAVIOR -->
         <div class="bg-surface border border-border p-5 rounded-lg space-y-2">
-          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Checkboxes en Bodega</h3>
+          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Control de Nuevos Productos</h3>
           <p class="text-xs text-text-muted leading-relaxed">
-            En la hoja <strong>MAESTRO</strong>, la columna <strong>SELECCIONAR</strong> cuenta con checkboxes individuales. Al marcar estos checks, el administrador puede seleccionar múltiples productos a la vez para aplicar acciones del menú ⚙️ Mise (como dar de baja en lote, modificar unidades o eliminar del sistema).
-          </p>
-        </div>
-
-        <!-- DISCONTINUED VS NEW PRODUCTS -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-2">
-          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Productos Nuevos y Descontinuados</h3>
-          <p class="text-xs text-text-muted leading-relaxed">
-            Cuando un insumo ya no se maneja o se descontinúa, el administrador cambia la celda ACTIVO a <strong>NO</strong>. De inmediato, la fila se vuelve gris atenuada y el producto se oculta de las tiendas, manteniendo la información limpia. Al ingresar un producto nuevo, el sistema crea sus registros en todos los libros y asigna formato de alerta hasta que se configura su stock mínimo/máximo.
+            Al dar de alta un producto nuevo, el sistema le creará sus registros automáticamente en la Bodega y en las tiendas. Aparecerá en estatus de **No Configurado** hasta que se definan sus niveles de Mínimo y Máximo recomendados en la hoja Maestro.
           </p>
         </div>
 
@@ -547,6 +704,62 @@
               </div>
             </div>
           </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== VIEW 2C: INDEPENDENT PAGE FOR TIPS & TRICKS ==================== -->
+    <div id="tips-view" class="view-container hidden px-6 py-6 space-y-6 animate-fade-in">
+      
+      <div class="space-y-1">
+        <h2 class="text-2xl font-bold font-serif text-verde dark:text-crema">Tips & Tricks</h2>
+        <p class="text-xs text-text-muted">Consejos prácticos para maximizar el uso y rapidez de las Hojas de Cálculo.</p>
+      </div>
+
+      <div class="space-y-4">
+        
+        <!-- TIENDA TIPS -->
+        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema flex items-center gap-2">
+            <i data-lucide="store" class="w-4.5 h-4.5 text-oro"></i> Para la Tienda (Pedidos)
+          </h3>
+          <ul class="space-y-3 text-xs text-text-muted leading-relaxed">
+            <li>
+              <strong class="text-text block">💡 El truco del pasillo en celular:</strong>
+              Antes de iniciar la captura, abre la hoja de Surtido Rápido. Esto congelará la columna de productos para que nunca pierdas de vista qué renglón estás llenando mientras caminas por el pasillo.
+            </li>
+            <li>
+              <strong class="text-text block">💡 Limpieza ante fallos o retrasos:</strong>
+              Si la hoja de pedidos de la tienda no se actualiza o las fórmulas marcan error, haz clic en el menú <strong>⚙️ Mise ➜ Sincronizar Estados</strong>. Esto restablece las fórmulas dañadas y fuerza a la hoja a conectarse de nuevo con Bodega.
+            </li>
+            <li>
+              <strong class="text-text block">💡 Evita duplicados involuntarios:</strong>
+              Escribe las cantidades en formato puramente numérico (ej. 2.5 en lugar de "2,5 kg"). El sistema detectará las letras y arrojará una alerta para prevenir errores matemáticos.
+            </li>
+          </ul>
+        </div>
+
+        <!-- BODEGA TIPS -->
+        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+          <h3 class="font-serif font-bold text-sm text-verde dark:text-crema flex items-center gap-2">
+            <i data-lucide="warehouse" class="w-4.5 h-4.5 text-oro"></i> Para Bodega (Central)
+          </h3>
+          <ul class="space-y-3 text-xs text-text-muted leading-relaxed">
+            <li>
+              <strong class="text-text block">💡 La regla de oro del Cierre del Sábado:</strong>
+              Antes de marcar la casilla de "Avanzar Semana", revisa que no haya cantidades vacías en las columnas de entradas y salidas físicas del Kardex. Rellena con 0 para evitar descuadres en los saldos iniciales del lunes.
+            </li>
+            <li>
+              <strong class="text-text block">💡 Ediciones masivas seguras:</strong>
+              Al usar "Editar productos seleccionados", no alteres el orden de las filas en la hoja temporal. Modifica solo los nombres, mínimos o máximos y confirma. El sistema se encarga de reordenar todo en su lugar al finalizar.
+            </li>
+            <li>
+              <strong class="text-text block">💡 Auditar mermas críticas:</strong>
+              Consulta el Kardex periódicamente. Si detectas celdas de saldo en color rojo, significa que hay existencias negativas en el sistema y requiere conciliación física urgente en el pasillo de la tienda.
+            </li>
+          </ul>
         </div>
 
       </div>

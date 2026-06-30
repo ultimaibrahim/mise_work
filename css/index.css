@@ -144,3 +144,11 @@ body {
     box-shadow: 0 0 0 0 rgba(184, 144, 47, 0);
   }
 }
+
+/* --- HAMBURGER DRAWER TRANSITIONS --- */
+#menu-drawer {
+  transition: opacity 0.3s ease;
+}
+#menu-drawer .relative {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
