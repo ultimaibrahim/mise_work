@@ -191,17 +191,60 @@ window.switchMainView = function(viewId) {
   const views = ['landing', 'manual', 'manual-pedidos', 'manual-bodega', 'tips', 'about'];
   if (!views.includes(viewId)) viewId = 'landing';
 
-  // Toggle views
-  views.forEach(v => {
+  // Obtener vista activa actual
+  const currentActive = views.find(v => {
     const el = document.getElementById(`${v}-view`);
-    if (el) {
-      if (v === viewId) {
-        el.classList.remove('hidden');
-      } else {
-        el.classList.add('hidden');
-      }
-    }
+    return el && !el.classList.contains('hidden');
   });
+
+  const newViewEl = document.getElementById(`${viewId}-view`);
+  if (!newViewEl) return;
+
+  if (currentActive && currentActive !== viewId) {
+    const oldViewEl = document.getElementById(`${currentActive}-view`);
+    if (oldViewEl) {
+      // 1. Difuminar y desvanecer la vista actual
+      oldViewEl.style.transition = 'opacity 180ms ease, transform 180ms ease, filter 180ms ease';
+      oldViewEl.style.opacity = '0';
+      oldViewEl.style.transform = 'scale(0.985) translateY(-4px)';
+      oldViewEl.style.filter = 'blur(3px)';
+
+      setTimeout(() => {
+        oldViewEl.classList.add('hidden');
+        oldViewEl.style.transition = '';
+        oldViewEl.style.opacity = '';
+        oldViewEl.style.transform = '';
+        oldViewEl.style.filter = '';
+
+        // 2. Revelar la nueva vista de forma orgánica
+        revealNewView(newViewEl);
+      }, 180);
+    }
+  } else {
+    revealNewView(newViewEl);
+  }
+
+  function revealNewView(el) {
+    el.classList.remove('hidden');
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(12px) scale(0.99)';
+    el.style.filter = 'blur(3px)';
+    
+    // Forzar reflujo del navegador
+    el.offsetHeight;
+
+    el.style.transition = 'opacity 280ms var(--ease-out), transform 280ms var(--ease-out), filter 280ms var(--ease-out)';
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0) scale(1)';
+    el.style.filter = 'blur(0)';
+
+    setTimeout(() => {
+      el.style.transition = '';
+      el.style.opacity = '';
+      el.style.transform = '';
+      el.style.filter = '';
+    }, 280);
+  }
 
   // Update URL hash
   window.location.hash = `#/${viewId}`;
