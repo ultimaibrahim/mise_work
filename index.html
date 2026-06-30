@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light" class="">
+<html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>MISE — Control de Inventarios y Abastecimiento</title>
+  <title>MISE — Ecosistema de Inventarios y Automatizaciones</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,9 +34,7 @@
             text: 'var(--text)',
             'text-muted': 'var(--text-muted)',
             'card-bg': 'var(--card-bg)',
-            'tooltip-bg': 'var(--tooltip-bg)',
-            shadow: 'var(--shadow)',
-            'accent-glow': 'var(--accent-glow)'
+            shadow: 'var(--shadow)'
           },
           borderRadius: {
             lg: 'var(--radius-lg)',
@@ -51,848 +49,373 @@
   <link rel="stylesheet" href="css/index.css">
   <script defer src="js/index.js"></script>
 </head>
-<body>
+<body class="bg-bg text-text min-h-screen flex flex-col transition-colors duration-300">
 
-  <!-- ==================== 1. LANDING PORTAL VIEW ==================== -->
-  <div id="landing-view" class="view-container w-full min-h-screen overflow-y-auto px-4 py-8 md:py-16 relative bg-bg text-text select-none">
-    <!-- Aurora background effect -->
-    <div class="aurora-bg"></div>
+  <!-- ==================== MAIN APPLICATION CONTAINER ==================== -->
+  <div class="flex-1 flex flex-col relative w-full max-w-[450px] mx-auto min-h-screen shadow-2xl bg-bg border-x border-border overflow-x-hidden pb-20">
     
-    <div class="relative z-10 max-w-5xl mx-auto space-y-12 text-center">
-      <!-- Brand Header -->
-      <div class="flex justify-center items-center gap-2 mb-4">
-        <div class="w-3 h-3 rounded-full bg-oro animate-ping"></div>
-        <span class="text-xs font-bold uppercase tracking-[0.2em] text-oro">Suite Atelier — LCP</span>
+    <!-- HEADER -->
+    <header class="w-full flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-bg/85 backdrop-blur-md z-30">
+      <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-bold font-serif tracking-tight text-verde dark:text-crema">MISE</h1>
+        <span class="text-[9px] font-bold tracking-wider uppercase bg-oro/10 text-oro px-2 py-0.5 rounded-full">v2.0</span>
       </div>
-
-      <!-- Hero Title -->
-      <div class="space-y-4 max-w-3xl mx-auto">
-        <h1 class="text-6xl md:text-8xl font-black tracking-tight font-serif text-verde dark:text-crema main-title select-text">
-          MISE
-        </h1>
-        <p class="text-xl md:text-2xl font-light text-text-muted dark:text-sage max-w-2xl mx-auto italic select-text">
-          Control de Inventarios y Abastecimiento Inteligente
-        </p>
-      </div>
-
-      <!-- Operational Metrics Grid (ui-ux-pro-max style) -->
-      <div class="grid grid-cols-3 gap-3 md:gap-6 max-w-2xl mx-auto py-2">
-        <div class="bg-surface/60 border border-border p-3 md:p-4 rounded-lg shadow-sm">
-          <div class="text-xs text-text-muted uppercase tracking-wider">Sincronización</div>
-          <div class="text-base md:text-xl font-bold font-mono text-oro">~1.2s</div>
-        </div>
-        <div class="bg-surface/60 border border-border p-3 md:p-4 rounded-lg shadow-sm">
-          <div class="text-xs text-text-muted uppercase tracking-wider">Precisión</div>
-          <div class="text-base md:text-xl font-bold font-mono text-oro">99.8%</div>
-        </div>
-        <div class="bg-surface/60 border border-border p-3 md:p-4 rounded-lg shadow-sm">
-          <div class="text-xs text-text-muted uppercase tracking-wider">Tolerancia</div>
-          <div class="text-base md:text-xl font-bold font-mono text-oro">0.0% Mermas</div>
-        </div>
-      </div>
-
-      <!-- Visual Roles Split Column -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-left pt-2">
-        <div class="p-6 rounded-lg bg-surface/40 border border-border space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-verde/15 flex items-center justify-center text-oro">
-              <i data-lucide="store" class="w-4 h-4"></i>
-            </div>
-            <h4 class="font-bold text-base font-serif">Encargados & Sucursal</h4>
-          </div>
-          <p class="text-xs text-text-muted leading-relaxed">
-            Levanta pedidos diarios a pie de pasillo, registra adiciones tardías y concilia de manera ágil los insumos recibidos a través de la interfaz optimizada para celulares.
-          </p>
-        </div>
-
-        <div class="p-6 rounded-lg bg-surface/40 border border-border space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-verde/15 flex items-center justify-center text-oro">
-              <i data-lucide="warehouse" class="w-4 h-4"></i>
-            </div>
-            <h4 class="font-bold text-base font-serif">Bodeguero & Central</h4>
-          </div>
-          <p class="text-xs text-text-muted leading-relaxed">
-            Administra el catálogo maestro de insumos, controla las existencias mediante el Kardex y realiza cierres históricos semanales automatizados en caliente.
-          </p>
-        </div>
-      </div>
-
-      <!-- Action cards / Spotlight Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto pt-4">
-        <div class="spotlight-card group cursor-pointer" onclick="navigateTo('simulator')">
-          <div class="spotlight-inner">
-            <div class="card-icon-wrapper">
-              <i data-lucide="compass" class="w-8 h-8 text-oro"></i>
-            </div>
-            <h3 class="text-2xl font-bold font-serif text-verde dark:text-crema mb-2 group-hover:text-oro transition-colors">
-              Guía Interactiva & Simulador
-            </h3>
-            <p class="text-sm text-text-muted dark:text-sage leading-relaxed">
-              Interactúa con el clon interactivo de Google Sheets. Aprende a levantar pedidos, ordenar celdas, registrar adiciones y auditar el Kardex paso a paso.
-            </p>
-          </div>
-        </div>
-
-        <div class="spotlight-card group cursor-pointer" onclick="navigateTo('manual')">
-          <div class="spotlight-inner">
-            <div class="card-icon-wrapper">
-              <i data-lucide="book-open" class="w-8 h-8 text-oro"></i>
-            </div>
-            <h3 class="text-2xl font-bold font-serif text-verde dark:text-crema mb-2 group-hover:text-oro transition-colors">
-              Manual de Usuario v2.0
-            </h3>
-            <p class="text-sm text-text-muted dark:text-sage leading-relaxed">
-              Documentación oficial optimizada para móviles. Conoce las especificaciones de las hojas de cálculo, consejos operativos y análisis del código Apps Script.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer Info -->
-      <div class="pt-8 flex justify-center items-center gap-6 text-sm text-text-muted dark:text-sage border-t border-border mt-12 max-w-md mx-auto">
-        <span>La Crêpe Parisienne</span>
-        <span>•</span>
-        <span>Estable</span>
-        <span>•</span>
-        <button id="landing-theme-toggle" class="theme-toggle-btn p-1.5 rounded-full hover:bg-surface-2 transition-colors" title="Cambiar tema">
-          <i data-lucide="sun" class="w-4 h-4 text-oro"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ==================== 2. SIMULATOR VIEW ==================== -->
-  <div id="simulator-view" class="view-container hidden flex flex-col w-full h-screen bg-bg text-text overflow-hidden">
-    <!-- Simulator Top Header -->
-    <header class="simulator-header flex justify-between items-center px-4 md:px-6 py-4 bg-surface border-b border-border z-20">
       <div class="flex items-center gap-3">
-        <button onclick="navigateTo('landing')" class="flex items-center gap-1.5 text-xs md:text-sm font-semibold text-text-muted hover:text-oro transition-colors">
-          <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver
-        </button>
-        <span class="text-border">|</span>
-        <h2 class="text-xs md:text-sm font-bold font-serif text-oro">Simulador de Operaciones MISE</h2>
-      </div>
-      <div class="flex items-center gap-2 md:gap-4">
-        <button id="sim-role-badge" class="flex items-center gap-1.5 text-[10px] font-bold bg-surface-2 px-2.5 py-1.5 rounded-md border border-border text-oro font-mono tracking-wider transition-colors duration-300 hover:bg-surface hover:text-amber" title="Haz clic para cambiar de Rol">
-          <i data-lucide="repeat" class="w-3.5 h-3.5 text-oro"></i>
-          <span id="sim-role-text">SIN SELECCIONAR</span>
-        </button>
-        <button id="sim-theme-toggle" class="theme-toggle-btn p-1.5 rounded-full hover:bg-surface-2 transition-colors" title="Cambiar tema">
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-surface-2 transition-colors duration-200" title="Cambiar tema">
           <i data-lucide="sun" class="w-5 h-5 text-oro"></i>
         </button>
       </div>
     </header>
 
-    <div class="flex flex-1 overflow-hidden relative">
-      <!-- Left Column: The Simulated Google Sheets Spreadsheet (Scrollable, takes up most space) -->
-      <div id="sim-spreadsheet-wrapper" class="flex-1 overflow-hidden bg-surface-2 p-3 md:p-6 pb-0 flex flex-col justify-start relative min-w-0 transition-all duration-300 guide-active">
-        <div class="max-w-5xl w-full mx-auto space-y-4 role-fade-container h-full flex flex-col" id="sim-role-container">
-          <!-- Excel/Sheets Menu Bar Simulator -->
-          <div class="sheets-window-header bg-surface border border-border rounded-lg overflow-hidden shadow-2xl flex flex-col flex-1 min-h-[300px]">
-            <!-- Sheets Title Bar -->
-            <div class="bg-surface-2 px-4 py-2 border-b border-border flex justify-between items-center text-[11px] md:text-xs">
-              <div class="flex items-center gap-3">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                <span class="font-bold text-text" id="sim-sheet-title">(at) MISE - Pedidos</span>
-              </div>
-              <div class="flex gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span>
-              </div>
-            </div>
-            
-            <!-- Custom Google Sheets Menu Bar -->
-            <div class="bg-surface border-b border-border px-3 py-1.5 flex gap-3 md:gap-4 text-[11px] font-medium text-text-muted overflow-visible z-30 select-none relative">
-              <span class="hover:text-text cursor-pointer">Archivo</span>
-              <span class="hover:text-text cursor-pointer">Editar</span>
-              <span class="hover:text-text cursor-pointer">Ver</span>
-              <span class="hover:text-text cursor-pointer">Insertar</span>
-              <span class="hover:text-text cursor-pointer">Formato</span>
-              <span class="hover:text-text cursor-pointer">Datos</span>
-              <span class="cursor-pointer relative z-50 group" id="sim-menu-group">
-                <strong class="text-oro font-bold flex items-center gap-1">⚙️ Mise <i data-lucide="chevron-down" class="w-3 h-3"></i></strong>
-                <!-- Simulated Dropdown -->
-                <div class="sim-dropdown absolute left-0 top-full mt-1 bg-surface border border-border shadow-lg rounded-md py-1 w-48 hidden text-text">
-                  <div class="px-3 py-1.5 hover:bg-surface-2 cursor-pointer flex items-center gap-2" onclick="simTriggerMenu('setup')">
-                    <i data-lucide="rocket" class="w-3.5 h-3.5 text-oro"></i> Setup completo
-                  </div>
-                  <div class="px-3 py-1.5 hover:bg-surface-2 cursor-pointer flex items-center gap-2" onclick="simTriggerMenu('avanzar')">
-                    <i data-lucide="archive" class="w-3.5 h-3.5 text-oro"></i> Avanzar semana
-                  </div>
-                  <div class="px-3 py-1.5 hover:bg-surface-2 cursor-pointer flex items-center gap-2" onclick="simTriggerMenu('sincronizar')">
-                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-oro"></i> Sincronizar estados
-                  </div>
-                </div>
-              </span>
-              <span class="hover:text-text cursor-pointer">Ayuda</span>
-            </div>
-            
-            <!-- Form Fila Formula -->
-            <div class="bg-surface-2 border-b border-border px-3 py-1.5 flex items-center gap-2 font-mono text-[11px] md:text-xs text-text-muted">
-              <div class="bg-surface border border-border px-2 py-0.5 rounded text-text font-bold" id="sim-cell-id">F2</div>
-              <div class="text-lg text-border select-none">|</div>
-              <div class="flex-1 bg-surface border border-border px-3 py-0.5 rounded text-text min-h-[22px] flex items-center" id="sim-formula-bar">1.5</div>
-            </div>
-
-            <!-- Simulated Tabs -->
-            <div class="bg-surface-2 border-b border-border px-3 flex gap-2 overflow-x-auto text-[11px] font-bold" id="sim-tabs-bar">
-              <!-- Tabs are dynamically updated in JS -->
-            </div>
-
-            <!-- Sheet Content Scroll Container -->
-            <div id="sim-table-container" class="overflow-auto bg-surface flex-1">
-              <table class="sim-table w-full border-collapse font-mono text-[11px] text-text select-none min-w-[750px]">
-                <thead id="sim-table-head">
-                  <!-- Generated by JS -->
-                </thead>
-                <tbody id="sim-table-body">
-                  <!-- Generated by JS -->
-                </tbody>
-              </table>
-            </div>
-          </div>
+    <!-- ==================== VIEW 1: PORTAL (LANDING) ==================== -->
+    <div id="landing-view" class="view-container px-6 py-8 space-y-10 animate-fade-in">
+      
+      <!-- HERO SECTION -->
+      <div class="space-y-4 text-center py-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-verde/5 text-verde dark:text-sage text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-oro animate-pulse"></span>
+          Suite Atelier — La Crêpe Parisienne
         </div>
+        <h2 class="text-4xl font-extrabold font-serif text-verde dark:text-crema tracking-tight leading-tight">
+          Control & Automatización de Inventarios
+        </h2>
+        <p class="text-sm text-text-muted leading-relaxed max-w-xs mx-auto">
+          Guía técnica interactiva y documentación operativa para encargados y bodegueros.
+        </p>
+      </div>
 
-        <!-- Simulated Dialog Box Popup inside Spreadsheet -->
-        <div id="sim-dialog-overlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-          <div class="bg-surface border border-border rounded-lg shadow-2xl p-6 max-w-sm w-full space-y-4 mx-4">
-            <div class="flex items-center gap-3 text-oro">
-              <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-              <h4 class="font-serif font-bold text-lg text-text" id="sim-dialog-title">Aviso de Confirmación</h4>
-            </div>
-            <p class="text-xs text-text-muted leading-relaxed" id="sim-dialog-text">
-              ¿Estás seguro de que deseas avanzar la semana? Esto respaldará los Kardex de Andares y limpiará los registros diarios.
-            </p>
-            <div class="flex justify-end gap-3 pt-2">
-              <button onclick="closeSimDialog(false)" class="btn-ob text-xs">Cancelar</button>
-              <button onclick="closeSimDialog(true)" class="btn-ob primary text-xs">Confirmar</button>
-            </div>
-          </div>
+      <!-- KEY METRICS GRID -->
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-surface border border-border p-4 rounded-lg space-y-1">
+          <span class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Archivos GAS</span>
+          <div class="text-lg font-mono font-bold text-oro">3 Scripts</div>
+        </div>
+        <div class="bg-surface border border-border p-4 rounded-lg space-y-1">
+          <span class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Precisión LCP</span>
+          <div class="text-lg font-mono font-bold text-oro">100% Digital</div>
         </div>
       </div>
 
-      <!-- Reopen Guide Floating Button -->
-      <button id="sim-guide-reopen-btn" onclick="toggleSimGuide()" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-oro hover:bg-amber text-crema px-5 py-2.5 rounded-full shadow-2xl flex items-center gap-2 transition-all duration-300 z-30 font-bold text-xs uppercase tracking-wider scale-90 hover:scale-95 border border-oro/20 active:scale-90 hidden">
-        <i data-lucide="help-circle" class="w-4 h-4"></i> Mostrar Guía
-      </button>
-
-      <div id="sim-guide-panel" class="bg-surface border-t border-border flex flex-col overflow-hidden shadow-2xl z-10 transition-all duration-300">
-        <!-- Progress bar indicator -->
-        <div class="h-1.5 w-full bg-border">
-          <div class="h-full bg-oro transition-all duration-500" id="sim-progress-bar" style="width: 0%;"></div>
-        </div>
-
-        <div class="py-1.5 px-4 md:px-5 border-b border-border bg-surface-2 flex justify-between items-center gap-2">
-          <div>
-            <span class="text-[8px] font-bold uppercase tracking-wider text-oro" id="sim-step-progress">Paso 1 de 5</span>
-            <h3 class="text-xs font-bold font-serif text-verde dark:text-crema mt-0.5 leading-tight" id="sim-step-title">Bienvenido al Tutorial</h3>
+      <!-- ACTIONS MENU -->
+      <div class="space-y-4">
+        <h3 class="text-xs uppercase font-bold tracking-wider text-text-muted px-1">Guías Disponibles</h3>
+        
+        <div class="group bg-surface hover:bg-surface-2 border border-border p-5 rounded-lg transition-all duration-200 cursor-pointer space-y-2" onclick="navigateTo('sheets')">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-verde/5 flex items-center justify-center text-verde dark:text-crema">
+                <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+              </div>
+              <h4 class="font-bold font-serif text-base text-verde dark:text-crema">Diseño de Hojas 1:1</h4>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-text-muted group-hover:text-oro transition-colors"></i>
           </div>
-          <button onclick="toggleSimGuide()" class="p-1 rounded-full hover:bg-surface transition-colors text-text-muted hover:text-oro flex items-center justify-center shrink-0" title="Ocultar Guía">
-            <i data-lucide="x" class="w-3.5 h-3.5"></i>
-          </button>
+          <p class="text-xs text-text-muted leading-relaxed">
+            Revisa las plantillas oficiales y descubre qué macros de Apps Script controlan cada celda.
+          </p>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 text-sm" id="sim-step-desc">
-          <!-- Dynamically generated step descriptions -->
-        </div>
-
-        <div class="p-4 md:p-6 border-t border-border bg-surface-2 flex justify-between items-center gap-4">
-          <button class="btn-ob text-xs md:text-sm" id="sim-btn-back" disabled onclick="simStepBack()">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i> Atrás
-          </button>
-
-          <button class="btn-ob text-xs md:text-sm text-text-muted hover:text-oro" id="sim-btn-reset" onclick="resetSimulator()">
-            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reiniciar
-          </button>
-          
-          <button class="btn-ob primary text-xs md:text-sm" id="sim-btn-next" onclick="simStepNext()">
-            Siguiente <i data-lucide="arrow-right" class="w-4 h-4"></i>
-          </button>
+        <div class="group bg-surface hover:bg-surface-2 border border-border p-5 rounded-lg transition-all duration-200 cursor-pointer space-y-2" onclick="navigateTo('manual')">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-verde/5 flex items-center justify-center text-verde dark:text-crema">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
+              </div>
+              <h4 class="font-bold font-serif text-base text-verde dark:text-crema">Manual Técnico GAS</h4>
+            </div>
+            <i data-lucide="chevron-right" class="w-5 h-5 text-text-muted group-hover:text-oro transition-colors"></i>
+          </div>
+          <p class="text-xs text-text-muted leading-relaxed">
+            Estructura detallada del código en Google Apps Script, eventos de edición y sincronización en la nube.
+          </p>
         </div>
       </div>
+
+      <!-- FOOTER -->
+      <footer class="pt-6 border-t border-border text-center text-[10px] text-text-muted space-y-1">
+        <div>La Crêpe Parisienne — Guadalajara</div>
+        <div>Control Interno de Calidad Operativa</div>
+      </footer>
+
     </div>
-  </div>
 
+    <!-- ==================== VIEW 2: SHEETS 1:1 EXPLORER ==================== -->
+    <div id="sheets-view" class="view-container hidden px-6 py-6 space-y-6 animate-fade-in">
+      
+      <div class="space-y-2">
+        <h2 class="text-2xl font-bold font-serif text-verde dark:text-crema">Guía Visual de Hojas</h2>
+        <p class="text-xs text-text-muted leading-relaxed">
+          Toca cualquier celda o control marcado con <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-oro/15 text-oro text-[10px] font-bold font-mono">GAS</span> para revelar la automatización de Apps Script que la opera.
+        </p>
+      </div>
 
-  <!-- ==================== 3. MANUAL VIEW ==================== -->
-  <div id="manual-view" class="view-container hidden flex flex-row w-screen h-screen overflow-hidden">
-    <!-- MENÚ LATERAL DESLIZABLE (MOBILE-FIRST DRAWER) -->
-    <nav class="sidebar" id="sidebar">
-      <div class="sidebar-header" style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div class="brand-title">MISE</div>
-          <div class="brand-subtitle">Manual de Usuario</div>
+      <!-- SHEET SELECTOR TABS -->
+      <div class="flex border-b border-border overflow-x-auto no-scrollbar gap-2 py-1">
+        <button class="sheet-tab active text-xs font-semibold px-4 py-2 border-b-2 border-oro text-oro shrink-0" onclick="switchActiveSheet('maestro')">
+          1. MAESTRO
+        </button>
+        <button class="sheet-tab text-xs font-semibold px-4 py-2 border-b-2 border-transparent text-text-muted shrink-0" onclick="switchActiveSheet('pedido')">
+          2. PEDIDO DIARIO
+        </button>
+        <button class="sheet-tab text-xs font-semibold px-4 py-2 border-b-2 border-transparent text-text-muted shrink-0" onclick="switchActiveSheet('kardex')">
+          3. KARDEX_BA
+        </button>
+      </div>
+
+      <!-- SPREADSHEET MOCKUP WINDOW -->
+      <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-sm flex flex-col">
+        <!-- Mockup Header -->
+        <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[10px] font-mono text-text-muted">
+          <div class="flex items-center gap-1.5">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span id="current-sheet-filename" class="font-bold text-text">MISE — Catálogo Bodega</span>
+          </div>
+          <span class="text-[9px] text-oro font-bold">Google Sheets</span>
         </div>
-        <!-- Close button visible only on mobile -->
-        <button class="lg:hidden p-1 text-text hover:text-oro" id="sidebar-close" aria-label="Cerrar Menú">
-          <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
+
+        <!-- Custom Sheets Menu Bar -->
+        <div class="bg-surface border-b border-border px-3 py-1 flex items-center gap-3 text-[10px] font-medium text-text-muted overflow-x-auto no-scrollbar select-none">
+          <span class="hover:text-text cursor-pointer">Archivo</span>
+          <span class="hover:text-text cursor-pointer">Ver</span>
+          <span class="hover:text-text cursor-pointer text-oro font-bold flex items-center gap-0.5 relative" onclick="triggerGASInfo('menu-mise')">
+            ⚙️ Mise <span class="w-1.5 h-1.5 rounded-full bg-oro animate-ping"></span>
+          </span>
+          <span class="hover:text-text cursor-pointer">Datos</span>
+        </div>
+
+        <!-- Sheet Mockup Table Container -->
+        <div class="overflow-x-auto w-full scroll-hint">
+          
+          <!-- TABLE: MAESTRO -->
+          <table id="mock-table-maestro" class="mock-sheet-table w-full text-left font-mono text-[10px] border-collapse min-w-[380px]">
+            <thead>
+              <tr class="bg-surface-2 border-b border-border text-[9px] text-text-muted">
+                <th class="p-2 border-r border-border w-10 text-center">No</th>
+                <th class="p-2 border-r border-border">PRODUCTO</th>
+                <th class="p-2 border-r border-border text-center">ACTIVO</th>
+                <th class="p-2 text-center">SELECCIONAR</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-border">
+                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">1</td>
+                <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
+                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('maestro-activo')">
+                  <span class="text-emerald-700 font-bold">SÍ</span>
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+                <td class="p-2 text-center cursor-pointer hover:bg-amber-500/10 transition-colors relative" onclick="triggerGASInfo('maestro-seleccionar')">
+                  <input type="checkbox" checked disabled class="accent-oro">
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+              </tr>
+              <tr class="border-b border-border bg-black/[0.02] dark:bg-white/[0.02]">
+                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">2</td>
+                <td class="p-2 border-r border-border font-bold">Queso mozzarella CDK</td>
+                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('maestro-activo')">
+                  <span class="text-emerald-700 font-bold">SÍ</span>
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+                <td class="p-2 text-center cursor-pointer hover:bg-amber-500/10 transition-colors relative" onclick="triggerGASInfo('maestro-seleccionar')">
+                  <input type="checkbox" disabled class="accent-oro">
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+              </tr>
+              <tr class="border-b border-border opacity-60">
+                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">3</td>
+                <td class="p-2 border-r border-border font-bold text-text-muted">Fresa (Desactivado)</td>
+                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('maestro-activo')">
+                  <span class="text-red-700 font-bold">NO</span>
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+                <td class="p-2 text-center disabled">
+                  <input type="checkbox" disabled class="accent-oro">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- TABLE: PEDIDO DIARIO -->
+          <table id="mock-table-pedido" class="mock-sheet-table w-full text-left font-mono text-[10px] border-collapse min-w-[420px] hidden">
+            <thead>
+              <tr class="bg-surface-2 border-b border-border text-[9px] text-text-muted">
+                <th class="p-2 border-r border-border w-10 text-center">No</th>
+                <th class="p-2 border-r border-border">PRODUCTO</th>
+                <th class="p-2 border-r border-border text-center">PEDIR</th>
+                <th class="p-2 border-r border-border text-center">ESTADO</th>
+                <th class="p-2 text-center">ALERTAS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-border">
+                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">4</td>
+                <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
+                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('pedido-pedir')">
+                  <span class="font-bold text-oro">2.0</span>
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+                <td class="p-2 border-r border-border text-center font-bold text-emerald-600 bg-emerald-500/5">
+                  ✅ COMPLETO
+                </td>
+                <td class="p-2 text-center text-text-muted">-</td>
+              </tr>
+              <tr class="border-b border-border bg-black/[0.02] dark:bg-white/[0.02] bg-amber-500/[0.02]">
+                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">7</td>
+                <td class="p-2 border-r border-border font-bold">Nutella</td>
+                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('pedido-pedir')">
+                  <span class="font-bold text-oro">1.0</span>
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+                <td class="p-2 border-r border-border text-center font-bold text-amber-600 bg-amber-500/5">
+                  ⏳ PENDIENTE
+                </td>
+                <td class="p-2 text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('pedido-adicion')">
+                  <span class="text-amber-700 font-bold bg-amber-500/20 px-1 py-0.5 rounded">🚨 ADICIÓN</span>
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- TABLE: KARDEX -->
+          <table id="mock-table-kardex" class="mock-sheet-table w-full text-left font-mono text-[10px] border-collapse min-w-[450px] hidden">
+            <thead>
+              <tr class="bg-surface-2 border-b border-border text-[9px] text-text-muted">
+                <th class="p-2 border-r border-border w-10 text-center">No</th>
+                <th class="p-2 border-r border-border">PRODUCTO</th>
+                <th class="p-2 border-r border-border text-center">ENTRADAS</th>
+                <th class="p-2 border-r border-border text-center">SALIDAS</th>
+                <th class="p-2 text-center">SALDO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-border">
+                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">1</td>
+                <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
+                <td class="p-2 border-r border-border text-center">15.0</td>
+                <td class="p-2 border-r border-border text-center">2.0</td>
+                <td class="p-2 text-center font-bold text-verde dark:text-sage cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('kardex-saldo')">
+                  13.0
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+              </tr>
+              <tr class="border-b border-border bg-black/[0.02] dark:bg-white/[0.02]">
+                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">2</td>
+                <td class="p-2 border-r border-border font-bold">Queso mozzarella CDK</td>
+                <td class="p-2 border-r border-border text-center">20.0</td>
+                <td class="p-2 border-r border-border text-center">5.0</td>
+                <td class="p-2 text-center font-bold text-verde dark:text-sage cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('kardex-saldo')">
+                  15.0
+                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
       </div>
 
-      <div class="search-container">
-        <i data-lucide="search" class="search-icon"></i>
-        <input type="text" class="search-input" id="search-input" placeholder="Buscar función o palabra...">
+      <!-- INTERACTIVE GAS DETAILED PANEL -->
+      <div id="gas-details-panel" class="bg-surface border border-border rounded-lg p-5 space-y-4 transition-all duration-300">
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-oro/10 text-oro rounded-lg shrink-0">
+            <i data-lucide="code" class="w-5 h-5"></i>
+          </div>
+          <div class="space-y-1">
+            <span class="text-[9px] font-bold font-mono tracking-wider uppercase text-text-muted" id="gas-script-file">miseAuthBDG.gs</span>
+            <h4 class="text-sm font-bold font-serif text-verde dark:text-crema" id="gas-function-name">Selecciona un elemento</h4>
+          </div>
+        </div>
+        <p class="text-xs text-text-muted leading-relaxed" id="gas-function-desc">
+          Toca cualquiera de las celdas con la etiqueta dorada <span class="font-bold text-oro">GAS</span> en el mockup de la hoja de cálculo de arriba para analizar cómo funciona su código asociado.
+        </p>
+        <div id="gas-code-container" class="hidden">
+          <div class="flex items-center justify-between bg-surface-2 px-3 py-1.5 border-t border-x border-border rounded-t-md text-[9px] font-mono text-text-muted">
+            <span>CÓDIGO FUENTE (GAS)</span>
+            <span id="gas-line-count">Líneas 69-90</span>
+          </div>
+          <pre class="bg-surface-2 border border-border p-3 rounded-b-md font-mono text-[9px] text-text overflow-x-auto max-h-[160px] scrollbar-thin"><code id="gas-code-block">function onOpen() { ... }</code></pre>
+        </div>
       </div>
 
-      <ul class="nav-list" id="nav-list">
-        <li class="nav-category">General</li>
-        <li class="nav-item active" data-target="intro"><i data-lucide="info" style="width:16px;"></i> Introducción</li>
-        <li class="nav-item" id="nav-item-walkthrough" onclick="navigateTo('simulator')"><i data-lucide="compass" style="width:16px;"></i> Guía de Inicio</li>
-        
-        <li class="nav-category">Módulos de Sistema</li>
-        <li class="nav-item" data-target="bodega"><i data-lucide="warehouse" style="width:16px;"></i> Módulo Bodegas</li>
-        <li class="nav-item" data-target="tienda"><i data-lucide="store" style="width:16px;"></i> Módulo Pedidos</li>
-        
-        <li class="nav-category">Automatizaciones</li>
-        <li class="nav-item" data-target="scripts-guide"><i data-lucide="code-2" style="width:16px;"></i> Análisis de Scripts (GAS)</li>
-        
-        <li class="nav-category">Avanzado</li>
-        <li class="nav-item" data-target="advanced"><i data-lucide="settings" style="width:16px;"></i> Menú ⚙️ Mise (Sheets)</li>
-      </ul>
+    </div>
 
-      <div class="sidebar-footer">
-        <button onclick="navigateTo('landing')" class="flex items-center gap-1.5 text-xs text-oro hover:text-text transition-colors mb-2 text-left self-start">
-          <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Volver al Portal
-        </button>
-        <div style="font-weight: 600; color: var(--text);">Estable</div>
-        <div>Suite ATELIER — LCP</div>
+    <!-- ==================== VIEW 3: TECHNICAL MANUAL ==================== -->
+    <div id="manual-view" class="view-container hidden px-6 py-6 space-y-8 animate-fade-in">
+      
+      <div class="space-y-2">
+        <h2 class="text-2xl font-bold font-serif text-verde dark:text-crema">Manual de Operaciones</h2>
+        <p class="text-xs text-text-muted leading-relaxed">
+          Documentación técnica del ecosistema en la nube e interacción entre libros.
+        </p>
       </div>
+
+      <!-- SEARCH INPUT -->
+      <div class="relative">
+        <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"></i>
+        <input type="text" id="manual-search-input" placeholder="Buscar función o concepto..." class="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-md text-xs text-text outline-none focus:border-oro transition-all duration-200">
+      </div>
+
+      <!-- MANUAL TOPICS/SECTIONS -->
+      <div class="space-y-6" id="manual-content-list">
+        
+        <!-- SECTION 1: ARCHITECTURE -->
+        <div class="manual-section p-5 bg-surface border border-border rounded-lg space-y-3" data-search-terms="arquitectura importrange bodega tienda sucursal">
+          <div class="flex items-center gap-2 text-verde dark:text-crema">
+            <i data-lucide="git-branch" class="w-4 h-4 text-oro"></i>
+            <h3 class="font-serif font-bold text-sm">1. Arquitectura en la Nube</h3>
+          </div>
+          <p class="text-xs text-text-muted leading-relaxed">
+            MISE opera de forma descentralizada. La **Bodega Central** define el catálogo maestro en `Maestro` y consolida existencias. Las sucursales (**Andares** y **Mercado**) enlazan el catálogo mediante la fórmula `IMPORTRANGE` para realizar solicitudes diarias en caliente.
+          </p>
+          <div class="p-3 bg-surface-2 border border-border rounded font-mono text-[9px] text-text-muted space-y-1">
+            <div class="font-bold text-oro">Flujo de datos:</div>
+            <div>[Catálogo Bodega] ➜ IMPORTRANGE ➜ [Pedidos Tienda] ➜ Captura Móvil ➜ onEdit() ➜ Conciliación</div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: BODEGA SECTOR -->
+        <div class="manual-section p-5 bg-surface border border-border rounded-lg space-y-3" data-search-terms="bodega maestro kardex cierre avanzar semana historico">
+          <div class="flex items-center gap-2 text-verde dark:text-crema">
+            <i data-lucide="warehouse" class="w-4 h-4 text-oro"></i>
+            <h3 class="font-serif font-bold text-sm">2. Módulo de Bodega</h3>
+          </div>
+          <p class="text-xs text-text-muted leading-relaxed">
+            El Bodeguero controla el catálogo y realiza cierres semanales los sábados por la tarde. Al ejecutar <strong>Avanzar semana</strong>, el script transfiere los saldos finales del Kardex como inventario inicial de la nueva semana y limpia el historial diario de entradas/salidas.
+          </p>
+        </div>
+
+        <!-- SECTION 3: SUCURSAL SECTOR -->
+        <div class="manual-section p-5 bg-surface border border-border rounded-lg space-y-3" data-search-terms="sucursal tienda pedidos pedir adicion surtido completo">
+          <div class="flex items-center gap-2 text-verde dark:text-crema">
+            <i data-lucide="store" class="w-4 h-4 text-oro"></i>
+            <h3 class="font-serif font-bold text-sm">3. Módulo de Sucursales</h3>
+          </div>
+          <p class="text-xs text-text-muted leading-relaxed">
+            Los encargados capturan cantidades en la columna <strong>PEDIR</strong>. El sistema procesa el estado del surtido y previene ediciones tardías. Si se añade mercancía post-surtido, se marca automáticamente con el tag <code>🚨 ADICIÓN</code> en color naranja para alertar a bodega.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== MOBILE NAVIGATION BAR ==================== -->
+    <nav class="absolute bottom-0 left-0 right-0 h-16 border-t border-border bg-bg/95 backdrop-blur-md flex items-center justify-around z-40">
+      <button class="nav-btn active flex flex-col items-center justify-center gap-1 w-16 h-12 text-oro transition-colors duration-200" onclick="switchMainView('landing')">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold font-sans">Inicio</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center justify-center gap-1 w-16 h-12 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('sheets')">
+        <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold font-sans">Hojas 1:1</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center justify-center gap-1 w-16 h-12 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('manual')">
+        <i data-lucide="book-open" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold font-sans">Manual</span>
+      </button>
     </nav>
 
-    <!-- Overlay background behind mobile sidebar -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden transition-opacity duration-300"></div>
-
-    <!-- CONTENEDOR PRINCIPAL -->
-    <div class="content-wrapper">
-      <header class="content-header px-4 md:px-8">
-        <div class="header-left">
-          <!-- Toggle sidebar menu on mobile -->
-          <button class="menu-toggle p-1 rounded hover:bg-surface-2 transition-colors mr-2 block lg:hidden" id="menu-toggle" aria-label="Abrir Menú">
-            <i data-lucide="menu" id="menu-icon" class="w-6 h-6"></i>
-          </button>
-          <h4 id="header-title" style="font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:600; color: var(--text-muted);">Introducción</h4>
-        </div>
-        <div class="header-right">
-          <button id="manual-theme-toggle" class="theme-toggle-btn" title="Cambiar tema">
-            <i data-lucide="sun" id="theme-icon" style="width:18px;"></i>
-          </button>
-        </div>
-      </header>
-
-      <main class="main-content px-4 py-8 md:px-10 md:py-12">
-
-        <!-- SECCIÓN 1: INTRODUCCIÓN -->
-        <section class="doc-section active" id="sect-intro">
-          <h2 class="section-title">Manual de Operaciones MISE v2.0</h2>
-          <p class="section-subtitle select-text">
-            Plataforma digital integrada de control de inventarios, enlace de catálogos y gestión de abastecimiento diario para La Crêpe Parisienne.
-          </p>
-
-          <div class="doc-alert select-text">
-            <div class="doc-alert-title"><i data-lucide="info" class="w-4.5 h-4.5"></i> Arquitectura del Sistema</div>
-            <div class="doc-alert-content">
-              MISE es un ecosistema desacoplado que vincula la Bodega Central con las tiendas de <strong>Andares (BA)</strong> y <strong>Mercado (BM)</strong> mediante enlaces en caliente y formatos condicionales automatizados en la nube de Google Sheets.
-            </div>
-          </div>
-
-          <h3 class="text-xl font-bold font-serif text-text mt-8 mb-4">Flujo de Datos Operativos</h3>
-          
-          <!-- SVGs and Flow Diagram in Manual -->
-          <div class="p-6 rounded-lg bg-surface-2 border border-border space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center text-xs">
-              <div class="p-3 bg-surface border border-border rounded shadow-sm">
-                <span class="text-oro font-bold">1. MAESTRO</span>
-                <p class="text-[10px] text-text-muted mt-1">Bodeguero define catálogo activo</p>
-              </div>
-              <div class="p-3 bg-surface border border-border rounded shadow-sm">
-                <span class="text-oro font-bold">2. SYNC</span>
-                <p class="text-[10px] text-text-muted mt-1">Hojas de pedidos importan existencias</p>
-              </div>
-              <div class="p-3 bg-surface border border-border rounded shadow-sm">
-                <span class="text-oro font-bold">3. CAPTURA</span>
-                <p class="text-[10px] text-text-muted mt-1">Encargado pide a pie de pasillo</p>
-              </div>
-              <div class="p-3 bg-surface border border-border rounded shadow-sm">
-                <span class="text-oro font-bold">4. CONCILIACIÓN</span>
-                <p class="text-[10px] text-text-muted mt-1">Bodeguero entrega y valida en móvil</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-grid pt-6">
-            <div class="info-card">
-              <div class="card-icon"><i data-lucide="database" style="width:28px; height:28px;"></i></div>
-              <h4 class="card-title">1. Libro Bodegas</h4>
-              <p class="card-desc">Administra el catálogo maestro oficial, las entradas físicas, consumos del Kardex y exporta saldos teóricos consolidados.</p>
-            </div>
-            <div class="info-card">
-              <div class="card-icon"><i data-lucide="shopping-bag" style="width:28px; height:28px;"></i></div>
-              <h4 class="card-title">2. Pedidos Andares (BA)</h4>
-              <p class="card-desc">Libro de uso diario en sucursal Andares. Conecta por IMPORTRANGE con Bodega para solicitar y recibir mercancía.</p>
-            </div>
-            <div class="info-card">
-              <div class="card-icon"><i data-lucide="store" style="width:28px; height:28px;"></i></div>
-              <h4 class="card-title">3. Pedidos Mercado (BM)</h4>
-              <p class="card-desc">Libro de uso diario en sucursal Mercado, independiente y sincronizado directamente con la base de datos central.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- SECCIÓN 2: MÓDULO BODEGAS -->
-        <section class="doc-section" id="sect-bodega">
-          <h2 class="section-title">Módulo de Bodegas</h2>
-          <p class="section-subtitle">Gestión central del catálogo maestro de insumos y captura semanal de existencias.</p>
-
-          <h3 class="text-lg font-bold font-serif text-text mt-6 mb-3">Hojas de Trabajo en Bodega</h3>
-          <div class="sheet-desc-box">
-            <div class="sheet-desc-title"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> MAESTRO</div>
-            <div class="sheet-desc-grid">
-              <div><strong>¿Para qué sirve?</strong> Catálogo maestro donde se registran insumos, unidades, máximos y mínimos.</div>
-              <div><strong>¿Cómo opera?</strong> Si el producto tiene la casilla "ACTIVO" en SÍ, aparecerá en las sucursales. Si se marca NO, se oculta.</div>
-            </div>
-          </div>
-
-          <div class="sheet-desc-box">
-            <div class="sheet-desc-title"><i data-lucide="calendar" class="w-4 h-4"></i> KARDEX_BA / KARDEX_BM</div>
-            <div class="sheet-desc-grid">
-              <div><strong>¿Para qué sirve?</strong> Registra entradas diarias por compras y salidas de stock hacia las tiendas.</div>
-              <div><strong>¿Cómo opera?</strong> El saldo restante se calcula en tiempo real para evitar discrepancias físicas.</div>
-            </div>
-          </div>
-
-          <!-- Bodeguero Pro Tips (2.6 requirement) -->
-          <div class="p-6 rounded-lg bg-emerald-950/20 border border-emerald-900/30 space-y-3 mt-6">
-            <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-400 font-bold text-sm">
-              <i data-lucide="lightbulb" class="w-4.5 h-4.5"></i>
-              <span>💡 SUGERENCIAS PARA EL BODEGUERO</span>
-            </div>
-            <ul class="list-disc pl-5 text-xs text-text-muted space-y-2">
-              <li><strong>Cierre de Semana:</strong> Ejecuta siempre el avance de semana los sábados por la tarde. Revisa los saldos antes de confirmar para que el inventario inicial del lunes sea 100% real.</li>
-              <li><strong>Carga Masiva:</strong> Para meter productos nuevos, usa el menú <code>⚙️ Mise → Carga masiva</code>. Esto evita duplicados de ID y da formato automático a las filas.</li>
-              <li><strong>Caducidades:</strong> Consulta la hoja de caducidades antes de surtir. Entrega primero los insumos con fecha de expiración más cercana (PEPS).</li>
-            </ul>
-          </div>
-
-          <h3 class="text-lg font-bold font-serif text-text mt-8 mb-3">Interacción con la hoja MAESTRO</h3>
-          <p class="text-xs text-text-muted mb-4">Haz clic sobre las celdas marcadas con línea punteada e icono ℹ️ para detallar su funcionamiento:</p>
-
-          <div class="sheet-interface-container">
-            <div class="sheet-mockup-wrapper">
-              <div class="sheet-mockup-header">
-                <i data-lucide="table" class="w-4.5 h-4.5"></i> Hoja MAESTRO (Catálogo)
-              </div>
-              <div class="sheet-scroll-container">
-                <table class="sheet-table">
-                  <thead>
-                    <tr>
-                      <th>No</th>
-                      <th>ID_FAMILIA</th>
-                      <th>PRODUCTO</th>
-                      <th>PRESENTACION</th>
-                      <th>UNIDAD</th>
-                      <th>ACTIVO</th>
-                      <th>MÍN</th>
-                      <th>MÁX</th>
-                      <th>SELECCIONAR</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>REF-001</td>
-                      <td class="hover-cell" data-tip="maestro-producto">Jamón Lala Pechuga <span class="cell-info-icon">ℹ️</span></td>
-                      <td>BOL 1 kg</td>
-                      <td>kg</td>
-                      <td class="hover-cell" data-tip="maestro-activo">SÍ <span class="cell-info-icon">ℹ️</span></td>
-                      <td>5</td>
-                      <td>20</td>
-                      <td class="hover-cell" data-tip="maestro-seleccionar"><input type="checkbox" checked disabled> <span class="cell-info-icon">ℹ️</span></td>
-                    </tr>
-                    <tr style="opacity: 0.7;">
-                      <td>2</td>
-                      <td>FYV-002</td>
-                      <td>Fresa Entera</td>
-                      <td>CAJA 2 kg</td>
-                      <td>caja</td>
-                      <td class="hover-cell" data-tip="maestro-inactivo">NO <span class="cell-info-icon">ℹ️</span></td>
-                      <td>2</td>
-                      <td>10</td>
-                      <td><input type="checkbox" disabled></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Side Inspector Panel -->
-            <div class="sheet-inspector" id="inspector-maestro">
-              <div class="inspector-header">
-                <i data-lucide="info" class="w-4 h-4"></i>
-                <span>Detalle de Celda</span>
-              </div>
-              <div class="inspector-content">
-                <div class="inspector-empty-state">
-                  <i data-lucide="mouse-pointer-click" class="empty-icon"></i>
-                  <p class="text-xs text-text-muted">Haz clic en una celda con borde punteado dorado para ver su descripción.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tooltips data sources -->
-          <div class="tooltip-info-box" id="tip-maestro-producto">
-            <strong>Columna Producto:</strong> Nombre del insumo en bodega. Al editarse aquí, se propaga automáticamente a los Kardex y a los libros de las sucursales.
-          </div>
-          <div class="tooltip-info-box" id="tip-maestro-activo">
-            <strong>Celda Activo:</strong> Indica si las sucursales pueden ver el insumo en su menú. Si se cambia a <strong>NO</strong>, se oculta en caliente de la hoja de pedidos de las tiendas.
-          </div>
-          <div class="tooltip-info-box" id="tip-maestro-seleccionar">
-            <strong>Checkbox Seleccionar:</strong> Casillas auxiliares para acciones masivas (activar, desactivar, borrar). Al marcar un producto, su fila entera se resalta visualmente.
-          </div>
-          <div class="tooltip-info-box" id="tip-maestro-inactivo">
-            <strong>Producto Inactivo:</strong> Las filas inactivas se formatean de gris tenue para alertar de inmediato al administrador que el producto no se encuentra disponible.
-          </div>
-        </section>
-
-        <!-- SECCIÓN 3: MÓDULO PEDIDOS -->
-        <section class="doc-section" id="sect-tienda">
-          <h2 class="section-title">Módulo de Pedidos (Sucursal)</h2>
-          <p class="section-subtitle">Gestión simplificada para el levantamiento de pedidos en tienda y conciliación de entregas.</p>
-
-          <h3 class="text-lg font-bold font-serif text-text mt-6 mb-3">Hojas de Trabajo en Sucursal</h3>
-          <div class="sheet-desc-box">
-            <div class="sheet-desc-title"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> PEDIDO DIARIO</div>
-            <div class="sheet-desc-grid">
-              <div><strong>¿Para qué sirve?</strong> Hoja del encargado de tienda para capturar necesidades y verificar el estado del pedido.</div>
-              <div><strong>¿Cómo opera?</strong> Se llena la columna PEDIR y luego se concilia el surtido entregado en físico.</div>
-            </div>
-          </div>
-
-          <div class="sheet-desc-box">
-            <div class="sheet-desc-title"><i data-lucide="truck" class="w-4 h-4"></i> 🚚 SURTIDO RÁPIDO</div>
-            <div class="sheet-desc-grid">
-              <div><strong>¿Para qué sirve?</strong> Vista limpia optimizada para pantallas móviles de celulares.</div>
-              <div><strong>¿Cómo opera?</strong> Permite marcar de forma ágil celdas de "Completo" o "Inexistente" mientras se concilia la entrega.</div>
-            </div>
-          </div>
-
-          <!-- Encargado Pro Tips (2.6 requirement) -->
-          <div class="p-6 rounded-lg bg-amber-950/20 border border-amber-900/30 space-y-3 mt-6">
-            <div class="flex items-center gap-2 text-amber-800 dark:text-amber-400 font-bold text-sm">
-              <i data-lucide="lightbulb" class="w-4.5 h-4.5"></i>
-              <span>💡 SUGERENCIAS PARA EL ENCARGADO / PICKER</span>
-            </div>
-            <ul class="list-disc pl-5 text-xs text-text-muted space-y-2">
-              <li><strong>Pasillo en Celular:</strong> Carga el archivo en tu celular y recorre los pasillos. Captura directamente en la columna PEDIR. Usa decimales en harinas o líquidos si es necesario.</li>
-              <li><strong>Adiciones:</strong> Si necesitas agregar mercancía después de haber enviado el pedido, el sistema la marcará como <code>🚨 ADICIÓN</code> en naranja para avisar al surtidor de bodega.</li>
-              <li><strong>Surtido Rápido:</strong> Al recibir el camión, abre la pestaña <code>🚚 SURTIDO RÁPIDO</code>. Toca las casillas de verificación para marcar lo que llegó completo o inexistente. El panel del resumen a la derecha se llenará solo de manera automática.</li>
-            </ul>
-          </div>
-
-          <h3 class="text-lg font-bold font-serif text-text mt-8 mb-3">Interacción con la hoja PEDIDO DIARIO</h3>
-          <p class="text-xs text-text-muted mb-4">Haz clic sobre las celdas marcadas con línea punteada e icono ℹ️ para detallar su funcionamiento:</p>
-
-          <div class="sheet-interface-container">
-            <div class="sheet-mockup-wrapper">
-              <div class="sheet-mockup-header">
-                <i data-lucide="file-spreadsheet" class="w-4.5 h-4.5"></i> Hoja PEDIDO DIARIO
-              </div>
-              <div class="sheet-scroll-container">
-                <table class="sheet-table">
-                  <thead>
-                    <tr>
-                      <th>No</th>
-                      <th>CATEGORÍA</th>
-                      <th>PRODUCTO</th>
-                      <th>UNIDAD</th>
-                      <th>PEDIR</th>
-                      <th>RECIBIDO</th>
-                      <th>ESTADO</th>
-                      <th>ALERTAS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>REFRIGERADOS</td>
-                      <td>Jamón Lala Pechuga</td>
-                      <td>kg</td>
-                      <td class="hover-cell" data-tip="tienda-pedir">3 <span class="cell-info-icon">ℹ️</span></td>
-                      <td class="hover-cell" data-tip="tienda-recibido">3 <span class="cell-info-icon">ℹ️</span></td>
-                      <td class="hover-cell" data-tip="tienda-completo" style="background-color: rgba(61, 138, 95, 0.2); text-align:center; font-weight:700; color:#3D8A5F;">✅ COMPLETO <span class="cell-info-icon">ℹ️</span></td>
-                      <td>-</td>
-                    </tr>
-                    <tr style="background: rgba(255, 167, 38, 0.05);">
-                      <td>12</td>
-                      <td>ABARROTES</td>
-                      <td>Nutella</td>
-                      <td>bote</td>
-                      <td>1</td>
-                      <td>0</td>
-                      <td style="color: var(--oro); text-align:center; font-weight:700;">⏳ PENDIENTE</td>
-                      <td class="hover-cell" data-tip="tienda-adicion" style="background-color:rgba(239, 108, 0, 0.2); color:#EF6C00; font-weight:bold; text-align:center;">🚨 ADICIÓN <span class="cell-info-icon">ℹ️</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Side Inspector Panel -->
-            <div class="sheet-inspector" id="inspector-tienda">
-              <div class="inspector-header">
-                <i data-lucide="info" class="w-4 h-4"></i>
-                <span>Detalle de Celda</span>
-              </div>
-              <div class="inspector-content">
-                <div class="inspector-empty-state">
-                  <i data-lucide="mouse-pointer-click" class="empty-icon"></i>
-                  <p class="text-xs text-text-muted">Haz clic en una celda con borde punteado dorado para ver su descripción.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tooltips data sources -->
-          <div class="tooltip-info-box" id="tip-tienda-pedir">
-            <strong>Columna PEDIR:</strong> Celda editable por el encargado. Escribe la cantidad requerida. La fila se ilumina automáticamente en amarillo tenue para facilitar el control visual.
-          </div>
-          <div class="tooltip-info-box" id="tip-tienda-recibido">
-            <strong>Columna RECIBIDO:</strong> Cantidad entregada físicamente por bodega en la sucursal. Sirve para calcular mermas e inventario remanente.
-          </div>
-          <div class="tooltip-info-box" id="tip-tienda-completo">
-            <strong>Estado del Surtido:</strong> Compara lo pedido contra lo recibido y se auto-actualiza a: Completo (Verde), Pendiente (Amarillo) o Parcial (Naranja).
-          </div>
-          <div class="tooltip-info-box" id="tip-tienda-adicion">
-            <strong>Alerta ADICIÓN:</strong> Si capturas un producto después de haber activado el check de `Ordenar` (pedido enviado), el script colorea la celda de naranja para avisar al surtidor de un pedido de último minuto.
-          </div>
-        </section>
-
-        <!-- SECCIÓN NUEVA: ANÁLISIS DE SCRIPTS (GAS) (2.3 requirement) -->
-        <section class="doc-section" id="sect-scripts-guide">
-          <h2 class="section-title">Análisis de Automatizaciones (Google Apps Script)</h2>
-          <p class="section-subtitle">Inventario de las macros y scripts en la nube que controlan el ecosistema de Hojas de Cálculo de MISE.</p>
-
-          <div class="space-y-6 select-text">
-            <!-- Bodega Backend -->
-            <div class="p-6 rounded-lg bg-surface-2 border border-border">
-              <div class="flex items-center gap-2 mb-3">
-                <i data-lucide="terminal" class="w-5 h-5 text-oro"></i>
-                <h4 class="font-bold text-base">Mise Central Backend — <code>miseAuthBDG.gs</code></h4>
-              </div>
-              <p class="text-xs text-text-muted leading-relaxed mb-3">
-                Ubicado en el libro de **Bodegas**. Centraliza y resguarda la información del inventario consolidado.
-              </p>
-              <table class="docs-table text-xs w-full">
-                <thead>
-                  <tr>
-                    <th>Función Clave</th>
-                    <th>Tipo</th>
-                    <th>Efecto Operativo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>setupCompleto()</code></td>
-                    <td>Inicialización</td>
-                    <td>Genera las hojas de Kardex y Maestro, asignando checkboxes y formatos condicionales.</td>
-                  </tr>
-                  <tr>
-                    <td><code>crearVistaMóvilBA() / BM()</code></td>
-                    <td>Buffer</td>
-                    <td>Recrea las vistas móviles limpias que leen los libros de las sucursales por IMPORTRANGE.</td>
-                  </tr>
-                  <tr>
-                    <td><code>configurarSemana()</code></td>
-                    <td>Tiempo</td>
-                    <td>Establece el lunes inicial en el Kardex validando que corresponda a un día de inicio de semana.</td>
-                  </tr>
-                  <tr>
-                    <td><code>avanzarSemana()</code></td>
-                    <td>Cierre</td>
-                    <td>Archiva el Kardex activo en las hojas de historial horizontal y desplaza el saldo final como inicio.</td>
-                  </tr>
-                  <tr>
-                    <td><code>procesarCargaMasiva()</code></td>
-                    <td>Bulk Import</td>
-                    <td>Lee la pestaña temporal <code>➕ AGREGAR_MÚLTIPLES</code>, carga los productos en lote y limpia la hoja.</td>
-                  </tr>
-                  <tr>
-                    <td><code>restaurarValidacionesMaestro()</code></td>
-                    <td>Mantenimiento</td>
-                    <td>Corrige y reestablece los checkboxes y menús desplegables dañados o borrados por el usuario.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Sucursales Backend -->
-            <div class="p-6 rounded-lg bg-surface-2 border border-border">
-              <div class="flex items-center gap-2 mb-3">
-                <i data-lucide="terminal" class="w-5 h-5 text-oro"></i>
-                <h4 class="font-bold text-base">Tiendas Front-end Automation — <code>miseAuthPDA.gs</code> / <code>PDM.gs</code></h4>
-              </div>
-              <p class="text-xs text-text-muted leading-relaxed mb-3">
-                Ubicados en los libros de **Pedidos Andares** y **Pedidos Mercado**. Optimizan el flujo de pedido y entrega.
-              </p>
-              <table class="docs-table text-xs w-full">
-                <thead>
-                  <tr>
-                    <th>Función Clave</th>
-                    <th>Tipo</th>
-                    <th>Efecto Operativo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>onEdit(e)</code></td>
-                    <td>Trigger</td>
-                    <td>Detecta celdas escritas en PEDIR. Si se edita después de ordenar, le asigna la alerta <code>🚨 ADICIÓN</code>.</td>
-                  </tr>
-                  <tr>
-                    <td><code>sincronizarEstados()</code></td>
-                    <td>Sincronización</td>
-                    <td>Trae la información de stock actualizada desde el libro de Bodega y recrea fórmulas rotas.</td>
-                  </tr>
-                  <tr>
-                    <td><code>ordenarPedido()</code></td>
-                    <td>Agrupación</td>
-                    <td>Ordena la lista de productos por categorías (pasillo) y coloca lo pedido al inicio del documento.</td>
-                  </tr>
-                  <tr>
-                    <td><code>_checkAutoResetNuevoDia()</code></td>
-                    <td>Auto-limpieza</td>
-                    <td>Compara la fecha actual. Si detecta un cambio de día, limpia los pedidos para evitar capturas viejas.</td>
-                  </tr>
-                  <tr>
-                    <td><code>generarSurtidoRapido()</code></td>
-                    <td>Móvil</td>
-                    <td>Genera o activa la pestaña <code>🚚 SURTIDO RÁPIDO</code> con el resumen de conteos dinámicos en celular.</td>
-                  </tr>
-                  <tr>
-                    <td><code>generarDatosPrueba()</code></td>
-                    <td>Simulador</td>
-                    <td>Rellena de forma aleatoria cantidades con decimales de hasta 4 posiciones para pruebas del sistema.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- SECCIÓN 4: SECCIÓN AVANZADA (MENÚS DE SHEETS) -->
-        <section class="doc-section" id="sect-advanced">
-          <h2 class="section-title">Sección Avanzada — Menú ⚙️ Mise</h2>
-          <p class="section-subtitle">Guía rápida de las herramientas integradas en la barra superior personalizada de Google Sheets.</p>
-
-          <div style="display: flex; gap: 1.5rem; margin-bottom: 2.5rem; border-bottom:1px solid var(--border);">
-            <button class="btn-sim primary" id="btn-menu-bodega" style="border-radius: var(--radius-md) var(--radius-md) 0 0; margin-bottom:-1px;">Menú en "Bodegas"</button>
-            <button class="btn-sim" id="btn-menu-pedidos" style="border-radius: var(--radius-md) var(--radius-md) 0 0; margin-bottom:-1px;">Menú en "Pedidos"</button>
-          </div>
-
-          <!-- Detalle de Menú de Bodega -->
-          <div id="menu-doc-bodega" class="menu-doc-wrapper">
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="rocket" style="width:16px; color:var(--oro);"></i> Setup completo</div>
-              <div class="menu-item-doc-desc">
-                Crea desde cero toda la estructura de pestañas necesarias (`MAESTRO`, `KARDEX_BA`, `KARDEX_BM`, `VISTA_MOVIL_BA`, `VISTA_MOVIL_BM`, `CADUCIDADES`), aplica los formatos condicionales, inyecta las validaciones de datos en las celdas y resguarda las fórmulas base. <strong>Ejecutar únicamente al configurar el libro por primera vez.</strong>
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="calendar" style="width:16px; color:var(--oro);"></i> Configurar semana — B-Andares / B-Mercado</div>
-              <div class="menu-item-doc-desc">
-                Establece la fecha inicial de control (Lunes) en la celda `D4` del Kardex correspondiente. Solicita confirmación y valida que la fecha corresponda a un día Lunes.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="archive" style="width:16px; color:var(--oro);"></i> Avanzar semana — B-Andares / B-Mercado</div>
-              <div class="menu-item-doc-desc">
-                <strong>Acción de Cierre Semanal (Sábado):</strong> Toma todo el registro de movimientos del Kardex activo, lo guarda como un bloque histórico en la pestaña de historial correspondiente, limpia los campos de entradas/salidas diarias en el Kardex y calcula los nuevos saldos de inicio para la semana entrante.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="refresh-cw" style="width:16px; color:var(--oro);"></i> Recrear VISTA_MOVIL_BA / VISTA_MOVIL_BM</div>
-              <div class="menu-item-doc-desc">
-                Reconstruye por completo la hoja optimizada que leen las tiendas de forma remota, restaurando las fórmulas de filtrado y enlace. Utilizada en caso de edición accidental o pérdida de estructura.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="plus-circle" style="width:16px; color:var(--oro);"></i> Agregar producto al catálogo</div>
-              <div class="menu-item-doc-desc">
-                Abre un formulario lateral para ingresar un nuevo producto individual (Nombre, Unidad, Categoría). Lo registra al final del catálogo y lo inserta en los Kardex respectivos con sus validaciones correspondientes.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="list-plus" style="width:16px; color:var(--oro);"></i> Carga masiva de productos</div>
-              <div class="menu-item-doc-desc">
-                Crea la pestaña temporal `➕ AGREGAR_MÚLTIPLES`. El usuario ingresa la lista de productos nuevos. Al confirmar la carga mediante la casilla en la hoja, los registra en lote en todas las pestañas y elimina la pestaña temporal.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="edit-3" style="width:16px; color:var(--oro);"></i> Editar productos seleccionados</div>
-              <div class="menu-item-doc-desc">
-                Busca los productos que tienen la casilla "SELECCIONAR" en `TRUE` en la hoja `MAESTRO`. Crea la pestaña temporal `✏️ EDITAR_PRODUCTOS` con la información elegida para su modificación en lote. Al confirmar los cambios, actualiza los nombres y stock en Maestro, Kardex e Históricos de golpe y borra la pestaña temporal.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="check-square" style="width:16px; color:var(--oro);"></i> Restaurar validaciones de MAESTRO</div>
-              <div class="menu-item-doc-desc">
-                Corrige los checkboxes de selección y los menús desplegables de unidades de medida en caso de que un operario los borre o sobrescriba por error.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="test-tube" style="width:16px; color:var(--oro);"></i> Correr tests</div>
-              <div class="menu-item-doc-desc">
-                Función de diagnóstico técnico. Valida que las hojas contengan el mismo número de filas, que las fórmulas no tengan errores y que las conexiones de datos no estén rotas.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="trash-2" style="width:16px; color:var(--oro);"></i> Limpiar propiedades</div>
-              <div class="menu-item-doc-desc">
-                Elimina los registros almacenados en la caché del script (como URLs de conexión anteriores y variables de bloqueo). Útil para depurar el sistema ante cambios de libros.
-              </div>
-            </div>
-          </div>
-
-          <!-- Detalle de Menú de Pedidos -->
-          <div id="menu-doc-pedidos" class="menu-doc-wrapper" style="display:none;">
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="rocket" style="width:16px; color:var(--oro);"></i> Setup completo</div>
-              <div class="menu-item-doc-desc">
-                Crea la hoja operativa `📋 PEDIDO DIARIO` y el buffer `_SYNC`, inyecta las fórmulas y aplica las reglas de formato condicional nativas. <strong>Ejecutar al configurar el pedido de la sucursal por primera vez.</strong>
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="link-2" style="width:16px; color:var(--oro);"></i> Configurar conexión con Bodega</div>
-              <div class="menu-item-doc-desc">
-                Abre un cuadro de diálogo en pantalla para pegar la dirección web (URL) del libro maestro de Bodega. Esto vincula de forma segura el `IMPORTRANGE` para traer el catálogo y existencias en tiempo real.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="truck" style="width:16px; color:var(--oro);"></i> Surtido Rápido (móvil)</div>
-              <div class="menu-item-doc-desc">
-                Genera o activa de forma manual la hoja de `"🚚 SURTIDO RÁPIDO"`, la cual cuenta con la columna de producto congelada, columnas ocultas y reglas de formato para registrar la mercancía recibida en celulares.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="dices" style="width:16px; color:var(--oro);"></i> Generar datos de prueba</div>
-              <div class="menu-item-doc-desc">
-                <strong>Función de pruebas:</strong> Rellena de forma aleatoria cantidades de pedido (enteros y flotantes de hasta 4 decimales) y estados de recibo para varios productos al azar del catálogo, agilizando las pruebas del sistema.
-              </div>
-            </div>
-            <div class="menu-item-doc">
-              <div class="menu-item-doc-name"><i data-lucide="info" style="width:16px; color:var(--oro);"></i> Acerca de Mise</div>
-              <div class="menu-item-doc-desc">
-                Muestra información técnica del script, número de versión y configuración de la tienda.
-              </div>
-            </div>
-          </div>
-        </section>
-
-      </main>
-    </div>
   </div>
 
 </body>
