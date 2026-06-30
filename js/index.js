@@ -204,19 +204,19 @@ window.switchMainView = function(viewId) {
     const thread = document.getElementById('gold-thread-transition');
 
     if (oldViewEl && thread) {
-      // 1. Mostrar y expandir horizontalmente el hilo de oro
-      thread.style.transition = 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms ease';
+      // 1. Mostrar y expandir horizontalmente el hilo de oro (300ms)
+      thread.style.transition = 'transform 300ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease';
       thread.style.opacity = '1';
       thread.style.transform = 'translate(-50%, -50%) scaleX(1)';
 
-      // 2. Expandir verticalmente cubriendo la pantalla
+      // 2. Expandir verticalmente cubriendo la pantalla (350ms)
       setTimeout(() => {
-        thread.style.transition = 'transform 250ms cubic-bezier(0.23, 1, 0.32, 1), height 250ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 250ms ease';
+        thread.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1), height 350ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 350ms ease';
         thread.style.height = '100%';
         thread.style.boxShadow = 'none'; // Desactivar resplandor al expandirse a bloque sólido
-      }, 200);
+      }, 300);
 
-      // 3. Intercambiar la vista justo cuando el bloque cubre todo
+      // 3. Intercambiar la vista justo cuando el bloque cubre todo (550ms)
       setTimeout(() => {
         oldViewEl.classList.add('hidden');
         newViewEl.classList.remove('hidden');
@@ -224,13 +224,13 @@ window.switchMainView = function(viewId) {
 
         // Actualizar URL hash
         window.location.hash = `#/${viewId}`;
-      }, 380);
+      }, 550);
 
-      // 4. Desvanecer la cortina dorada
+      // 4. Desvanecer la cortina dorada (400ms fadeout)
       setTimeout(() => {
-        thread.style.transition = 'opacity 300ms ease';
+        thread.style.transition = 'opacity 400ms ease';
         thread.style.opacity = '0';
-      }, 450);
+      }, 650);
 
       // 5. Restablecer el estado inicial del hilo
       setTimeout(() => {
@@ -238,7 +238,7 @@ window.switchMainView = function(viewId) {
         thread.style.transform = 'translate(-50%, -50%) scaleX(0)';
         thread.style.height = '2px';
         thread.style.boxShadow = '0 0 12px var(--oro), 0 0 24px var(--oro)';
-      }, 760);
+      }, 1080);
     }
   } else {
     newViewEl.classList.remove('hidden');
