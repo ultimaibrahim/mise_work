@@ -304,20 +304,20 @@ body {
   }
 }
 
-/* --- SWEEP TRANSITION CURTAINS (ESPATULA) --- */
-#sweep-curtain-1, #sweep-curtain-2 {
+/* --- GOLD THREAD TRANSITION (EFECTO PLANCHA) --- */
+#gold-thread-transition {
   position: fixed;
-  top: 0;
-  bottom: 0;
+  top: 50%;
   left: 50%;
   width: 100%;
   max-width: 450px;
-  transform: translateX(-150%);
+  height: 2px;
+  background-color: var(--oro);
+  box-shadow: 0 0 12px var(--oro), 0 0 24px var(--oro);
+  transform: translate(-50%, -50%) scaleX(0);
+  opacity: 0;
   z-index: 9999;
   pointer-events: none;
-  border-x: 1px solid var(--border);
 }
-#sweep-curtain-2 {
-  filter: drop-shadow(-10px 0 20px rgba(0, 0, 0, 0.15));
-}
+
 

@@ -201,95 +201,49 @@ window.switchMainView = function(viewId) {
 
   if (currentActive && currentActive !== viewId) {
     const oldViewEl = document.getElementById(`${currentActive}-view`);
-    if (oldViewEl) {
-      const toManual = ['manual', 'manual-pedidos', 'manual-bodega', 'tips', 'landing'].includes(viewId);
-      
-      if (toManual) {
-        // --- OPCIÓN 1: Cinemático Suave (Blur + Scale + Opacity) ---
-        oldViewEl.style.transition = 'opacity 180ms ease, transform 180ms ease, filter 180ms ease';
-        oldViewEl.style.opacity = '0';
-        oldViewEl.style.transform = 'scale(0.985) translateY(-4px)';
-        oldViewEl.style.filter = 'blur(4px)';
+    const thread = document.getElementById('gold-thread-transition');
 
-        setTimeout(() => {
-          oldViewEl.classList.add('hidden');
-          oldViewEl.style.transition = '';
-          oldViewEl.style.opacity = '';
-          oldViewEl.style.transform = '';
-          oldViewEl.style.filter = '';
+    if (oldViewEl && thread) {
+      // 1. Mostrar y expandir horizontalmente el hilo de oro
+      thread.style.transition = 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1), opacity 150ms ease';
+      thread.style.opacity = '1';
+      thread.style.transform = 'translate(-50%, -50%) scaleX(1)';
 
-          newViewEl.classList.remove('hidden');
-          newViewEl.style.opacity = '0';
-          newViewEl.style.transform = 'scale(0.985) translateY(4px)';
-          newViewEl.style.filter = 'blur(4px)';
-          window.scrollTo(0, 0);
-          
-          // Force reflow
-          newViewEl.offsetHeight;
+      // 2. Expandir verticalmente cubriendo la pantalla
+      setTimeout(() => {
+        thread.style.transition = 'transform 250ms cubic-bezier(0.23, 1, 0.32, 1), height 250ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 250ms ease';
+        thread.style.height = '100%';
+        thread.style.boxShadow = 'none'; // Desactivar resplandor al expandirse a bloque sólido
+      }, 200);
 
-          newViewEl.style.transition = 'opacity 250ms var(--ease-out), transform 250ms var(--ease-out), filter 250ms var(--ease-out)';
-          newViewEl.style.opacity = '1';
-          newViewEl.style.transform = 'scale(1) translateY(0)';
-          newViewEl.style.filter = 'blur(0)';
-
-          setTimeout(() => {
-            newViewEl.style.transition = '';
-            newViewEl.style.opacity = '';
-            newViewEl.style.transform = '';
-            newViewEl.style.filter = '';
-          }, 250);
-        }, 180);
-
-      } else {
-        // --- OPCIÓN 2: Deslizamiento Lateral Físico (iOS Parallax) ---
-        const parent = oldViewEl.parentElement;
-        parent.style.position = 'relative';
-        parent.style.overflow = 'hidden';
-
-        oldViewEl.style.position = 'absolute';
-        oldViewEl.style.width = '100%';
-        oldViewEl.style.zIndex = '10';
-        oldViewEl.style.transition = 'transform 320ms var(--ease-drawer), opacity 320ms var(--ease-drawer)';
-        
-        newViewEl.style.position = 'absolute';
-        newViewEl.style.width = '100%';
-        newViewEl.style.zIndex = '20';
+      // 3. Intercambiar la vista justo cuando el bloque cubre todo
+      setTimeout(() => {
+        oldViewEl.classList.add('hidden');
         newViewEl.classList.remove('hidden');
-        newViewEl.style.transform = 'translateX(100%)';
-        newViewEl.style.transition = 'transform 320ms var(--ease-drawer)';
         window.scrollTo(0, 0);
 
-        // Force reflow
-        newViewEl.offsetHeight;
+        // Actualizar URL hash
+        window.location.hash = `#/${viewId}`;
+      }, 380);
 
-        oldViewEl.style.transform = 'translateX(-25%)';
-        oldViewEl.style.opacity = '0.4';
-        newViewEl.style.transform = 'translateX(0)';
+      // 4. Desvanecer la cortina dorada
+      setTimeout(() => {
+        thread.style.transition = 'opacity 300ms ease';
+        thread.style.opacity = '0';
+      }, 450);
 
-        setTimeout(() => {
-          oldViewEl.classList.add('hidden');
-          
-          oldViewEl.style.position = '';
-          oldViewEl.style.width = '';
-          oldViewEl.style.zIndex = '';
-          oldViewEl.style.transform = '';
-          oldViewEl.style.opacity = '';
-          oldViewEl.style.transition = '';
-
-          newViewEl.style.position = '';
-          newViewEl.style.width = '';
-          newViewEl.style.zIndex = '';
-          newViewEl.style.transform = '';
-          newViewEl.style.transition = '';
-
-          parent.style.position = '';
-          parent.style.overflow = '';
-        }, 330);
-      }
+      // 5. Restablecer el estado inicial del hilo
+      setTimeout(() => {
+        thread.style.transition = 'none';
+        thread.style.transform = 'translate(-50%, -50%) scaleX(0)';
+        thread.style.height = '2px';
+        thread.style.boxShadow = '0 0 12px var(--oro), 0 0 24px var(--oro)';
+      }, 760);
     }
   } else {
     newViewEl.classList.remove('hidden');
     window.scrollTo(0, 0);
+    window.location.hash = `#/${viewId}`;
   }
 
   // Update URL hash
