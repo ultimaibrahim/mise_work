@@ -209,10 +209,11 @@ window.switchMainView = function(viewId) {
       thread.style.opacity = '1';
       thread.style.transform = 'translate(-50%, -50%) scaleX(1)';
 
-      // 2. Expandir verticalmente cubriendo la pantalla (350ms)
+      // 2. Expandir verticalmente cubriendo la pantalla (350ms) y transicionar al color de fondo del tema
       setTimeout(() => {
-        thread.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1), height 350ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 350ms ease';
+        thread.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1), height 350ms cubic-bezier(0.23, 1, 0.32, 1), background-color 220ms ease, box-shadow 350ms ease';
         thread.style.height = '100%';
+        thread.style.backgroundColor = 'var(--bg)';
         thread.style.boxShadow = 'none'; // Desactivar resplandor al expandirse a bloque sólido
       }, 300);
 
@@ -237,6 +238,7 @@ window.switchMainView = function(viewId) {
         thread.style.transition = 'none';
         thread.style.transform = 'translate(-50%, -50%) scaleX(0)';
         thread.style.height = '2px';
+        thread.style.backgroundColor = 'var(--oro)';
         thread.style.boxShadow = '0 0 12px var(--oro), 0 0 24px var(--oro)';
       }, 1080);
     }
