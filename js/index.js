@@ -191,7 +191,6 @@ window.switchMainView = function(viewId) {
   const views = ['landing', 'manual', 'manual-pedidos', 'manual-bodega', 'tips', 'about'];
   if (!views.includes(viewId)) viewId = 'landing';
 
-  // Obtener vista activa actual
   const currentActive = views.find(v => {
     const el = document.getElementById(`${v}-view`);
     return el && !el.classList.contains('hidden');
@@ -202,48 +201,43 @@ window.switchMainView = function(viewId) {
 
   if (currentActive && currentActive !== viewId) {
     const oldViewEl = document.getElementById(`${currentActive}-view`);
-    if (oldViewEl) {
-      // 1. Difuminar y desvanecer la vista actual
-      oldViewEl.style.transition = 'opacity 180ms ease, transform 180ms ease, filter 180ms ease';
-      oldViewEl.style.opacity = '0';
-      oldViewEl.style.transform = 'scale(0.985) translateY(-4px)';
-      oldViewEl.style.filter = 'blur(3px)';
+    const c1 = document.getElementById('sweep-curtain-1');
+    const c2 = document.getElementById('sweep-curtain-2');
+
+    if (oldViewEl && c1 && c2) {
+      // 1. Deslizar cortinas de izquierda a centro
+      c1.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1)';
+      c1.style.transform = 'translateX(-50%)';
 
       setTimeout(() => {
-        oldViewEl.classList.add('hidden');
-        oldViewEl.style.transition = '';
-        oldViewEl.style.opacity = '';
-        oldViewEl.style.transform = '';
-        oldViewEl.style.filter = '';
+        c2.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1)';
+        c2.style.transform = 'translateX(-50%)';
+      }, 60);
 
-        // 2. Revelar la nueva vista de forma orgánica
-        revealNewView(newViewEl);
-      }, 180);
+      // 2. Hacer swap en el punto de cobertura (190ms)
+      setTimeout(() => {
+        oldViewEl.classList.add('hidden');
+        newViewEl.classList.remove('hidden');
+        window.scrollTo(0, 0);
+
+        // Deslizar cortinas hacia la derecha para revelar la nueva hoja
+        c1.style.transform = 'translateX(50%)';
+        setTimeout(() => {
+          c2.style.transform = 'translateX(50%)';
+        }, 60);
+      }, 190);
+
+      // 3. Resetear posiciones originales sin transición
+      setTimeout(() => {
+        c1.style.transition = 'none';
+        c2.style.transition = 'none';
+        c1.style.transform = 'translateX(-150%)';
+        c2.style.transform = 'translateX(-150%)';
+      }, 580);
     }
   } else {
-    revealNewView(newViewEl);
-  }
-
-  function revealNewView(el) {
-    el.classList.remove('hidden');
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(12px) scale(0.99)';
-    el.style.filter = 'blur(3px)';
-    
-    // Forzar reflujo del navegador
-    el.offsetHeight;
-
-    el.style.transition = 'opacity 280ms var(--ease-out), transform 280ms var(--ease-out), filter 280ms var(--ease-out)';
-    el.style.opacity = '1';
-    el.style.transform = 'translateY(0) scale(1)';
-    el.style.filter = 'blur(0)';
-
-    setTimeout(() => {
-      el.style.transition = '';
-      el.style.opacity = '';
-      el.style.transform = '';
-      el.style.filter = '';
-    }, 280);
+    newViewEl.classList.remove('hidden');
+    window.scrollTo(0, 0);
   }
 
   // Update URL hash

@@ -303,3 +303,21 @@ body {
     transition: opacity 0.3s ease;
   }
 }
+
+/* --- SWEEP TRANSITION CURTAINS (ESPATULA) --- */
+#sweep-curtain-1, #sweep-curtain-2 {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100%;
+  max-width: 450px;
+  transform: translateX(-150%);
+  z-index: 9999;
+  pointer-events: none;
+  border-x: 1px solid var(--border);
+}
+#sweep-curtain-2 {
+  filter: drop-shadow(-10px 0 20px rgba(0, 0, 0, 0.15));
+}
+
