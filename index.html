@@ -58,26 +58,18 @@
         <defs>
           <!-- Camino plano recto horizontal para la fase de carga -->
           <path id="flatPath" d="M 20,230 L 280,230" />
-          <!-- Camino curvado para la órbita/cierre al finalizar -->
-          <path id="curvePath" d="M 50,150 A 100,100 0 0,0 250,150" />
           <!-- Gradiente lineal para el rellenado horizontal del texto -->
           <linearGradient id="loaderTextGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="var(--oro)" id="gradient-stop-1" />
             <stop offset="0%" stop-color="rgba(245, 239, 230, 0.25)" id="gradient-stop-2" />
           </linearGradient>
         </defs>
-        <!-- MISE en el centro -->
-        <text x="150" y="156" class="loader-logo-svg-text" text-anchor="middle">MISE</text>
+        <!-- mise en el centro -->
+        <text x="150" y="156" class="loader-logo-svg-text" text-anchor="middle">mise</text>
         <!-- Frase plana (activa durante la carga) -->
         <text class="loader-phrase-svg-text loader-phrase-flat">
           <textPath href="#flatPath" startOffset="50%" text-anchor="middle">
-            L'art de la crêpe, l'excellence du service
-          </textPath>
-        </text>
-        <!-- Frase curvada (aparece y rota al finalizar) -->
-        <text class="loader-phrase-svg-text loader-phrase-curve">
-          <textPath href="#curvePath" startOffset="50%" text-anchor="middle">
-            L'art de la crêpe, l'excellence du service
+            L'ordre en cuisine, la précision en inventaire
           </textPath>
         </text>
       </svg>

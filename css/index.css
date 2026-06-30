@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+@font-face {
+  font-family: 'Giaza';
+  src: url('../fonts/Giaza-Font/Giaza Font/Giaza.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
 /* --- CUSTOM VARIABLES (TINTED GRAPHITE & WARM ALABASTER) --- */
 html[data-theme="dark"] {
   --bg:           #0E1210; /* Soft black forest */
@@ -202,13 +210,14 @@ body {
 }
 
 .loader-logo-svg-text {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Giaza', serif;
   font-size: 52px;
   fill: var(--crema);
-  font-weight: 700;
+  font-weight: normal;
+  text-transform: lowercase;
   letter-spacing: 0.06em;
   transform-origin: 150px 150px;
-  transition: transform 1s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.8s ease;
+  transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.8s ease;
 }
 
 .loader-phrase-svg-text {
@@ -218,12 +227,7 @@ body {
   letter-spacing: 0.05em;
   fill: url(#loaderTextGradient);
   transform-origin: 150px 150px;
-}
-
-.loader-phrase-curve {
-  opacity: 0;
-  pointer-events: none;
-  fill: var(--oro);
+  transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.6s ease;
 }
 
 .loader-plancha-line {
@@ -245,19 +249,14 @@ body {
 
 #lcp-loader.wrap-active .loader-phrase-flat {
   opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.15s ease;
-}
-
-#lcp-loader.wrap-active .loader-phrase-curve {
-  opacity: 1;
-  animation: phraseCurveOrbit 1.4s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+  transform: scale(0.95);
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 #lcp-loader.wrap-active .loader-logo-svg-text {
-  transform: scale(0.9);
+  transform: scale(0.95);
   opacity: 0;
-  transition: transform 1.2s cubic-bezier(0.85, 0, 0.15, 1) 0.4s, opacity 1s ease 0.4s;
+  transition: transform 0.4s ease, opacity 0.4s ease;
 }
 
 #lcp-loader.line-visible #lcp-loader-plancha {
@@ -285,30 +284,12 @@ body {
   transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease;
 }
 
-@keyframes phraseCurveOrbit {
-  0% {
-    transform: rotate(0deg) scale(1);
-    opacity: 1;
-    filter: blur(0);
-  }
-  100% {
-    transform: rotate(360deg) scale(0.25);
-    opacity: 0;
-    filter: blur(2px);
-  }
-}
-
 /* Reduced motion compliance */
 @media (prefers-reduced-motion: reduce) {
   #lcp-loader {
     transition: opacity 0.3s ease;
   }
-  #lcp-loader.wrap-active .loader-phrase-curve {
-    animation: none !important;
-    opacity: 0;
-  }
   #lcp-loader.wrap-active .loader-logo-svg-text {
-    transform: none !important;
     opacity: 0;
     transition: opacity 0.3s ease;
   }

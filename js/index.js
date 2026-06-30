@@ -83,15 +83,15 @@ function hideLcpLoader() {
   // 1. Asegurar progreso al 100% de la frase
   updateLcpLoader(100);
 
-  // 2. Iniciar órbita de frase alrededor de MISE y desaparición
+  // 2. Iniciar desaparición (fade/scale out) de textos
   setTimeout(() => {
     loader.classList.add('wrap-active');
-  }, 350); // Pausa dramática corta con el texto plano completo
+  }, 250);
 
   // 3. Mostrar hilo de luz dorada en el centro (plancha)
   setTimeout(() => {
     loader.classList.add('line-visible');
-  }, 1300); // Sincronizado con la órbita (1.4s de rotación)
+  }, 550);
 
   // 4. Barrido de expansión total en crema y desvanecimiento
   setTimeout(() => {
@@ -105,7 +105,7 @@ function hideLcpLoader() {
       }
     }, 150);
 
-  }, 1600); // 1.3s + 300ms de espera
+  }, 850);
 
   // 5. Ocultar del DOM al finalizar por completo la animación
   setTimeout(() => {
@@ -113,7 +113,7 @@ function hideLcpLoader() {
     if (appEl) {
       appEl.classList.remove('entrance-active');
     }
-  }, 2600);
+  }, 1750);
 }
 
 // --- THEME STATE & TOGGLE ---
