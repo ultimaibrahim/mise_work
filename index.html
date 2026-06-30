@@ -25,16 +25,16 @@
             'verde-deep': '#2a3f32',
             sage: '#7A9E8A',
             oro: '#B8902F',
-            crema: '#F5EFE6',
-            negro: '#1A1A1A',
+            crema: '#FAF6ED',
+            negro: '#0E1210',
             bg: 'var(--bg)',
             surface: 'var(--surface)',
             'surface-2': 'var(--surface-2)',
             border: 'var(--border)',
             text: 'var(--text)',
             'text-muted': 'var(--text-muted)',
-            'card-bg': 'var(--card-bg)',
-            shadow: 'var(--shadow)'
+            shadow: 'var(--shadow)',
+            'shadow-tinted': 'var(--shadow-tinted)'
           },
           borderRadius: {
             lg: 'var(--radius-lg)',
@@ -49,24 +49,24 @@
   <link rel="stylesheet" href="css/index.css">
   <script defer src="js/index.js"></script>
 </head>
-<body class="bg-bg text-text min-h-screen flex flex-col transition-colors duration-300">
+<body class="bg-negro text-text min-h-screen flex flex-col transition-colors duration-300">
 
   <!-- ==================== MAIN APPLICATION CONTAINER ==================== -->
-  <div class="flex-1 flex flex-col relative w-full max-w-[450px] mx-auto min-h-screen shadow-2xl bg-bg border-x border-border overflow-x-hidden pb-24">
+  <div class="flex-1 flex flex-col relative w-full max-w-[450px] mx-auto min-h-screen shadow-2xl bg-bg border-x border-border overflow-x-hidden pb-28 grain-overlay">
     
     <!-- HEADER -->
     <header class="w-full flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-bg/85 backdrop-blur-md z-30">
       <div class="flex items-center gap-3">
         <!-- Hamburger Menu Button -->
-        <button id="menu-btn" class="p-1.5 rounded hover:bg-surface-2 transition-colors duration-200" title="Abrir Índice">
-          <i data-lucide="menu" class="w-6 h-6 text-verde dark:text-crema"></i>
+        <button id="menu-btn" class="p-2 rounded-full hover:bg-surface-2 transition-all duration-200 interactive-element" title="Abrir Índice">
+          <i data-lucide="menu" class="w-5 h-5 text-verde dark:text-crema"></i>
         </button>
         <div class="flex items-center gap-2">
-          <h1 class="text-xl font-bold font-serif tracking-tight text-verde dark:text-crema">MISE</h1>
-          <span class="text-[9px] font-bold tracking-wider uppercase bg-oro/10 text-oro px-2 py-0.5 rounded-full">Guía Oficial</span>
+          <h1 class="text-xl font-extrabold font-serif tracking-tight text-verde dark:text-crema">MISE</h1>
+          <span class="text-[9px] font-bold tracking-wider uppercase bg-oro/10 text-oro px-2.5 py-0.5 rounded-full">Guía Oficial</span>
         </div>
       </div>
-      <button id="theme-toggle" class="p-2 rounded-full hover:bg-surface-2 transition-colors duration-200" title="Cambiar tema">
+      <button id="theme-toggle" class="p-2 rounded-full hover:bg-surface-2 transition-all duration-200 interactive-element" title="Cambiar tema">
         <i data-lucide="sun" class="w-5 h-5 text-oro"></i>
       </button>
     </header>
@@ -77,14 +77,14 @@
       <div id="drawer-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"></div>
       
       <!-- Drawer Content -->
-      <div class="relative w-80 max-w-[85%] h-full bg-surface border-r border-border shadow-2xl flex flex-col p-6 space-y-8 z-10 transition-transform duration-300 transform -translate-x-full">
+      <div class="relative w-80 max-w-[85%] h-full bg-surface border-r border-border shadow-2xl flex flex-col p-6 space-y-8 z-10 transition-transform duration-300 transform -translate-x-full grain-overlay">
         <!-- Drawer Header -->
         <div class="flex items-center justify-between">
           <div class="space-y-0.5">
             <span class="text-[9px] font-bold text-oro uppercase tracking-widest font-mono">Suite Atelier</span>
             <div class="text-2xl font-bold font-serif text-verde dark:text-crema">Índice General</div>
           </div>
-          <button id="menu-close-btn" class="p-1 rounded-full hover:bg-surface-2 transition-colors">
+          <button id="menu-close-btn" class="p-1.5 rounded-full hover:bg-surface-2 transition-colors interactive-element">
             <i data-lucide="x" class="w-5 h-5 text-text-muted"></i>
           </button>
         </div>
@@ -92,12 +92,12 @@
         <!-- Menu Navigation Items -->
         <ul class="space-y-3 flex-1 overflow-y-auto text-xs select-none">
           <li>
-            <button onclick="drawerNavigate('landing')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+            <button onclick="drawerNavigate('landing')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-all duration-200 text-left text-text font-medium interactive-element">
               <i data-lucide="home" class="w-4 h-4 text-oro"></i> Inicio
             </button>
           </li>
           <li>
-            <button onclick="drawerNavigate('manual')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+            <button onclick="drawerNavigate('manual')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-all duration-200 text-left text-text font-medium interactive-element">
               <i data-lucide="book-open" class="w-4 h-4 text-oro"></i> Manual General
             </button>
           </li>
@@ -105,12 +105,12 @@
             <span class="px-3 text-[9px] font-bold uppercase tracking-wider text-text-muted font-mono">Manuales por Módulo</span>
           </li>
           <li>
-            <button onclick="drawerNavigate('manual-pedidos')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium pl-6">
+            <button onclick="drawerNavigate('manual-pedidos')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-all duration-200 text-left text-text font-medium pl-6 interactive-element">
               <i data-lucide="store" class="w-4 h-4 text-verde dark:text-sage"></i> Módulo de Pedidos (Tienda)
             </button>
           </li>
           <li>
-            <button onclick="drawerNavigate('manual-bodega')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium pl-6">
+            <button onclick="drawerNavigate('manual-bodega')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-all duration-200 text-left text-text font-medium pl-6 interactive-element">
               <i data-lucide="warehouse" class="w-4 h-4 text-verde dark:text-sage"></i> Módulo de Bodega (Central)
             </button>
           </li>
@@ -118,12 +118,12 @@
             <span class="px-3 text-[9px] font-bold uppercase tracking-wider text-text-muted font-mono">Consejos Operativos</span>
           </li>
           <li>
-            <button onclick="drawerNavigate('tips')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+            <button onclick="drawerNavigate('tips')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-all duration-200 text-left text-text font-medium interactive-element">
               <i data-lucide="lightbulb" class="w-4 h-4 text-oro"></i> Tips & Tricks de Hojas
             </button>
           </li>
           <li class="border-t border-border pt-3">
-            <button onclick="drawerNavigate('about')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-colors text-left text-text font-medium">
+            <button onclick="drawerNavigate('about')" class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-2 transition-all duration-200 text-left text-text font-medium interactive-element">
               <i data-lucide="info" class="w-4 h-4 text-oro"></i> Acerca de la Guía
             </button>
           </li>
@@ -141,23 +141,23 @@
     <div id="landing-view" class="view-container px-6 py-8 space-y-8 animate-fade-in">
       
       <!-- HERO -->
-      <div class="space-y-3 text-center py-2">
+      <div class="space-y-4 text-center py-2">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-verde/5 text-verde dark:text-sage text-[11px] font-semibold">
           <span class="w-1.5 h-1.5 rounded-full bg-oro animate-pulse"></span>
           Suite Atelier — La Crêpe Parisienne
         </div>
-        <h2 class="text-3xl font-extrabold font-serif text-verde dark:text-crema tracking-tight leading-tight">
+        <h2 class="text-3xl font-bold font-serif text-verde dark:text-crema tracking-tight leading-tight px-2">
           Control de Inventarios y Abastecimiento
         </h2>
-        <p class="text-xs text-text-muted leading-relaxed max-w-xs mx-auto">
+        <p class="text-xs text-text-muted leading-relaxed max-w-xs mx-auto font-sans">
           Plataforma inteligente para el control diario de insumos y comunicación en tiempo real.
         </p>
       </div>
 
       <!-- SIMPLIFIED SYSTEM FLOW -->
-      <div class="bg-surface border border-border p-5 rounded-lg space-y-4 shadow-sm">
+      <div class="premium-card space-y-4">
         <h3 class="text-xs font-bold uppercase tracking-wider text-oro flex items-center gap-1.5">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> ¿Cómo funciona MISE?
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin-slow"></i> ¿Cómo funciona MISE?
         </h3>
         
         <div class="space-y-4 text-xs">
@@ -187,12 +187,12 @@
 
       <!-- VALUE CARDS -->
       <div class="grid grid-cols-2 gap-4">
-        <div class="bg-surface border border-border p-4 rounded-lg space-y-1">
+        <div class="premium-card p-4 space-y-1">
           <span class="text-[9px] uppercase font-bold tracking-wider text-text-muted">Control</span>
           <div class="font-serif font-bold text-sm text-verde dark:text-crema">Cero Mermas</div>
           <p class="text-[10px] text-text-muted leading-tight">Control estricto de entradas y salidas.</p>
         </div>
-        <div class="bg-surface border border-border p-4 rounded-lg space-y-1">
+        <div class="premium-card p-4 space-y-1">
           <span class="text-[9px] uppercase font-bold tracking-wider text-text-muted">Velocidad</span>
           <div class="font-serif font-bold text-sm text-verde dark:text-crema">Pedidos en 1 Min</div>
           <p class="text-[10px] text-text-muted leading-tight">Levantamiento ágil sin hojas impresas.</p>
@@ -200,7 +200,7 @@
       </div>
 
       <!-- MAIN ACTION -->
-      <button class="w-full bg-verde dark:bg-oro text-white dark:text-negro font-bold text-xs py-3.5 rounded-lg shadow hover:opacity-90 transition-opacity flex items-center justify-center gap-2" onclick="switchMainView('manual')">
+      <button class="w-full bg-verde dark:bg-oro text-white dark:text-negro font-bold text-xs py-4 rounded-lg shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 interactive-element" onclick="switchMainView('manual')">
         <i data-lucide="book-open" class="w-4 h-4"></i> Abrir Manual Operativo
       </button>
 
@@ -219,13 +219,13 @@
       <!-- SEARCH INPUT -->
       <div class="relative">
         <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"></i>
-        <input type="text" id="manual-search-input" placeholder="Buscar concepto..." class="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-md text-xs text-text outline-none focus:border-oro transition-all duration-200">
+        <input type="text" id="manual-search-input" placeholder="Buscar concepto..." class="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-md text-xs text-text outline-none focus:border-oro transition-all duration-200">
       </div>
 
       <!-- MENU CARDS -->
       <div class="space-y-4" id="manual-menu-list">
         
-        <div class="manual-menu-card group bg-surface hover:bg-surface-2 border border-border p-5 rounded-lg transition-all duration-200 cursor-pointer space-y-2" onclick="switchMainView('manual-pedidos')" data-search-terms="pedidos tienda sucursal encargado pasillo surtido completo adicion reset diario">
+        <div class="manual-menu-card premium-card group hover:border-oro transition-all duration-200 cursor-pointer space-y-2 interactive-element" onclick="switchMainView('manual-pedidos')" data-search-terms="pedidos tienda sucursal encargado pasillo surtido completo adicion reset diario">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-verde/5 flex items-center justify-center text-verde dark:text-crema">
@@ -240,7 +240,7 @@
           </p>
         </div>
 
-        <div class="manual-menu-card group bg-surface hover:bg-surface-2 border border-border p-5 rounded-lg transition-all duration-200 cursor-pointer space-y-2" onclick="switchMainView('manual-bodega')" data-search-terms="bodega central maestro kardex configurar semana avanzar borrar editar masiva catálogo descontinuados">
+        <div class="manual-menu-card premium-card group hover:border-oro transition-all duration-200 cursor-pointer space-y-2 interactive-element" onclick="switchMainView('manual-bodega')" data-search-terms="bodega central maestro kardex configurar semana avanzar borrar editar masiva catálogo descontinuados">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-full bg-verde/5 flex items-center justify-center text-verde dark:text-crema">
@@ -263,7 +263,7 @@
     <div id="manual-pedidos-view" class="view-container hidden px-6 py-6 space-y-6 animate-fade-in">
       
       <!-- BACK BUTTON -->
-      <button onclick="switchMainView('manual')" class="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-oro transition-colors">
+      <button onclick="switchMainView('manual')" class="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-oro transition-colors interactive-element">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al Manual
       </button>
 
@@ -273,39 +273,39 @@
       </div>
 
       <!-- Mock Sheets Window -->
-      <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-sm">
-        <div class="bg-surface-2 px-3 py-1.5 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
+      <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-lg">
+        <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
           <span>MISE — Pedido Diario (BA)</span>
           <span class="text-oro font-bold">Sucursal</span>
         </div>
         
         <!-- Tab selector -->
         <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
-          <button id="tab-ped-diario" class="px-3 py-1.5 border-r border-border bg-surface text-oro" onclick="toggleSubSheet('ped-diario')">📋 PEDIDO DIARIO</button>
-          <button id="tab-sur-rapido" class="px-3 py-1.5 text-text-muted" onclick="toggleSubSheet('sur-rapido')">🚚 SURTIDO RÁPIDO</button>
+          <button id="tab-ped-diario" class="px-4 py-2 border-r border-border bg-surface text-oro interactive-element" onclick="toggleSubSheet('ped-diario')">📋 PEDIDO DIARIO</button>
+          <button id="tab-sur-rapido" class="px-4 py-2 text-text-muted interactive-element" onclick="toggleSubSheet('sur-rapido')">🚚 SURTIDO RÁPIDO</button>
         </div>
 
         <!-- Pedido Diario Mock Table -->
         <div id="sub-table-ped-diario" class="overflow-x-auto w-full scroll-hint">
-          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
+          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-              <th class="p-2 border-r border-border">PRODUCTO</th>
-              <th class="p-2 border-r border-border text-center">PEDIR</th>
-              <th class="p-2 text-center">ALERTAS</th>
+              <th class="p-2.5 border-r border-border">PRODUCTO</th>
+              <th class="p-2.5 border-r border-border text-center">PEDIR</th>
+              <th class="p-2.5 text-center">ALERTAS</th>
             </tr>
             <tr class="border-b border-border">
-              <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
-              <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
+              <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+              <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
                 2.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
-              <td class="p-2 text-center text-text-muted">-</td>
+              <td class="p-2.5 text-center text-text-muted">-</td>
             </tr>
             <tr class="border-b border-border">
-              <td class="p-2 border-r border-border font-bold">Nutella</td>
-              <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
+              <td class="p-2.5 border-r border-border font-bold">Nutella</td>
+              <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
                 1.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
-              <td class="p-2 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'adicion')">
+              <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'adicion')">
                 <span class="text-amber-700 font-bold bg-amber-500/20 px-1 py-0.5 rounded text-[8px]">🚨 ADICIÓN</span>
                 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
@@ -315,19 +315,19 @@
 
         <!-- Surtido Rápido Mock Table -->
         <div id="sub-table-sur-rapido" class="overflow-x-auto w-full hidden scroll-hint">
-          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
+          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-              <th class="p-2 border-r border-border">PRODUCTO</th>
-              <th class="p-2 border-r border-border text-center">COMPLETO</th>
-              <th class="p-2 text-center">INEXISTENTE</th>
+              <th class="p-2.5 border-r border-border">PRODUCTO</th>
+              <th class="p-2.5 border-r border-border text-center">COMPLETO</th>
+              <th class="p-2.5 text-center">INEXISTENTE</th>
             </tr>
             <tr class="border-b border-border">
-              <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
-              <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-complete')">
+              <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+              <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-complete')">
                 <input type="checkbox" checked disabled class="accent-oro">
                 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
-              <td class="p-2 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-missing')">
+              <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-missing')">
                 <input type="checkbox" disabled class="accent-oro">
                 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
@@ -337,9 +337,9 @@
       </div>
 
       <!-- Help panel for Pedidos -->
-      <div id="help-pedidos" class="bg-surface border border-border p-4 rounded-lg space-y-2">
+      <div id="help-pedidos" class="premium-card p-5 border-oro/40 space-y-2">
         <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
-          <i data-lucide="info" class="w-4 h-4 text-oro"></i>
+          <i data-lucide="info" class="w-4.5 h-4.5 text-oro animate-pulse"></i>
           <span id="help-title-pedidos">Selecciona un elemento</span>
         </h4>
         <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-pedidos">
@@ -349,7 +349,7 @@
 
       <!-- DUMMIES INTERACTIVE MANUAL TABLES -->
       <div class="space-y-4">
-        <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Tabla de Control de Pedidos (Dummies)</h3>
+        <h3 class="font-serif font-bold text-base text-verde dark:text-crema">Tabla de Control de Pedidos (Dummies)</h3>
         
         <table class="w-full text-left text-xs border-collapse">
           <thead>
@@ -393,7 +393,7 @@
         </table>
 
         <!-- FAQ AND OPERATIONAL FLOWS -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+        <div class="premium-card space-y-3">
           <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Reinicio de Pedidos Diario</h3>
           <p class="text-xs text-text-muted leading-relaxed">
             La hoja cuenta con un **Reinicio Diario Automático**. Todas las mañanas, al abrir el archivo de la tienda, la columna de PEDIR se borra y se restablece a cero de manera automática. Esto evita que los insumos pedidos ayer se dupliquen o se vuelvan a despachar por error hoy.
@@ -401,7 +401,7 @@
         </div>
 
         <!-- SEMAPHORE AT THE BOTTOM (TIENDA CONTEXT) -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+        <div class="premium-card space-y-3">
           <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Semáforo de Control de Stock</h3>
           <p class="text-xs text-text-muted leading-relaxed">
             El sistema de pedidos te alerta visualmente sobre los niveles de inventario en la tienda para asegurar ventas continuas sin acumular mermas:
@@ -454,7 +454,7 @@
     <div id="manual-bodega-view" class="view-container hidden px-6 py-6 space-y-6 animate-fade-in">
       
       <!-- BACK BUTTON -->
-      <button onclick="switchMainView('manual')" class="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-oro transition-colors">
+      <button onclick="switchMainView('manual')" class="flex items-center gap-1.5 text-xs font-semibold text-text-muted hover:text-oro transition-colors interactive-element">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al Manual
       </button>
 
@@ -464,65 +464,65 @@
       </div>
 
       <!-- Mock Sheets Window -->
-      <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-sm">
-        <div class="bg-surface-2 px-3 py-1.5 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
+      <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-lg">
+        <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
           <span>MISE — Catálogo Maestro</span>
           <span class="text-oro font-bold">Bodega Central</span>
         </div>
         
         <!-- Tab selector -->
         <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
-          <button id="tab-maestro" class="px-3 py-1.5 border-r border-border bg-surface text-oro" onclick="toggleSubSheet('maestro')">📋 MAESTRO</button>
-          <button id="tab-kardex" class="px-3 py-1.5 text-text-muted" onclick="toggleSubSheet('kardex')">📦 KARDEX_BA</button>
+          <button id="tab-maestro" class="px-4 py-2 border-r border-border bg-surface text-oro interactive-element" onclick="toggleSubSheet('maestro')">📋 MAESTRO</button>
+          <button id="tab-kardex" class="px-4 py-2 text-text-muted interactive-element" onclick="toggleSubSheet('kardex')">📦 KARDEX_BA</button>
         </div>
 
         <!-- Maestro Sub-Table -->
         <div id="sub-table-maestro" class="overflow-x-auto w-full scroll-hint">
-          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[380px]">
+          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[380px] mock-sheet-table">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-              <th class="p-2 border-r border-border text-center">PRODUCTO</th>
-              <th class="p-2 border-r border-border text-center">ACTIVO</th>
-              <th class="p-2 border-r border-border text-center">MÍN/MÁX</th>
-              <th class="p-2 text-center">ACCIONES</th>
+              <th class="p-2.5 border-r border-border text-center">PRODUCTO</th>
+              <th class="p-2.5 border-r border-border text-center">ACTIVO</th>
+              <th class="p-2.5 border-r border-border text-center">MÍN/MÁX</th>
+              <th class="p-2.5 text-center">ACCIONES</th>
             </tr>
             <tr class="border-b border-border">
-              <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
-              <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'activo-check')">
+              <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+              <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'activo-check')">
                 <span class="text-emerald-700 font-bold">SÍ</span>
                 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
-              <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'min-max')">
+              <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'min-max')">
                 5 / 20 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
-              <td class="p-2 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'acciones-check')">
+              <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'acciones-check')">
                 <input type="checkbox" checked disabled class="accent-oro">
                 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
             </tr>
             <tr class="border-b border-border opacity-50 bg-black/[0.03]">
-              <td class="p-2 border-r border-border font-bold text-text-muted">Fresa (Descontinuado)</td>
-              <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'descontinuado')">
+              <td class="p-2.5 border-r border-border font-bold text-text-muted">Fresa (Descontinuado)</td>
+              <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'descontinuado')">
                 <span class="text-red-700 font-bold">NO</span>
                 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
-              <td class="p-2 border-r border-border text-center">2 / 10</td>
-              <td class="p-2 text-center"><input type="checkbox" disabled></td>
+              <td class="p-2.5 border-r border-border text-center">2 / 10</td>
+              <td class="p-2.5 text-center"><input type="checkbox" disabled></td>
             </tr>
           </table>
         </div>
 
         <!-- Kardex Sub-Table -->
         <div id="sub-table-kardex" class="overflow-x-auto w-full hidden scroll-hint">
-          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
+          <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
             <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-              <th class="p-2 border-r border-border text-center">PRODUCTO</th>
-              <th class="p-2 border-r border-border text-center">ENT/SAL</th>
-              <th class="p-2 text-center">SALDO</th>
+              <th class="p-2.5 border-r border-border text-center">PRODUCTO</th>
+              <th class="p-2.5 border-r border-border text-center">ENT/SAL</th>
+              <th class="p-2.5 text-center">SALDO</th>
             </tr>
             <tr class="border-b border-border">
-              <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
-              <td class="p-2 border-r border-border text-center">15.0 / 2.0</td>
-              <td class="p-2 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'saldo-real')">
+              <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+              <td class="p-2.5 border-r border-border text-center">15.0 / 2.0</td>
+              <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'saldo-real')">
                 13.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
               </td>
             </tr>
@@ -531,9 +531,9 @@
       </div>
 
       <!-- Help panel for Bodega -->
-      <div id="help-bodegas" class="bg-surface border border-border p-4 rounded-lg space-y-2">
+      <div id="help-bodegas" class="premium-card p-5 border-oro/40 space-y-2">
         <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
-          <i data-lucide="info" class="w-4 h-4 text-oro"></i>
+          <i data-lucide="info" class="w-4.5 h-4.5 text-oro animate-pulse"></i>
           <span id="help-title-bodegas">Selecciona un elemento</span>
         </h4>
         <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-bodegas">
@@ -545,7 +545,7 @@
       <div class="space-y-4">
         
         <!-- TABLE 1: MENU ACTIONS -->
-        <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Menú Superior ⚙️ Mise (Bodega)</h3>
+        <h3 class="font-serif font-bold text-base text-verde dark:text-crema">Menú Superior ⚙️ Mise (Bodega)</h3>
         <table class="w-full text-left text-xs border-collapse">
           <thead>
             <tr class="bg-surface border-b border-border text-text font-bold">
@@ -604,7 +604,7 @@
         </table>
 
         <!-- TABLE 2: CHECKBOXES ACTIONABLE -->
-        <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Checkboxes en Bodega</h3>
+        <h3 class="font-serif font-bold text-base text-verde dark:text-crema">Checkboxes en Bodega</h3>
         <table class="w-full text-left text-xs border-collapse">
           <thead>
             <tr class="bg-surface border-b border-border text-text font-bold">
@@ -653,7 +653,7 @@
         </table>
 
         <!-- PRODUCT BEHAVIOR -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-2">
+        <div class="premium-card space-y-2">
           <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Control de Nuevos Productos</h3>
           <p class="text-xs text-text-muted leading-relaxed">
             Al dar de alta un producto nuevo, el sistema le creará sus registros automáticamente en la Bodega y en las tiendas. Aparecerá en estatus de **No Configurado** hasta que se definan sus niveles de Mínimo y Máximo recomendados en la hoja Maestro.
@@ -661,7 +661,7 @@
         </div>
 
         <!-- SEMAPHORE AT THE BOTTOM (BODEGA CONTEXT) -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+        <div class="premium-card space-y-3">
           <h3 class="font-serif font-bold text-sm text-verde dark:text-crema">Semáforo de Control de Stock (Bodega)</h3>
           <p class="text-xs text-text-muted leading-relaxed">
             Ayuda a planificar compras generales y detectar necesidades de reabastecimiento en el almacén de forma rápida:
@@ -721,7 +721,7 @@
       <div class="space-y-4">
         
         <!-- TIENDA TIPS -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+        <div class="premium-card space-y-3">
           <h3 class="font-serif font-bold text-sm text-verde dark:text-crema flex items-center gap-2">
             <i data-lucide="store" class="w-4.5 h-4.5 text-oro"></i> Para la Tienda (Pedidos)
           </h3>
@@ -742,7 +742,7 @@
         </div>
 
         <!-- BODEGA TIPS -->
-        <div class="bg-surface border border-border p-5 rounded-lg space-y-3">
+        <div class="premium-card space-y-3">
           <h3 class="font-serif font-bold text-sm text-verde dark:text-crema flex items-center gap-2">
             <i data-lucide="warehouse" class="w-4.5 h-4.5 text-oro"></i> Para Bodega (Central)
           </h3>
@@ -778,7 +778,7 @@
         <p class="text-xs text-text-muted">Control de Inventarios Guadalajara</p>
       </div>
 
-      <div class="bg-surface border border-border p-5 rounded-lg text-left space-y-3 max-w-xs mx-auto text-xs font-sans">
+      <div class="premium-card text-left space-y-3 max-w-xs mx-auto text-xs font-sans">
         <div class="flex justify-between items-center py-1 border-b border-border">
           <span class="text-text-muted">Estatus de Plataforma</span>
           <span class="font-bold text-emerald-600 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span> Estable</span>
@@ -800,16 +800,16 @@
     </div>
 
     <!-- ==================== MOBILE NAVIGATION BAR (FLOATING PILL) ==================== -->
-    <nav class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[calc(100%-48px)] max-w-[360px] border border-oro/20 bg-surface/90 dark:bg-surface-2/95 backdrop-blur-lg flex items-center justify-around py-2.5 px-3 rounded-full shadow-2xl z-40 transition-all duration-300">
-      <button class="nav-btn active flex flex-col items-center justify-center gap-0.5 w-16 text-oro transition-colors duration-200" onclick="switchMainView('landing')">
+    <nav class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[calc(100%-48px)] max-w-[360px] border border-oro/20 bg-surface/90 dark:bg-surface-2/95 backdrop-blur-lg flex items-center justify-around py-3 px-3 rounded-full shadow-2xl z-40 transition-all duration-300">
+      <button class="nav-btn active flex flex-col items-center justify-center gap-0.5 w-16 text-oro transition-all duration-200 interactive-element" onclick="switchMainView('landing')">
         <i data-lucide="home" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Inicio</span>
       </button>
-      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('manual')">
+      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-all duration-200 interactive-element" onclick="switchMainView('manual')">
         <i data-lucide="book-open" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Manual</span>
       </button>
-      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('about')">
+      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-all duration-200 interactive-element" onclick="switchMainView('about')">
         <i data-lucide="info" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Acerca de</span>
       </button>
