@@ -204,20 +204,20 @@ window.switchMainView = function(viewId) {
     const thread = document.getElementById('gold-thread-transition');
 
     if (oldViewEl && thread) {
-      // 1. Mostrar y expandir horizontalmente el hilo de oro (300ms)
-      thread.style.transition = 'transform 300ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease';
+      // 1. Mostrar y expandir horizontalmente el hilo de oro (500ms)
+      thread.style.transition = 'transform 500ms cubic-bezier(0.23, 1, 0.32, 1), opacity 300ms ease';
       thread.style.opacity = '1';
       thread.style.transform = 'translate(-50%, -50%) scaleX(1)';
 
-      // 2. Expandir verticalmente cubriendo la pantalla (350ms) y transicionar al color de fondo del tema
+      // 2. Expandir verticalmente cubriendo la pantalla (550ms) y transicionar al color de fondo del tema
       setTimeout(() => {
-        thread.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1), height 350ms cubic-bezier(0.23, 1, 0.32, 1), background-color 220ms ease, box-shadow 350ms ease';
+        thread.style.transition = 'transform 550ms cubic-bezier(0.23, 1, 0.32, 1), height 550ms cubic-bezier(0.23, 1, 0.32, 1), background-color 300ms ease, box-shadow 550ms ease';
         thread.style.height = '100%';
         thread.style.backgroundColor = 'var(--bg)';
         thread.style.boxShadow = 'none'; // Desactivar resplandor al expandirse a bloque sólido
-      }, 300);
+      }, 500);
 
-      // 3. Intercambiar la vista justo cuando el bloque cubre todo (550ms)
+      // 3. Intercambiar la vista justo cuando el bloque cubre todo (900ms)
       setTimeout(() => {
         oldViewEl.classList.add('hidden');
         newViewEl.classList.remove('hidden');
@@ -225,13 +225,13 @@ window.switchMainView = function(viewId) {
 
         // Actualizar URL hash
         window.location.hash = `#/${viewId}`;
-      }, 550);
+      }, 900);
 
-      // 4. Desvanecer la cortina dorada (400ms fadeout)
+      // 4. Desvanecer la cortina dorada (600ms fadeout)
       setTimeout(() => {
-        thread.style.transition = 'opacity 400ms ease';
+        thread.style.transition = 'opacity 600ms ease';
         thread.style.opacity = '0';
-      }, 650);
+      }, 1050);
 
       // 5. Restablecer el estado inicial del hilo
       setTimeout(() => {
@@ -240,7 +240,7 @@ window.switchMainView = function(viewId) {
         thread.style.height = '2px';
         thread.style.backgroundColor = 'var(--oro)';
         thread.style.boxShadow = '0 0 12px var(--oro), 0 0 24px var(--oro)';
-      }, 1080);
+      }, 1700);
     }
   } else {
     newViewEl.classList.remove('hidden');
