@@ -211,8 +211,8 @@ window.switchMainView = function(viewId) {
 
       // 2. Expandir verticalmente cubriendo la pantalla (550ms) y transicionar al color de fondo del tema
       setTimeout(() => {
-        thread.style.transition = 'transform 550ms cubic-bezier(0.23, 1, 0.32, 1), height 550ms cubic-bezier(0.23, 1, 0.32, 1), background-color 300ms ease, box-shadow 550ms ease';
-        thread.style.height = '100%';
+        thread.style.transition = 'height 550ms cubic-bezier(0.23, 1, 0.32, 1), background-color 300ms ease, box-shadow 550ms ease';
+        thread.style.height = '100vh';
         thread.style.backgroundColor = 'var(--bg)';
         thread.style.boxShadow = 'none'; // Desactivar resplandor al expandirse a bloque sólido
       }, 500);
