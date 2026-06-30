@@ -201,39 +201,91 @@ window.switchMainView = function(viewId) {
 
   if (currentActive && currentActive !== viewId) {
     const oldViewEl = document.getElementById(`${currentActive}-view`);
-    const c1 = document.getElementById('sweep-curtain-1');
-    const c2 = document.getElementById('sweep-curtain-2');
+    if (oldViewEl) {
+      const toManual = ['manual', 'manual-pedidos', 'manual-bodega', 'tips', 'landing'].includes(viewId);
+      
+      if (toManual) {
+        // --- OPCIÓN 1: Cinemático Suave (Blur + Scale + Opacity) ---
+        oldViewEl.style.transition = 'opacity 180ms ease, transform 180ms ease, filter 180ms ease';
+        oldViewEl.style.opacity = '0';
+        oldViewEl.style.transform = 'scale(0.985) translateY(-4px)';
+        oldViewEl.style.filter = 'blur(4px)';
 
-    if (oldViewEl && c1 && c2) {
-      // 1. Deslizar cortinas de izquierda a centro
-      c1.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1)';
-      c1.style.transform = 'translateX(-50%)';
+        setTimeout(() => {
+          oldViewEl.classList.add('hidden');
+          oldViewEl.style.transition = '';
+          oldViewEl.style.opacity = '';
+          oldViewEl.style.transform = '';
+          oldViewEl.style.filter = '';
 
-      setTimeout(() => {
-        c2.style.transition = 'transform 350ms cubic-bezier(0.23, 1, 0.32, 1)';
-        c2.style.transform = 'translateX(-50%)';
-      }, 60);
+          newViewEl.classList.remove('hidden');
+          newViewEl.style.opacity = '0';
+          newViewEl.style.transform = 'scale(0.985) translateY(4px)';
+          newViewEl.style.filter = 'blur(4px)';
+          window.scrollTo(0, 0);
+          
+          // Force reflow
+          newViewEl.offsetHeight;
 
-      // 2. Hacer swap en el punto de cobertura (190ms)
-      setTimeout(() => {
-        oldViewEl.classList.add('hidden');
+          newViewEl.style.transition = 'opacity 250ms var(--ease-out), transform 250ms var(--ease-out), filter 250ms var(--ease-out)';
+          newViewEl.style.opacity = '1';
+          newViewEl.style.transform = 'scale(1) translateY(0)';
+          newViewEl.style.filter = 'blur(0)';
+
+          setTimeout(() => {
+            newViewEl.style.transition = '';
+            newViewEl.style.opacity = '';
+            newViewEl.style.transform = '';
+            newViewEl.style.filter = '';
+          }, 250);
+        }, 180);
+
+      } else {
+        // --- OPCIÓN 2: Deslizamiento Lateral Físico (iOS Parallax) ---
+        const parent = oldViewEl.parentElement;
+        parent.style.position = 'relative';
+        parent.style.overflow = 'hidden';
+
+        oldViewEl.style.position = 'absolute';
+        oldViewEl.style.width = '100%';
+        oldViewEl.style.zIndex = '10';
+        oldViewEl.style.transition = 'transform 320ms var(--ease-drawer), opacity 320ms var(--ease-drawer)';
+        
+        newViewEl.style.position = 'absolute';
+        newViewEl.style.width = '100%';
+        newViewEl.style.zIndex = '20';
         newViewEl.classList.remove('hidden');
+        newViewEl.style.transform = 'translateX(100%)';
+        newViewEl.style.transition = 'transform 320ms var(--ease-drawer)';
         window.scrollTo(0, 0);
 
-        // Deslizar cortinas hacia la derecha para revelar la nueva hoja
-        c1.style.transform = 'translateX(50%)';
-        setTimeout(() => {
-          c2.style.transform = 'translateX(50%)';
-        }, 60);
-      }, 190);
+        // Force reflow
+        newViewEl.offsetHeight;
 
-      // 3. Resetear posiciones originales sin transición
-      setTimeout(() => {
-        c1.style.transition = 'none';
-        c2.style.transition = 'none';
-        c1.style.transform = 'translateX(-150%)';
-        c2.style.transform = 'translateX(-150%)';
-      }, 580);
+        oldViewEl.style.transform = 'translateX(-25%)';
+        oldViewEl.style.opacity = '0.4';
+        newViewEl.style.transform = 'translateX(0)';
+
+        setTimeout(() => {
+          oldViewEl.classList.add('hidden');
+          
+          oldViewEl.style.position = '';
+          oldViewEl.style.width = '';
+          oldViewEl.style.zIndex = '';
+          oldViewEl.style.transform = '';
+          oldViewEl.style.opacity = '';
+          oldViewEl.style.transition = '';
+
+          newViewEl.style.position = '';
+          newViewEl.style.width = '';
+          newViewEl.style.zIndex = '';
+          newViewEl.style.transform = '';
+          newViewEl.style.transition = '';
+
+          parent.style.position = '';
+          parent.style.overflow = '';
+        }, 330);
+      }
     }
   } else {
     newViewEl.classList.remove('hidden');
