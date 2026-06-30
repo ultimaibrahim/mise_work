@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>MISE — Ecosistema de Inventarios y Automatizaciones</title>
+  <title>MISE — Guía de Operaciones LCP</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,351 +52,430 @@
 <body class="bg-bg text-text min-h-screen flex flex-col transition-colors duration-300">
 
   <!-- ==================== MAIN APPLICATION CONTAINER ==================== -->
-  <div class="flex-1 flex flex-col relative w-full max-w-[450px] mx-auto min-h-screen shadow-2xl bg-bg border-x border-border overflow-x-hidden pb-20">
+  <div class="flex-1 flex flex-col relative w-full max-w-[450px] mx-auto min-h-screen shadow-2xl bg-bg border-x border-border overflow-x-hidden pb-24">
     
     <!-- HEADER -->
     <header class="w-full flex items-center justify-between px-6 py-5 border-b border-border sticky top-0 bg-bg/85 backdrop-blur-md z-30">
       <div class="flex items-center gap-2">
         <h1 class="text-2xl font-bold font-serif tracking-tight text-verde dark:text-crema">MISE</h1>
-        <span class="text-[9px] font-bold tracking-wider uppercase bg-oro/10 text-oro px-2 py-0.5 rounded-full">v2.0</span>
+        <span class="text-[9px] font-bold tracking-wider uppercase bg-oro/10 text-oro px-2 py-0.5 rounded-full">Guía Oficial</span>
       </div>
-      <div class="flex items-center gap-3">
-        <button id="theme-toggle" class="p-2 rounded-full hover:bg-surface-2 transition-colors duration-200" title="Cambiar tema">
-          <i data-lucide="sun" class="w-5 h-5 text-oro"></i>
-        </button>
-      </div>
+      <button id="theme-toggle" class="p-2 rounded-full hover:bg-surface-2 transition-colors duration-200" title="Cambiar tema">
+        <i data-lucide="sun" class="w-5 h-5 text-oro"></i>
+      </button>
     </header>
 
-    <!-- ==================== VIEW 1: PORTAL (LANDING) ==================== -->
-    <div id="landing-view" class="view-container px-6 py-8 space-y-10 animate-fade-in">
+    <!-- ==================== VIEW 1: PORTAL (INICIO) ==================== -->
+    <div id="landing-view" class="view-container px-6 py-8 space-y-8 animate-fade-in">
       
-      <!-- HERO SECTION -->
-      <div class="space-y-4 text-center py-4">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-verde/5 text-verde dark:text-sage text-xs font-medium">
-          <span class="w-2 h-2 rounded-full bg-oro animate-pulse"></span>
+      <!-- HERO -->
+      <div class="space-y-3 text-center py-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-verde/5 text-verde dark:text-sage text-[11px] font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-oro animate-pulse"></span>
           Suite Atelier — La Crêpe Parisienne
         </div>
-        <h2 class="text-4xl font-extrabold font-serif text-verde dark:text-crema tracking-tight leading-tight">
-          Control & Automatización de Inventarios
+        <h2 class="text-3xl font-extrabold font-serif text-verde dark:text-crema tracking-tight leading-tight">
+          Control de Inventarios y Abastecimiento
         </h2>
-        <p class="text-sm text-text-muted leading-relaxed max-w-xs mx-auto">
-          Guía técnica interactiva y documentación operativa para encargados y bodegueros.
+        <p class="text-xs text-text-muted leading-relaxed max-w-xs mx-auto">
+          Plataforma inteligente para el control diario de insumos y comunicación en tiempo real.
         </p>
       </div>
 
-      <!-- KEY METRICS GRID -->
+      <!-- SIMPLIFIED SYSTEM FLOW -->
+      <div class="bg-surface border border-border p-5 rounded-lg space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-oro flex items-center gap-1.5">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> ¿Cómo funciona MISE?
+        </h3>
+        
+        <div class="space-y-4 text-xs">
+          <div class="flex gap-3">
+            <div class="w-5 h-5 rounded-full bg-verde text-white flex items-center justify-center shrink-0 font-bold text-[10px]">1</div>
+            <div>
+              <h4 class="font-bold text-verde dark:text-crema">Bodega Central</h4>
+              <p class="text-text-muted mt-0.5">Controla la lista maestra de insumos y las existencias totales.</p>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-5 h-5 rounded-full bg-verde text-white flex items-center justify-center shrink-0 font-bold text-[10px]">2</div>
+            <div>
+              <h4 class="font-bold text-verde dark:text-crema">Sincronización Inmediata</h4>
+              <p class="text-text-muted mt-0.5">Los cambios se envían automáticamente del almacén a las hojas de las tiendas.</p>
+            </div>
+          </div>
+          <div class="flex gap-3">
+            <div class="w-5 h-5 rounded-full bg-verde text-white flex items-center justify-center shrink-0 font-bold text-[10px]">3</div>
+            <div>
+              <h4 class="font-bold text-verde dark:text-crema">Captura en Tienda</h4>
+              <p class="text-text-muted mt-0.5">Los encargados piden desde el pasillo usando su celular sin pérdidas ni mermas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VALUE CARDS -->
       <div class="grid grid-cols-2 gap-4">
         <div class="bg-surface border border-border p-4 rounded-lg space-y-1">
-          <span class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Archivos GAS</span>
-          <div class="text-lg font-mono font-bold text-oro">3 Scripts</div>
+          <span class="text-[9px] uppercase font-bold tracking-wider text-text-muted">Gestión</span>
+          <div class="font-serif font-bold text-sm text-verde dark:text-crema">Cero Mermas</div>
+          <p class="text-[10px] text-text-muted leading-tight">Control estricto de entradas y salidas.</p>
         </div>
         <div class="bg-surface border border-border p-4 rounded-lg space-y-1">
-          <span class="text-[10px] uppercase font-bold tracking-widest text-text-muted">Precisión LCP</span>
-          <div class="text-lg font-mono font-bold text-oro">100% Digital</div>
+          <span class="text-[9px] uppercase font-bold tracking-wider text-text-muted">Tiempo</span>
+          <div class="font-serif font-bold text-sm text-verde dark:text-crema">Pedidos Rápidos</div>
+          <p class="text-[10px] text-text-muted leading-tight">Levantamiento ágil desde el celular.</p>
         </div>
       </div>
 
-      <!-- ACTIONS MENU -->
-      <div class="space-y-4">
-        <h3 class="text-xs uppercase font-bold tracking-wider text-text-muted px-1">Guías Disponibles</h3>
-        
-        <div class="group bg-surface hover:bg-surface-2 border border-border p-5 rounded-lg transition-all duration-200 cursor-pointer space-y-2" onclick="navigateTo('sheets')">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-verde/5 flex items-center justify-center text-verde dark:text-crema">
-                <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
-              </div>
-              <h4 class="font-bold font-serif text-base text-verde dark:text-crema">Diseño de Hojas 1:1</h4>
-            </div>
-            <i data-lucide="chevron-right" class="w-5 h-5 text-text-muted group-hover:text-oro transition-colors"></i>
-          </div>
-          <p class="text-xs text-text-muted leading-relaxed">
-            Revisa las plantillas oficiales y descubre qué macros de Apps Script controlan cada celda.
-          </p>
-        </div>
-
-        <div class="group bg-surface hover:bg-surface-2 border border-border p-5 rounded-lg transition-all duration-200 cursor-pointer space-y-2" onclick="navigateTo('manual')">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-verde/5 flex items-center justify-center text-verde dark:text-crema">
-                <i data-lucide="book-open" class="w-5 h-5"></i>
-              </div>
-              <h4 class="font-bold font-serif text-base text-verde dark:text-crema">Manual Técnico GAS</h4>
-            </div>
-            <i data-lucide="chevron-right" class="w-5 h-5 text-text-muted group-hover:text-oro transition-colors"></i>
-          </div>
-          <p class="text-xs text-text-muted leading-relaxed">
-            Estructura detallada del código en Google Apps Script, eventos de edición y sincronización en la nube.
-          </p>
-        </div>
-      </div>
-
-      <!-- FOOTER -->
-      <footer class="pt-6 border-t border-border text-center text-[10px] text-text-muted space-y-1">
-        <div>La Crêpe Parisienne — Guadalajara</div>
-        <div>Control Interno de Calidad Operativa</div>
-      </footer>
+      <!-- MAIN ACTION -->
+      <button class="w-full bg-verde dark:bg-oro text-white dark:text-negro font-bold text-xs py-3.5 rounded-lg shadow hover:opacity-90 transition-opacity flex items-center justify-center gap-2" onclick="switchMainView('manual')">
+        <i data-lucide="book-open" class="w-4 h-4"></i> Abrir Manual de Operaciones
+      </button>
 
     </div>
 
-    <!-- ==================== VIEW 2: SHEETS 1:1 EXPLORER ==================== -->
-    <div id="sheets-view" class="view-container hidden px-6 py-6 space-y-6 animate-fade-in">
+    <!-- ==================== VIEW 2: INTERACTIVE MANUAL & SHEET GUIDE ==================== -->
+    <div id="manual-view" class="view-container hidden px-6 py-8 space-y-6 animate-fade-in">
       
-      <div class="space-y-2">
-        <h2 class="text-2xl font-bold font-serif text-verde dark:text-crema">Guía Visual de Hojas</h2>
+      <div class="space-y-1">
+        <h2 class="text-2xl font-bold font-serif text-verde dark:text-crema">Manual Operativo</h2>
         <p class="text-xs text-text-muted leading-relaxed">
-          Toca cualquier celda o control marcado con <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-oro/15 text-oro text-[10px] font-bold font-mono">GAS</span> para revelar la automatización de Apps Script que la opera.
-        </p>
-      </div>
-
-      <!-- SHEET SELECTOR TABS -->
-      <div class="flex border-b border-border overflow-x-auto no-scrollbar gap-2 py-1">
-        <button class="sheet-tab active text-xs font-semibold px-4 py-2 border-b-2 border-oro text-oro shrink-0" onclick="switchActiveSheet('maestro')">
-          1. MAESTRO
-        </button>
-        <button class="sheet-tab text-xs font-semibold px-4 py-2 border-b-2 border-transparent text-text-muted shrink-0" onclick="switchActiveSheet('pedido')">
-          2. PEDIDO DIARIO
-        </button>
-        <button class="sheet-tab text-xs font-semibold px-4 py-2 border-b-2 border-transparent text-text-muted shrink-0" onclick="switchActiveSheet('kardex')">
-          3. KARDEX_BA
-        </button>
-      </div>
-
-      <!-- SPREADSHEET MOCKUP WINDOW -->
-      <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-sm flex flex-col">
-        <!-- Mockup Header -->
-        <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[10px] font-mono text-text-muted">
-          <div class="flex items-center gap-1.5">
-            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-600"></i>
-            <span id="current-sheet-filename" class="font-bold text-text">MISE — Catálogo Bodega</span>
-          </div>
-          <span class="text-[9px] text-oro font-bold">Google Sheets</span>
-        </div>
-
-        <!-- Custom Sheets Menu Bar -->
-        <div class="bg-surface border-b border-border px-3 py-1 flex items-center gap-3 text-[10px] font-medium text-text-muted overflow-x-auto no-scrollbar select-none">
-          <span class="hover:text-text cursor-pointer">Archivo</span>
-          <span class="hover:text-text cursor-pointer">Ver</span>
-          <span class="hover:text-text cursor-pointer text-oro font-bold flex items-center gap-0.5 relative" onclick="triggerGASInfo('menu-mise')">
-            ⚙️ Mise <span class="w-1.5 h-1.5 rounded-full bg-oro animate-ping"></span>
-          </span>
-          <span class="hover:text-text cursor-pointer">Datos</span>
-        </div>
-
-        <!-- Sheet Mockup Table Container -->
-        <div class="overflow-x-auto w-full scroll-hint">
-          
-          <!-- TABLE: MAESTRO -->
-          <table id="mock-table-maestro" class="mock-sheet-table w-full text-left font-mono text-[10px] border-collapse min-w-[380px]">
-            <thead>
-              <tr class="bg-surface-2 border-b border-border text-[9px] text-text-muted">
-                <th class="p-2 border-r border-border w-10 text-center">No</th>
-                <th class="p-2 border-r border-border">PRODUCTO</th>
-                <th class="p-2 border-r border-border text-center">ACTIVO</th>
-                <th class="p-2 text-center">SELECCIONAR</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-border">
-                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">1</td>
-                <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
-                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('maestro-activo')">
-                  <span class="text-emerald-700 font-bold">SÍ</span>
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-                <td class="p-2 text-center cursor-pointer hover:bg-amber-500/10 transition-colors relative" onclick="triggerGASInfo('maestro-seleccionar')">
-                  <input type="checkbox" checked disabled class="accent-oro">
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-              </tr>
-              <tr class="border-b border-border bg-black/[0.02] dark:bg-white/[0.02]">
-                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">2</td>
-                <td class="p-2 border-r border-border font-bold">Queso mozzarella CDK</td>
-                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('maestro-activo')">
-                  <span class="text-emerald-700 font-bold">SÍ</span>
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-                <td class="p-2 text-center cursor-pointer hover:bg-amber-500/10 transition-colors relative" onclick="triggerGASInfo('maestro-seleccionar')">
-                  <input type="checkbox" disabled class="accent-oro">
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-              </tr>
-              <tr class="border-b border-border opacity-60">
-                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">3</td>
-                <td class="p-2 border-r border-border font-bold text-text-muted">Fresa (Desactivado)</td>
-                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('maestro-activo')">
-                  <span class="text-red-700 font-bold">NO</span>
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-                <td class="p-2 text-center disabled">
-                  <input type="checkbox" disabled class="accent-oro">
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- TABLE: PEDIDO DIARIO -->
-          <table id="mock-table-pedido" class="mock-sheet-table w-full text-left font-mono text-[10px] border-collapse min-w-[420px] hidden">
-            <thead>
-              <tr class="bg-surface-2 border-b border-border text-[9px] text-text-muted">
-                <th class="p-2 border-r border-border w-10 text-center">No</th>
-                <th class="p-2 border-r border-border">PRODUCTO</th>
-                <th class="p-2 border-r border-border text-center">PEDIR</th>
-                <th class="p-2 border-r border-border text-center">ESTADO</th>
-                <th class="p-2 text-center">ALERTAS</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-border">
-                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">4</td>
-                <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
-                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('pedido-pedir')">
-                  <span class="font-bold text-oro">2.0</span>
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-                <td class="p-2 border-r border-border text-center font-bold text-emerald-600 bg-emerald-500/5">
-                  ✅ COMPLETO
-                </td>
-                <td class="p-2 text-center text-text-muted">-</td>
-              </tr>
-              <tr class="border-b border-border bg-black/[0.02] dark:bg-white/[0.02] bg-amber-500/[0.02]">
-                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">7</td>
-                <td class="p-2 border-r border-border font-bold">Nutella</td>
-                <td class="p-2 border-r border-border text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('pedido-pedir')">
-                  <span class="font-bold text-oro">1.0</span>
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-                <td class="p-2 border-r border-border text-center font-bold text-amber-600 bg-amber-500/5">
-                  ⏳ PENDIENTE
-                </td>
-                <td class="p-2 text-center cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('pedido-adicion')">
-                  <span class="text-amber-700 font-bold bg-amber-500/20 px-1 py-0.5 rounded">🚨 ADICIÓN</span>
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- TABLE: KARDEX -->
-          <table id="mock-table-kardex" class="mock-sheet-table w-full text-left font-mono text-[10px] border-collapse min-w-[450px] hidden">
-            <thead>
-              <tr class="bg-surface-2 border-b border-border text-[9px] text-text-muted">
-                <th class="p-2 border-r border-border w-10 text-center">No</th>
-                <th class="p-2 border-r border-border">PRODUCTO</th>
-                <th class="p-2 border-r border-border text-center">ENTRADAS</th>
-                <th class="p-2 border-r border-border text-center">SALIDAS</th>
-                <th class="p-2 text-center">SALDO</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-border">
-                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">1</td>
-                <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
-                <td class="p-2 border-r border-border text-center">15.0</td>
-                <td class="p-2 border-r border-border text-center">2.0</td>
-                <td class="p-2 text-center font-bold text-verde dark:text-sage cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('kardex-saldo')">
-                  13.0
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-              </tr>
-              <tr class="border-b border-border bg-black/[0.02] dark:bg-white/[0.02]">
-                <td class="p-2 border-r border-border text-center bg-surface-2 text-text-muted">2</td>
-                <td class="p-2 border-r border-border font-bold">Queso mozzarella CDK</td>
-                <td class="p-2 border-r border-border text-center">20.0</td>
-                <td class="p-2 border-r border-border text-center">5.0</td>
-                <td class="p-2 text-center font-bold text-verde dark:text-sage cursor-pointer bg-amber-500/10 hover:bg-amber-500/25 transition-colors relative" onclick="triggerGASInfo('kardex-saldo')">
-                  15.0
-                  <span class="absolute right-1 top-1 text-[8px] font-bold text-oro">GAS</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-        </div>
-      </div>
-
-      <!-- INTERACTIVE GAS DETAILED PANEL -->
-      <div id="gas-details-panel" class="bg-surface border border-border rounded-lg p-5 space-y-4 transition-all duration-300">
-        <div class="flex items-start gap-3">
-          <div class="p-2 bg-oro/10 text-oro rounded-lg shrink-0">
-            <i data-lucide="code" class="w-5 h-5"></i>
-          </div>
-          <div class="space-y-1">
-            <span class="text-[9px] font-bold font-mono tracking-wider uppercase text-text-muted" id="gas-script-file">miseAuthBDG.gs</span>
-            <h4 class="text-sm font-bold font-serif text-verde dark:text-crema" id="gas-function-name">Selecciona un elemento</h4>
-          </div>
-        </div>
-        <p class="text-xs text-text-muted leading-relaxed" id="gas-function-desc">
-          Toca cualquiera de las celdas con la etiqueta dorada <span class="font-bold text-oro">GAS</span> en el mockup de la hoja de cálculo de arriba para analizar cómo funciona su código asociado.
-        </p>
-        <div id="gas-code-container" class="hidden">
-          <div class="flex items-center justify-between bg-surface-2 px-3 py-1.5 border-t border-x border-border rounded-t-md text-[9px] font-mono text-text-muted">
-            <span>CÓDIGO FUENTE (GAS)</span>
-            <span id="gas-line-count">Líneas 69-90</span>
-          </div>
-          <pre class="bg-surface-2 border border-border p-3 rounded-b-md font-mono text-[9px] text-text overflow-x-auto max-h-[160px] scrollbar-thin"><code id="gas-code-block">function onOpen() { ... }</code></pre>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ==================== VIEW 3: TECHNICAL MANUAL ==================== -->
-    <div id="manual-view" class="view-container hidden px-6 py-6 space-y-8 animate-fade-in">
-      
-      <div class="space-y-2">
-        <h2 class="text-2xl font-bold font-serif text-verde dark:text-crema">Manual de Operaciones</h2>
-        <p class="text-xs text-text-muted leading-relaxed">
-          Documentación técnica del ecosistema en la nube e interacción entre libros.
+          Selecciona tu área de trabajo para abrir el manual de procesos y la guía visual interactiva.
         </p>
       </div>
 
       <!-- SEARCH INPUT -->
       <div class="relative">
         <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted"></i>
-        <input type="text" id="manual-search-input" placeholder="Buscar función o concepto..." class="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-md text-xs text-text outline-none focus:border-oro transition-all duration-200">
+        <input type="text" id="manual-search-input" placeholder="Buscar concepto o función..." class="w-full pl-10 pr-4 py-2.5 bg-surface border border-border rounded-md text-xs text-text outline-none focus:border-oro transition-all duration-200">
       </div>
 
-      <!-- MANUAL TOPICS/SECTIONS -->
-      <div class="space-y-6" id="manual-content-list">
+      <!-- ACCORDION CONTROLLERS -->
+      <div class="space-y-4">
         
-        <!-- SECTION 1: ARCHITECTURE -->
-        <div class="manual-section p-5 bg-surface border border-border rounded-lg space-y-3" data-search-terms="arquitectura importrange bodega tienda sucursal">
-          <div class="flex items-center gap-2 text-verde dark:text-crema">
-            <i data-lucide="git-branch" class="w-4 h-4 text-oro"></i>
-            <h3 class="font-serif font-bold text-sm">1. Arquitectura en la Nube</h3>
-          </div>
-          <p class="text-xs text-text-muted leading-relaxed">
-            MISE opera de forma descentralizada. La **Bodega Central** define el catálogo maestro en `Maestro` y consolida existencias. Las sucursales (**Andares** y **Mercado**) enlazan el catálogo mediante la fórmula `IMPORTRANGE` para realizar solicitudes diarias en caliente.
-          </p>
-          <div class="p-3 bg-surface-2 border border-border rounded font-mono text-[9px] text-text-muted space-y-1">
-            <div class="font-bold text-oro">Flujo de datos:</div>
-            <div>[Catálogo Bodega] ➜ IMPORTRANGE ➜ [Pedidos Tienda] ➜ Captura Móvil ➜ onEdit() ➜ Conciliación</div>
+        <!-- MODULE A: SUCRUSALES (PEDIDOS) -->
+        <div class="accordion-item bg-surface border border-border rounded-lg overflow-hidden transition-all duration-300">
+          <button class="w-full flex items-center justify-between p-4 font-serif font-bold text-verde dark:text-crema text-left focus:outline-none" onclick="toggleAccordion('pedidos')">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="store" class="w-4.5 h-4.5 text-oro"></i>
+              <span>Módulo de Pedidos (Tienda)</span>
+            </div>
+            <i data-lucide="chevron-down" id="arrow-pedidos" class="w-5 h-5 text-text-muted transition-transform duration-300"></i>
+          </button>
+          
+          <div id="content-pedidos" class="accordion-content border-t border-border p-4 space-y-6 hidden">
+            <p class="text-xs text-text-muted leading-relaxed">
+              Utilizado diariamente en sucursal por los encargados. Permite levantar pedidos desde el celular a pie de pasillo y conciliar las entregas recibidas del camión repartidor.
+            </p>
+
+            <!-- Table Guide Simulator -->
+            <div class="space-y-3">
+              <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Hojas en Sucursal (Toca para ver información)</span>
+              
+              <!-- Mock Sheets Window -->
+              <div class="border border-border bg-surface rounded-lg overflow-hidden">
+                <div class="bg-surface-2 px-3 py-1.5 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
+                  <span>MISE — Pedido Diario (BA)</span>
+                  <span class="text-oro font-bold">Sucursal</span>
+                </div>
+                
+                <!-- Selector between Pedido and Surtido Rápido -->
+                <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
+                  <button id="tab-ped-diario" class="px-3 py-1.5 border-r border-border bg-surface text-oro" onclick="toggleSubSheet('ped-diario')">📋 PEDIDO DIARIO</button>
+                  <button id="tab-sur-rapido" class="px-3 py-1.5 text-text-muted" onclick="toggleSubSheet('sur-rapido')">🚚 SURTIDO RÁPIDO</button>
+                </div>
+
+                <!-- Pedido Diario Sub-Table -->
+                <div id="sub-table-ped-diario" class="overflow-x-auto w-full">
+                  <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
+                    <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                      <th class="p-2 border-r border-border text-center">PRODUCTO</th>
+                      <th class="p-2 border-r border-border text-center">PEDIR</th>
+                      <th class="p-2 text-center">ALERTAS</th>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
+                      <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
+                        2.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                      <td class="p-2 text-center text-text-muted">-</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2 border-r border-border font-bold">Nutella</td>
+                      <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
+                        1.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                      <td class="p-2 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'adicion')">
+                        <span class="text-amber-700 font-bold bg-amber-500/20 px-1 py-0.5 rounded text-[8px]">🚨 ADICIÓN</span>
+                        <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- Surtido Rápido Sub-Table -->
+                <div id="sub-table-sur-rapido" class="overflow-x-auto w-full hidden">
+                  <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
+                    <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                      <th class="p-2 border-r border-border text-center">PRODUCTO</th>
+                      <th class="p-2 border-r border-border text-center">COMPLETO</th>
+                      <th class="p-2 text-center">INEXISTENTE</th>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
+                      <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check')">
+                        <input type="checkbox" checked disabled class="accent-oro">
+                        <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                      <td class="p-2 text-center text-text-muted">-</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contextual Help Panel for Pedidos -->
+            <div id="help-pedidos" class="bg-surface-2 border border-border p-4 rounded-lg space-y-2">
+              <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
+                <i data-lucide="info" class="w-4 h-4 text-oro"></i>
+                <span id="help-title-pedidos">Selecciona un elemento</span>
+              </h4>
+              <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-pedidos">
+                Toca cualquier celda con el indicador <span class="text-oro font-bold">ℹ️</span> para detallar qué hace, cómo se maneja y resolver dudas operativas comunes.
+              </p>
+            </div>
+            
+            <!-- Global actions details -->
+            <div class="space-y-3 pt-2">
+              <h4 class="text-xs font-bold text-verde dark:text-crema">Preguntas Frecuentes del Encargado:</h4>
+              <div class="space-y-3 text-[11px] text-text-muted leading-relaxed">
+                <div>
+                  <strong class="text-oro block">¿Qué pasa si olvidé pedir algo y el pedido ya se envió?</strong>
+                  Si agregas una cantidad en la columna PEDIR después de la hora límite, la celda de la fila correspondiente se pintará automáticamente de naranja y cambiará el estado a <strong>🚨 ADICIÓN</strong>. Esto le avisa al bodeguero de inmediato que es una adición tardía y requiere surtido manual de último minuto.
+                </div>
+                <div>
+                  <strong class="text-oro block">¿Cómo se realiza el reinicio diario de la hoja?</strong>
+                  Para evitar confusiones con pedidos de días anteriores, la hoja se auto-limpia automáticamente todas las mañanas al abrir el archivo, restableciendo la columna PEDIR a cero y dejando la lista lista para el nuevo levantamiento.
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <!-- SECTION 2: BODEGA SECTOR -->
-        <div class="manual-section p-5 bg-surface border border-border rounded-lg space-y-3" data-search-terms="bodega maestro kardex cierre avanzar semana historico">
-          <div class="flex items-center gap-2 text-verde dark:text-crema">
-            <i data-lucide="warehouse" class="w-4 h-4 text-oro"></i>
-            <h3 class="font-serif font-bold text-sm">2. Módulo de Bodega</h3>
+        <!-- MODULE B: BODEGAS (CENTRAL) -->
+        <div class="accordion-item bg-surface border border-border rounded-lg overflow-hidden transition-all duration-300">
+          <button class="w-full flex items-center justify-between p-4 font-serif font-bold text-verde dark:text-crema text-left focus:outline-none" onclick="toggleAccordion('bodegas')">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="warehouse" class="w-4.5 h-4.5 text-oro"></i>
+              <span>Módulo de Bodega (Central)</span>
+            </div>
+            <i data-lucide="chevron-down" id="arrow-bodegas" class="w-5 h-5 text-text-muted transition-transform duration-300"></i>
+          </button>
+          
+          <div id="content-bodegas" class="accordion-content border-t border-border p-4 space-y-6 hidden">
+            <p class="text-xs text-text-muted leading-relaxed">
+              Permite la administración de todo el inventario de LCP. Desde aquí se controlan altas y bajas de productos, niveles máximos y mínimos de existencias, y el cierre de semana.
+            </p>
+
+            <!-- Table Guide Simulator for Bodega -->
+            <div class="space-y-3">
+              <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider">Hojas de Bodega (Toca para ver información)</span>
+              
+              <!-- Mock Sheets Window -->
+              <div class="border border-border bg-surface rounded-lg overflow-hidden">
+                <div class="bg-surface-2 px-3 py-1.5 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
+                  <span>MISE — Catálogo Maestro</span>
+                  <span class="text-oro font-bold">Bodega Central</span>
+                </div>
+                
+                <!-- Selector inside Bodega -->
+                <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
+                  <button id="tab-maestro" class="px-3 py-1.5 border-r border-border bg-surface text-oro" onclick="toggleSubSheet('maestro')">📋 MAESTRO</button>
+                  <button id="tab-kardex" class="px-3 py-1.5 text-text-muted" onclick="toggleSubSheet('kardex')">📦 KARDEX_BA</button>
+                </div>
+
+                <!-- Maestro Sub-Table -->
+                <div id="sub-table-maestro" class="overflow-x-auto w-full">
+                  <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[380px]">
+                    <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                      <th class="p-2 border-r border-border text-center">PRODUCTO</th>
+                      <th class="p-2 border-r border-border text-center">ACTIVO</th>
+                      <th class="p-2 border-r border-border text-center">MÍN/MÁX</th>
+                      <th class="p-2 text-center">ACCIONES</th>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
+                      <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'activo-check')">
+                        <span class="text-emerald-700 font-bold">SÍ</span>
+                        <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                      <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'min-max')">
+                        5 / 20 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                      <td class="p-2 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'acciones-check')">
+                        <input type="checkbox" checked disabled class="accent-oro">
+                        <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                    </tr>
+                    <tr class="border-b border-border opacity-50 bg-black/[0.03]">
+                      <td class="p-2 border-r border-border font-bold text-text-muted">Fresa (Descontinuado)</td>
+                      <td class="p-2 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'descontinuado')">
+                        <span class="text-red-700 font-bold">NO</span>
+                        <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                      <td class="p-2 border-r border-border text-center">2 / 10</td>
+                      <td class="p-2 text-center"><input type="checkbox" disabled></td>
+                    </tr>
+                  </table>
+                </div>
+
+                <!-- Kardex Sub-Table -->
+                <div id="sub-table-kardex" class="overflow-x-auto w-full hidden">
+                  <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px]">
+                    <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                      <th class="p-2 border-r border-border text-center">PRODUCTO</th>
+                      <th class="p-2 border-r border-border text-center">ENT/SAL</th>
+                      <th class="p-2 text-center">SALDO</th>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2 border-r border-border font-bold">Jamón de pavo Lala</td>
+                      <td class="p-2 border-r border-border text-center">15.0 / 2.0</td>
+                      <td class="p-2 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'saldo-real')">
+                        13.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contextual Help Panel for Bodega -->
+            <div id="help-bodegas" class="bg-surface-2 border border-border p-4 rounded-lg space-y-2">
+              <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
+                <i data-lucide="info" class="w-4 h-4 text-oro"></i>
+                <span id="help-title-bodegas">Selecciona un elemento</span>
+              </h4>
+              <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-bodegas">
+                Toca cualquier celda con el indicador <span class="text-oro font-bold">ℹ️</span> para detallar su función operativa en bodega.
+              </p>
+            </div>
+
+            <!-- Menu "⚙️ Mise" Features -->
+            <div class="space-y-4 pt-2">
+              <h4 class="text-xs font-bold text-verde dark:text-crema">Opciones del Menú ⚙️ Mise (Bodega):</h4>
+              <div class="grid grid-cols-1 gap-3 text-[11px] text-text-muted">
+                
+                <div class="bg-surface-2 p-3 rounded-lg border border-border space-y-1">
+                  <strong class="text-oro flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i> Configurar Semana</strong>
+                  <p>Establece la fecha del Lunes inicial del Kardex. Se puede configurar de dos formas:</p>
+                  <ul class="list-disc pl-4 mt-1 space-y-1">
+                    <li><strong>Automática:</strong> El sistema detecta la semana actual y asigna el lunes automáticamente.</li>
+                    <li><strong>Manual:</strong> Permite ingresar la fecha exacta de un lunes específico para registrar semanas históricas o futuras.</li>
+                  </ul>
+                </div>
+
+                <div class="bg-surface-2 p-3 rounded-lg border border-border space-y-1">
+                  <strong class="text-oro flex items-center gap-1"><i data-lucide="archive" class="w-3.5 h-3.5"></i> Avanzar Semana (Cierre de Sábado)</strong>
+                  <p>Guarda de forma permanente todos los consumos y saldos de la semana que termina, vacía las celdas diarias y arrastra el saldo final restante como inventario de inicio para el lunes entrante.</p>
+                </div>
+
+                <div class="bg-surface-2 p-3 rounded-lg border border-border space-y-1">
+                  <strong class="text-oro flex items-center gap-1"><i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Agregar, Editar y Eliminar</strong>
+                  <p>Permite registrar insumos individuales nuevos, modificar nombres de productos existentes en lote (usando la hoja de edición masiva) o dar de baja productos obsoletos de forma segura.</p>
+                </div>
+
+              </div>
+            </div>
+
           </div>
-          <p class="text-xs text-text-muted leading-relaxed">
-            El Bodeguero controla el catálogo y realiza cierres semanales los sábados por la tarde. Al ejecutar <strong>Avanzar semana</strong>, el script transfiere los saldos finales del Kardex como inventario inicial de la nueva semana y limpia el historial diario de entradas/salidas.
-          </p>
         </div>
 
-        <!-- SECTION 3: SUCURSAL SECTOR -->
-        <div class="manual-section p-5 bg-surface border border-border rounded-lg space-y-3" data-search-terms="sucursal tienda pedidos pedir adicion surtido completo">
-          <div class="flex items-center gap-2 text-verde dark:text-crema">
-            <i data-lucide="store" class="w-4 h-4 text-oro"></i>
-            <h3 class="font-serif font-bold text-sm">3. Módulo de Sucursales</h3>
+        <!-- MODULE C: INVENTARIOS Y SEMÁFORO DE STOCK -->
+        <div class="accordion-item bg-surface border border-border rounded-lg overflow-hidden transition-all duration-300">
+          <button class="w-full flex items-center justify-between p-4 font-serif font-bold text-verde dark:text-crema text-left focus:outline-none" onclick="toggleAccordion('stock')">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="info" class="w-4.5 h-4.5 text-oro"></i>
+              <span>Semáforo de Control de Stock</span>
+            </div>
+            <i data-lucide="chevron-down" id="arrow-stock" class="w-5 h-5 text-text-muted transition-transform duration-300"></i>
+          </button>
+          
+          <div id="content-stock" class="accordion-content border-t border-border p-4 space-y-4 hidden text-xs">
+            <p class="text-text-muted leading-relaxed">
+              Para evitar mermas por sobrestock o pérdida de ventas por desabastecimiento, MISE utiliza un sistema de semáforo de colores basado en los límites mínimos y máximos configurados para cada producto:
+            </p>
+            
+            <div class="space-y-2.5 pt-2">
+              <div class="flex items-center gap-3 bg-surface p-2.5 rounded border border-border">
+                <span class="w-4 h-4 rounded-full bg-red-600 shrink-0"></span>
+                <div>
+                  <strong class="text-text">Falta de Stock (Estado Crítico)</strong>
+                  <p class="text-[10px] text-text-muted mt-0.5">El nivel de existencias físicas está por debajo del mínimo de seguridad requerido.</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-3 bg-surface p-2.5 rounded border border-border">
+                <span class="w-4 h-4 rounded-full bg-emerald-600 shrink-0"></span>
+                <div>
+                  <strong class="text-text">Stock Estable</strong>
+                  <p class="text-[10px] text-text-muted mt-0.5">El nivel de inventario se encuentra en la zona óptima entre el mínimo y máximo.</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 bg-surface p-2.5 rounded border border-border">
+                <span class="w-4 h-4 rounded-full bg-amber-500 shrink-0"></span>
+                <div>
+                  <strong class="text-text">Sobrestock</strong>
+                  <p class="text-[10px] text-text-muted mt-0.5">Las existencias superan el nivel máximo establecido, aumentando el riesgo de merma.</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3 bg-surface p-2.5 rounded border border-border">
+                <span class="w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-600 shrink-0"></span>
+                <div>
+                  <strong class="text-text">No Configurado</strong>
+                  <p class="text-[10px] text-text-muted mt-0.5">El producto no tiene parámetros de mínimo y máximo definidos en la hoja central.</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <p class="text-xs text-text-muted leading-relaxed">
-            Los encargados capturan cantidades en la columna <strong>PEDIR</strong>. El sistema procesa el estado del surtido y previene ediciones tardías. Si se añade mercancía post-surtido, se marca automáticamente con el tag <code>🚨 ADICIÓN</code> en color naranja para alertar a bodega.
-          </p>
         </div>
 
       </div>
+
+    </div>
+
+    <!-- ==================== VIEW 3: ACERCA DE (INFO & STABLE) ==================== -->
+    <div id="about-view" class="view-container hidden px-6 py-8 space-y-6 animate-fade-in text-center">
+      
+      <div class="w-16 h-16 rounded-full bg-verde/5 text-verde dark:text-oro flex items-center justify-center mx-auto text-xl font-bold font-serif shadow-inner">
+        LCP
+      </div>
+
+      <div class="space-y-2">
+        <h2 class="text-2xl font-bold font-serif text-verde dark:text-crema">La Crêpe Parisienne</h2>
+        <p class="text-xs text-text-muted">Control de Inventarios Guadalajara</p>
+      </div>
+
+      <div class="bg-surface border border-border p-5 rounded-lg text-left space-y-3 max-w-xs mx-auto text-xs">
+        <div class="flex justify-between items-center py-1 border-b border-border">
+          <span class="text-text-muted">Estatus de Plataforma</span>
+          <span class="font-bold text-emerald-600 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span> Estable</span>
+        </div>
+        <div class="flex justify-between items-center py-1 border-b border-border">
+          <span class="text-text-muted">Versión de Guía</span>
+          <span class="font-mono text-text">v2.0 (Mobile)</span>
+        </div>
+        <div class="flex justify-between items-center py-1">
+          <span class="text-text-muted">Soporte Técnico</span>
+          <span class="text-oro">Sistemas LCP GDL</span>
+        </div>
+      </div>
+
+      <p class="text-[10px] text-text-muted leading-relaxed max-w-xs mx-auto">
+        Esta guía de operaciones interactiva está diseñada exclusivamente para uso del personal en tienda y almacén central de La Crêpe Parisienne.
+      </p>
 
     </div>
 
@@ -406,13 +485,13 @@
         <i data-lucide="home" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Inicio</span>
       </button>
-      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('sheets')">
-        <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
-        <span class="text-[9px] font-bold font-sans">Hojas 1:1</span>
-      </button>
       <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('manual')">
         <i data-lucide="book-open" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Manual</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('about')">
+        <i data-lucide="info" class="w-5 h-5"></i>
+        <span class="text-[9px] font-bold font-sans">Acerca de</span>
       </button>
     </nav>
 

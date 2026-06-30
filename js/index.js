@@ -1,4 +1,4 @@
-// MISE Application Controller (Mobile-First & Didactic Mode)
+// MISE Application Controller (Mobile-First & Clean Documentation Mode)
 
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize Lucide Icons
@@ -25,9 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (searchInput) {
     searchInput.addEventListener('input', handleManualSearch);
   }
-
-  // Load first GAS info automatically when sheets tab is loaded
-  triggerGASInfo('maestro-activo');
 });
 
 // --- THEME STATE & TOGGLE ---
@@ -74,7 +71,7 @@ function syncThemeIcons() {
 
 // --- VIEW NAVIGATION ---
 window.switchMainView = function(viewId) {
-  const views = ['landing', 'sheets', 'manual'];
+  const views = ['landing', 'manual', 'about'];
   if (!views.includes(viewId)) viewId = 'landing';
 
   // Toggle views
@@ -106,148 +103,139 @@ window.switchMainView = function(viewId) {
   });
 };
 
-window.navigateTo = function(viewId) {
-  switchMainView(viewId);
-};
+// --- ACCORDION EXPANSION ---
+window.toggleAccordion = function(id) {
+  const content = document.getElementById(`content-${id}`);
+  const arrow = document.getElementById(`arrow-${id}`);
+  
+  if (content && arrow) {
+    const isHidden = content.classList.contains('hidden');
+    
+    // Close all accordions first for clean visual focus
+    const allContents = document.querySelectorAll('.accordion-content');
+    const allArrows = document.querySelectorAll('.accordion-item button i');
+    
+    allContents.forEach(c => c.classList.add('hidden'));
+    allArrows.forEach(a => a.style.transform = 'rotate(0deg)');
 
-// --- SPREADSHEET SHEETS TOGGLE ---
-window.switchActiveSheet = function(sheetKey) {
-  // Hide all mock tables
-  const tables = ['maestro', 'pedido', 'kardex'];
-  tables.forEach(t => {
-    const tbl = document.getElementById(`mock-table-${t}`);
-    if (tbl) {
-      if (t === sheetKey) {
-        tbl.classList.remove('hidden');
-      } else {
-        tbl.classList.add('hidden');
+    if (isHidden) {
+      content.classList.remove('hidden');
+      arrow.style.transform = 'rotate(180deg)';
+      // Reset contextual helps
+      if (id === 'pedidos') {
+        showHelp('pedidos', 'pedir');
+      } else if (id === 'bodegas') {
+        showHelp('bodegas', 'activo-check');
       }
     }
-  });
+  }
+};
 
-  // Update tabs visual style
-  const tabs = document.querySelectorAll('.sheet-tab');
-  tabs.forEach(tab => {
-    const onclickStr = tab.getAttribute('onclick') || '';
-    if (onclickStr.includes(sheetKey)) {
-      tab.classList.add('border-oro', 'text-oro');
-      tab.classList.remove('border-transparent', 'text-text-muted');
-    } else {
-      tab.classList.remove('border-oro', 'text-oro');
-      tab.classList.add('border-transparent', 'text-text-muted');
+// --- TOGGLE MOCK SHEET TABS ---
+window.toggleSubSheet = function(sheetKey) {
+  if (sheetKey === 'ped-diario' || sheetKey === 'sur-rapido') {
+    const isDiario = sheetKey === 'ped-diario';
+    document.getElementById('sub-table-ped-diario').classList.toggle('hidden', !isDiario);
+    document.getElementById('sub-table-sur-rapido').classList.toggle('hidden', isDiario);
+    
+    // Toggle active tab classes
+    document.getElementById('tab-ped-diario').className = isDiario 
+      ? 'px-3 py-1.5 border-r border-border bg-surface text-oro' 
+      : 'px-3 py-1.5 border-r border-border text-text-muted';
+    document.getElementById('tab-sur-rapido').className = !isDiario 
+      ? 'px-3 py-1.5 bg-surface text-oro' 
+      : 'px-3 py-1.5 text-text-muted';
+      
+    showHelp('pedidos', isDiario ? 'pedir' : 'surtido-check');
+  } else if (sheetKey === 'maestro' || sheetKey === 'kardex') {
+    const isMaestro = sheetKey === 'maestro';
+    document.getElementById('sub-table-maestro').classList.toggle('hidden', !isMaestro);
+    document.getElementById('sub-table-kardex').classList.toggle('hidden', isMaestro);
+    
+    // Toggle active tab classes
+    document.getElementById('tab-maestro').className = isMaestro 
+      ? 'px-3 py-1.5 border-r border-border bg-surface text-oro' 
+      : 'px-3 py-1.5 border-r border-border text-text-muted';
+    document.getElementById('tab-kardex').className = !isMaestro 
+      ? 'px-3 py-1.5 bg-surface text-oro' 
+      : 'px-3 py-1.5 text-text-muted';
+      
+    showHelp('bodegas', isMaestro ? 'activo-check' : 'saldo-real');
+  }
+};
+
+// --- CONTEXTUAL HELP METADATA ---
+const CONTEXT_HELP = {
+  pedidos: {
+    'pedir': {
+      title: 'Columna Pedir (Cantidad a solicitar)',
+      desc: 'Celda rellenable por el encargado de tienda. Permite ingresar cantidades numéricas con hasta 4 posiciones decimales si se requieren gramos u onzas. La fila se resalta automáticamente en amarillo suave al capturar para que el operario visualice fácilmente qué productos lleva seleccionados.'
+    },
+    'adicion': {
+      title: 'Alerta de Adición Tardía',
+      desc: 'Si agregas o modificas una cantidad en la sucursal después de la hora de bloqueo de pedidos, la celda de estatus cambia automáticamente a naranja y muestra el texto "🚨 ADICIÓN". Esto sirve para alertar de inmediato a bodega que se trata de un pedido de último minuto.'
+    },
+    'surtido-check': {
+      title: 'Marcación de Surtido Rápido',
+      desc: 'Diseñado específicamente para pantallas de celulares. Permite al personal en la tienda marcar directamente con checks si la mercancía del camión llegó completa o inexistente. Evita el ingreso manual de números en pantallas móviles, acelerando la conciliación de mermas.'
     }
-  });
-
-  // Update custom filename
-  const filename = document.getElementById('current-sheet-filename');
-  if (filename) {
-    if (sheetKey === 'maestro') {
-      filename.textContent = 'MISE — Catálogo Bodega';
-      triggerGASInfo('maestro-activo');
-    } else if (sheetKey === 'pedido') {
-      filename.textContent = 'MISE — Pedido Diario (BA)';
-      triggerGASInfo('pedido-pedir');
-    } else if (sheetKey === 'kardex') {
-      filename.textContent = 'MISE — Kardex Bodega';
-      triggerGASInfo('kardex-saldo');
+  },
+  bodegas: {
+    'activo-check': {
+      title: 'Casilla Activo (Control de Catálogo)',
+      desc: 'Permite definir si un insumo está disponible para las sucursales. Al cambiar la celda de SÍ a NO, el producto se oculta en caliente de las pantallas móviles de las tiendas, previniendo que los encargados realicen solicitudes de insumos agotados o descontinuados.'
+    },
+    'min-max': {
+      title: 'Control de Mínimos y Máximos',
+      desc: 'Establece los parámetros de stock recomendados para la sucursal. Estos números alimentan el semáforo inteligente de inventario para alertar visualmente sobre la falta de stock o el riesgo de merma por exceso de mercancía.'
+    },
+    'acciones-check': {
+      title: 'Checkboxes de Acción Masiva',
+      desc: 'Permiten seleccionar múltiples productos del catálogo al mismo tiempo. Al marcar los productos, el bodeguero puede utilizar el menú superior para desactivarlos, reactivarlos o eliminarlos en un solo paso.'
+    },
+    'descontinuado': {
+      title: 'Producto Deshabilitado',
+      desc: 'Los productos desactivados (con estatus NO en Activo) se atenúan con color gris en la hoja del administrador. Esto le permite llevar un control histórico sin saturar la vista operativa.'
+    },
+    'saldo-real': {
+      title: 'Cálculo Automático de Saldo',
+      desc: 'Muestra el stock restante calculado al instante con la fórmula de (Inventario Inicial + Entradas del día - Salidas del día). Garantiza que las cifras físicas coincidan con el libro digital en todo momento.'
     }
   }
 };
 
-// --- GAS AUTOMATION INFORMATION MAPPING ---
-const GAS_METADATA = {
-  'menu-mise': {
-    file: 'miseAuthBDG.gs',
-    func: 'onOpen()',
-    lines: 'Líneas 69-95',
-    desc: 'Función disparadora que construye la barra de menús personalizada "⚙️ Mise" en Google Sheets cuando se abre la hoja de cálculo. Carga los accesos a Setup Completo, Avanzar Semana y Cargas Masivas.',
-    code: `function onOpen() {\n  var ui = SpreadsheetApp.getUi();\n  ui.createMenu('⚙️ Mise')\n    .addItem('Setup completo', 'setupCompleto')\n    .addItem('Avanzar semana', 'avanzarSemana')\n    .addToUi();\n}`
-  },
-  'maestro-activo': {
-    file: 'miseAuthBDG.gs',
-    func: 'onEdit(e) -> Catálogo',
-    lines: 'Líneas 98-132',
-    desc: 'Trigger de edición que intercepta cuando se cambia el valor de la columna ACTIVO. Si cambia a NO, el script desactiva el insumo y lo remueve en caliente de la visualización de los pedidos móviles de las sucursales.',
-    code: `function onEdit(e) {\n  var sheet = e.range.getSheet();\n  if (sheet.getName() === "MAESTRO" && e.range.getColumn() === 6) {\n    var isActivo = e.value === "SÍ";\n    _actualizarEstadoCatalogo(e.range.getRow(), isActivo);\n  }\n}`
-  },
-  'maestro-seleccionar': {
-    file: 'miseAuthBDG.gs',
-    func: 'desactivarSeleccionadosMaestro()',
-    lines: 'Líneas 1837-1875',
-    desc: 'Función por lotes vinculada a los checkboxes. Escanea todas las filas marcadas con la casilla en TRUE y ejecuta de manera masiva la desactivación del stock.',
-    code: `function desactivarSeleccionadosMaestro() {\n  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("MAESTRO");\n  // Escanea celdas seleccionadas y desactiva productos...\n}`
-  },
-  'pedido-pedir': {
-    file: 'miseAuthPDA.gs',
-    func: 'onEdit(e) -> Tienda',
-    lines: 'Líneas 226-290',
-    desc: 'Interviene de forma inmediata al escribir en la columna PEDIR. Verifica la hora y el estado de la celda de confirmación de pedido para calcular si corresponde a un surtido regular o una adición tardía.',
-    code: `function onEdit(e) {\n  var sheet = e.range.getSheet();\n  if (sheet.getName() === "PEDIDO DIARIO" && e.range.getColumn() === 3) {\n    _evaluarEstadoPedido(e);\n  }\n}`
-  },
-  'pedido-adicion': {
-    file: 'miseAuthPDA.gs',
-    func: 'onEdit(e) -> Alertas',
-    lines: 'Líneas 300-345',
-    desc: 'Si el encargado introduce cantidades de forma tardía (después de que el pedido fue mandado a bodega), esta rutina resalta la celda en naranja bajo el estado de ADICIÓN para avisar al personal de bodega.',
-    code: `// Si el pedido ya está bloqueado/enviado:\nif (status === "ENVIADO") {\n  e.range.setBackground("#FFE0B2"); // Naranja\n  sheet.getRange(row, 5).setValue("🚨 ADICIÓN");\n}`
-  },
-  'kardex-saldo': {
-    file: 'miseAuthBDG.gs',
-    func: '_buildKardex() / avanzarSemana()',
-    lines: 'Líneas 508-540',
-    desc: 'Dibuja el Kardex calculando en tiempo real las entradas diarias y salidas físicas. El saldo remanente se archiva horizontalmente de forma automática al avanzar la semana.',
-    code: `function _buildKardex(sheet, nombre) {\n  // Genera fórmulas condicionales y fórmulas de saldo:\n  // Saldo = Inventario Inicial + Entradas - Salidas\n}`
-  }
-};
-
-window.triggerGASInfo = function(key) {
-  const data = GAS_METADATA[key];
+window.showHelp = function(moduleKey, itemKey) {
+  const data = CONTEXT_HELP[moduleKey] ? CONTEXT_HELP[moduleKey][itemKey] : null;
   if (!data) return;
 
-  const fileEl = document.getElementById('gas-script-file');
-  const nameEl = document.getElementById('gas-function-name');
-  const descEl = document.getElementById('gas-function-desc');
-  const codeBlock = document.getElementById('gas-code-block');
-  const lineCount = document.getElementById('gas-line-count');
-  const codeContainer = document.getElementById('gas-code-container');
-
-  if (fileEl) fileEl.textContent = data.file;
-  if (nameEl) nameEl.textContent = data.func;
+  const titleEl = document.getElementById(`help-title-${moduleKey}`);
+  const descEl = document.getElementById(`help-desc-${moduleKey}`);
+  
+  if (titleEl) titleEl.textContent = data.title;
   if (descEl) descEl.textContent = data.desc;
-  if (lineCount) lineCount.textContent = data.lines;
-  
-  if (codeBlock) {
-    codeBlock.textContent = data.code;
-  }
-  
-  if (codeContainer) {
-    codeContainer.classList.remove('hidden');
-  }
 
-  // Highlight selected cell styling dynamically
-  const cells = document.querySelectorAll('.mock-sheet-table td');
-  cells.forEach(c => c.classList.remove('pulse-gold'));
-  
-  const target = event ? event.currentTarget : null;
-  if (target) {
-    target.classList.add('pulse-gold');
+  // Add click highlights to cells
+  const allCells = document.querySelectorAll('.accordion-content td');
+  allCells.forEach(cell => cell.classList.remove('pulse-gold'));
+
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add('pulse-gold');
   }
 };
 
-// --- TECHNICAL MANUAL SEARCH ---
+// --- MANUAL SEARCH ---
 function handleManualSearch(e) {
   const query = e.target.value.toLowerCase().trim();
-  const sections = document.querySelectorAll('.manual-section');
+  const accordionItems = document.querySelectorAll('.accordion-item');
 
-  sections.forEach(sec => {
-    const terms = sec.getAttribute('data-search-terms') || '';
-    const title = sec.querySelector('h3').textContent.toLowerCase();
-    const content = sec.querySelector('p').textContent.toLowerCase();
+  accordionItems.forEach(item => {
+    const title = item.querySelector('button').textContent.toLowerCase();
+    const content = item.querySelector('.accordion-content').textContent.toLowerCase();
 
-    if (query === '' || terms.includes(query) || title.includes(query) || content.includes(query)) {
-      sec.style.display = 'block';
+    if (query === '' || title.includes(query) || content.includes(query)) {
+      item.style.display = 'block';
     } else {
-      sec.style.display = 'none';
+      item.style.display = 'none';
     }
   });
 }
