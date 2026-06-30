@@ -1,6 +1,9 @@
 // MISE Application Controller (Mobile-First & Clean Documentation Mode)
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. Iniciar Animación de Carga Cinematográfica LCP (etoile)
+  startLoadingSequence();
+
   // Initialize Lucide Icons
   if (typeof lucide !== 'undefined') {
     lucide.createIcons();
@@ -42,6 +45,76 @@ document.addEventListener('DOMContentLoaded', () => {
     backdrop.addEventListener('click', closeMenuDrawer);
   }
 });
+
+// --- LCP CINEMATIC LOADER LOGIC ---
+function startLoadingSequence() {
+  updateLcpLoader(10);
+  
+  setTimeout(() => {
+    updateLcpLoader(35);
+  }, 250);
+
+  setTimeout(() => {
+    updateLcpLoader(75);
+  }, 500);
+
+  setTimeout(() => {
+    updateLcpLoader(100);
+    hideLcpLoader();
+  }, 850);
+}
+
+function updateLcpLoader(progress) {
+  const stop1 = document.getElementById('gradient-stop-1');
+  const stop2 = document.getElementById('gradient-stop-2');
+  if (stop1 && stop2) {
+    stop1.setAttribute('offset', `${progress}%`);
+    stop2.setAttribute('offset', `${progress}%`);
+  }
+}
+
+function hideLcpLoader() {
+  const loader = document.getElementById('lcp-loader');
+  const plancha = document.getElementById('lcp-loader-plancha');
+  const appEl = document.getElementById('app');
+
+  if (!loader) return;
+
+  // 1. Asegurar progreso al 100% de la frase
+  updateLcpLoader(100);
+
+  // 2. Iniciar órbita de frase alrededor de MISE y desaparición
+  setTimeout(() => {
+    loader.classList.add('wrap-active');
+  }, 350); // Pausa dramática corta con el texto plano completo
+
+  // 3. Mostrar hilo de luz dorada en el centro (plancha)
+  setTimeout(() => {
+    loader.classList.add('line-visible');
+  }, 1300); // Sincronizado con la órbita (1.4s de rotación)
+
+  // 4. Barrido de expansión total en crema y desvanecimiento
+  setTimeout(() => {
+    loader.classList.add('reveal-active');
+    
+    // Parallax inverso del contenedor de la aplicación
+    setTimeout(() => {
+      if (appEl) {
+        appEl.classList.remove('loading-active');
+        appEl.classList.add('entrance-active');
+      }
+    }, 150);
+
+  }, 1600); // 1.3s + 300ms de espera
+
+  // 5. Ocultar del DOM al finalizar por completo la animación
+  setTimeout(() => {
+    loader.style.display = 'none';
+    if (appEl) {
+      appEl.classList.remove('entrance-active');
+    }
+  }, 2600);
+}
 
 // --- THEME STATE & TOGGLE ---
 function initTheme() {
@@ -174,11 +247,11 @@ window.toggleSubSheet = function(sheetKey) {
     
     // Toggle active tab classes
     document.getElementById('tab-ped-diario').className = isDiario 
-      ? 'px-3 py-1.5 border-r border-border bg-surface text-oro' 
-      : 'px-3 py-1.5 border-r border-border text-text-muted';
+      ? 'px-4 py-2 border-r border-border bg-surface text-oro interactive-element' 
+      : 'px-4 py-2 border-r border-border text-text-muted interactive-element';
     document.getElementById('tab-sur-rapido').className = !isDiario 
-      ? 'px-3 py-1.5 bg-surface text-oro' 
-      : 'px-3 py-1.5 text-text-muted';
+      ? 'px-4 py-2 bg-surface text-oro interactive-element' 
+      : 'px-4 py-2 text-text-muted interactive-element';
       
     showHelp('pedidos', isDiario ? 'pedir' : 'surtido-check-complete');
   } else if (sheetKey === 'maestro' || sheetKey === 'kardex') {
@@ -188,11 +261,11 @@ window.toggleSubSheet = function(sheetKey) {
     
     // Toggle active tab classes
     document.getElementById('tab-maestro').className = isMaestro 
-      ? 'px-3 py-1.5 border-r border-border bg-surface text-oro' 
-      : 'px-3 py-1.5 border-r border-border text-text-muted';
+      ? 'px-4 py-2 border-r border-border bg-surface text-oro interactive-element' 
+      : 'px-4 py-2 border-r border-border text-text-muted interactive-element';
     document.getElementById('tab-kardex').className = !isMaestro 
-      ? 'px-3 py-1.5 bg-surface text-oro' 
-      : 'px-3 py-1.5 text-text-muted';
+      ? 'px-4 py-2 bg-surface text-oro interactive-element' 
+      : 'px-4 py-2 text-text-muted interactive-element';
       
     showHelp('bodegas', isMaestro ? 'activo-check' : 'saldo-real');
   }

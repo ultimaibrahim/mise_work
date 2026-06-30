@@ -28,6 +28,7 @@ html[data-theme="light"] {
   --verde-deep:   #233529;
   --sage:         #7A9E8A;
   --oro:          #B8902F;
+  --crema:        #FAF6ED;
   --radius-lg:    20px;
   --radius-md:    12px;
   --radius-sm:    8px;
@@ -159,4 +160,165 @@ body {
 
 .animate-fade-in {
   animation: viewEntrance 300ms var(--ease-out) forwards;
+}
+
+/* ==================== FULLSCREEN CINEMATIC LOADER ==================== */
+#lcp-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--verde) !important; /* Brand green */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s cubic-bezier(0.85, 0, 0.15, 1), visibility 0.6s;
+}
+
+#lcp-loader.reveal-active {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  text-align: center;
+  z-index: 10;
+}
+
+.loader-curve-svg {
+  width: 320px;
+  height: 320px;
+  overflow: visible;
+  display: block;
+}
+
+.loader-logo-svg-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  fill: var(--crema);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  transform-origin: 150px 150px;
+  transition: transform 1s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.8s ease;
+}
+
+.loader-phrase-svg-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  fill: url(#loaderTextGradient);
+  transform-origin: 150px 150px;
+}
+
+.loader-phrase-curve {
+  opacity: 0;
+  pointer-events: none;
+  fill: var(--oro);
+}
+
+.loader-plancha-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 2px;
+  width: 0%;
+  background: var(--oro);
+  box-shadow: 0 0 12px var(--oro), 0 0 24px var(--oro);
+  z-index: 100;
+  pointer-events: none;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), 
+              height 0.6s cubic-bezier(0.85, 0, 0.15, 1) 0.2s, 
+              background-color 0.6s ease 0.2s, 
+              opacity 0.6s cubic-bezier(0.85, 0, 0.15, 1) 0.2s;
+}
+
+#lcp-loader.wrap-active .loader-phrase-flat {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+}
+
+#lcp-loader.wrap-active .loader-phrase-curve {
+  opacity: 1;
+  animation: phraseCurveOrbit 1.4s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+}
+
+#lcp-loader.wrap-active .loader-logo-svg-text {
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 1.2s cubic-bezier(0.85, 0, 0.15, 1) 0.4s, opacity 1s ease 0.4s;
+}
+
+#lcp-loader.line-visible #lcp-loader-plancha {
+  width: 140px;
+}
+
+#lcp-loader.reveal-active #lcp-loader-plancha {
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg);
+  box-shadow: none;
+  opacity: 0;
+}
+
+/* App entry parallax animation state */
+#app.loading-active {
+  opacity: 0;
+  transform: translateY(80px);
+  transition: none;
+}
+
+#app.entrance-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease;
+}
+
+@keyframes phraseCurveOrbit {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: rotate(360deg) scale(0.25);
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+/* Reduced motion compliance */
+@media (prefers-reduced-motion: reduce) {
+  #lcp-loader {
+    transition: opacity 0.3s ease;
+  }
+  #lcp-loader.wrap-active .loader-phrase-curve {
+    animation: none !important;
+    opacity: 0;
+  }
+  #lcp-loader.wrap-active .loader-logo-svg-text {
+    transform: none !important;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .loader-plancha-line {
+    transition: none !important;
+  }
+  #lcp-loader.reveal-active #lcp-loader-plancha {
+    width: 100vw;
+    height: 100vh;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 }
