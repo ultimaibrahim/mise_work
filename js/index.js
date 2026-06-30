@@ -71,7 +71,7 @@ function syncThemeIcons() {
 
 // --- VIEW NAVIGATION ---
 window.switchMainView = function(viewId) {
-  const views = ['landing', 'manual', 'about'];
+  const views = ['landing', 'manual', 'manual-pedidos', 'manual-bodega', 'about'];
   if (!views.includes(viewId)) viewId = 'landing';
 
   // Toggle views
@@ -89,11 +89,19 @@ window.switchMainView = function(viewId) {
   // Update URL hash
   window.location.hash = `#/${viewId}`;
 
-  // Update navigation buttons active state
+  // Update navigation buttons active state (highlight Manual button when in sub-pages)
   const buttons = document.querySelectorAll('nav button');
   buttons.forEach(btn => {
     const onclickStr = btn.getAttribute('onclick') || '';
-    if (onclickStr.includes(viewId)) {
+    let isActive = false;
+    
+    if (viewId.startsWith('manual') && onclickStr.includes('manual')) {
+      isActive = true;
+    } else if (onclickStr.includes(viewId)) {
+      isActive = true;
+    }
+
+    if (isActive) {
       btn.classList.add('text-oro');
       btn.classList.remove('text-text-muted');
     } else {
@@ -101,33 +109,15 @@ window.switchMainView = function(viewId) {
       btn.classList.add('text-text-muted');
     }
   });
-};
 
-// --- ACCORDION EXPANSION ---
-window.toggleAccordion = function(id) {
-  const content = document.getElementById(`content-${id}`);
-  const arrow = document.getElementById(`arrow-${id}`);
-  
-  if (content && arrow) {
-    const isHidden = content.classList.contains('hidden');
-    
-    // Close all accordions first for clean visual focus
-    const allContents = document.querySelectorAll('.accordion-content');
-    const allArrows = document.querySelectorAll('.accordion-item button i');
-    
-    allContents.forEach(c => c.classList.add('hidden'));
-    allArrows.forEach(a => a.style.transform = 'rotate(0deg)');
+  // Scroll window to top on view switch
+  window.scrollTo(0, 0);
 
-    if (isHidden) {
-      content.classList.remove('hidden');
-      arrow.style.transform = 'rotate(180deg)';
-      // Reset contextual helps
-      if (id === 'pedidos') {
-        showHelp('pedidos', 'pedir');
-      } else if (id === 'bodegas') {
-        showHelp('bodegas', 'activo-check');
-      }
-    }
+  // Initialize view contextual help
+  if (viewId === 'manual-pedidos') {
+    showHelp('pedidos', 'pedir');
+  } else if (viewId === 'manual-bodega') {
+    showHelp('bodegas', 'activo-check');
   }
 };
 
@@ -146,7 +136,7 @@ window.toggleSubSheet = function(sheetKey) {
       ? 'px-3 py-1.5 bg-surface text-oro' 
       : 'px-3 py-1.5 text-text-muted';
       
-    showHelp('pedidos', isDiario ? 'pedir' : 'surtido-check');
+    showHelp('pedidos', isDiario ? 'pedir' : 'surtido-check-complete');
   } else if (sheetKey === 'maestro' || sheetKey === 'kardex') {
     const isMaestro = sheetKey === 'maestro';
     document.getElementById('sub-table-maestro').classList.toggle('hidden', !isMaestro);
@@ -168,38 +158,42 @@ window.toggleSubSheet = function(sheetKey) {
 const CONTEXT_HELP = {
   pedidos: {
     'pedir': {
-      title: 'Columna Pedir (Cantidad a solicitar)',
-      desc: 'Celda rellenable por el encargado de tienda. Permite ingresar cantidades numéricas con hasta 4 posiciones decimales si se requieren gramos u onzas. La fila se resalta automáticamente en amarillo suave al capturar para que el operario visualice fácilmente qué productos lleva seleccionados.'
+      title: 'Columna PEDIR (Cantidad de Pedido)',
+      desc: 'Celda rellenable por el encargado de tienda. Permite ingresar cantidades de insumos. La fila se resalta automáticamente en amarillo suave para verificar visualmente qué productos han sido seleccionados.'
     },
     'adicion': {
       title: 'Alerta de Adición Tardía',
-      desc: 'Si agregas o modificas una cantidad en la sucursal después de la hora de bloqueo de pedidos, la celda de estatus cambia automáticamente a naranja y muestra el texto "🚨 ADICIÓN". Esto sirve para alertar de inmediato a bodega que se trata de un pedido de último minuto.'
+      desc: 'Si agregas o modificas una cantidad en la tienda después de que el pedido fue mandado a bodega, la celda de estatus cambia de forma automática a naranja con la alerta "🚨 ADICIÓN". Indica al surtidor de bodega que es un pedido de último minuto.'
     },
-    'surtido-check': {
-      title: 'Marcación de Surtido Rápido',
-      desc: 'Diseñado específicamente para pantallas de celulares. Permite al personal en la tienda marcar directamente con checks si la mercancía del camión llegó completa o inexistente. Evita el ingreso manual de números en pantallas móviles, acelerando la conciliación de mermas.'
+    'surtido-check-complete': {
+      title: 'Check Completo (Surtido)',
+      desc: 'Casilla táctil para el encargado. Se marca si la cantidad de insumos que llegó en el camión coincide exactamente con lo pedido. Colorea la fila de verde de forma automática.'
+    },
+    'surtido-check-missing': {
+      title: 'Check Inexistente (Surtido)',
+      desc: 'Casilla táctil para registrar que el insumo no fue entregado por bodega. El sistema descuenta el valor del pedido activo.'
     }
   },
   bodegas: {
     'activo-check': {
       title: 'Casilla Activo (Control de Catálogo)',
-      desc: 'Permite definir si un insumo está disponible para las sucursales. Al cambiar la celda de SÍ a NO, el producto se oculta en caliente de las pantallas móviles de las tiendas, previniendo que los encargados realicen solicitudes de insumos agotados o descontinuados.'
+      desc: 'Define si un insumo está habilitado para pedidos. Si cambia a NO, el producto se oculta de inmediato de las pantallas de las tiendas, previniendo pedidos erróneos de productos agotados.'
     },
     'min-max': {
-      title: 'Control de Mínimos y Máximos',
-      desc: 'Establece los parámetros de stock recomendados para la sucursal. Estos números alimentan el semáforo inteligente de inventario para alertar visualmente sobre la falta de stock o el riesgo de merma por exceso de mercancía.'
+      title: 'Niveles de Mínimo y Máximo',
+      desc: 'Establece los niveles de inventario de seguridad y sobrestock para la sucursal. Estos límites regulan el semáforo inteligente de inventario.'
     },
     'acciones-check': {
-      title: 'Checkboxes de Acción Masiva',
-      desc: 'Permiten seleccionar múltiples productos del catálogo al mismo tiempo. Al marcar los productos, el bodeguero puede utilizar el menú superior para desactivarlos, reactivarlos o eliminarlos en un solo paso.'
+      title: 'Checkboxes de Selección Masiva',
+      desc: 'Permite seleccionar múltiples productos de la hoja MAESTRO para aplicar cambios masivos desde el menú superior (como activar, desactivar o eliminar del catálogo en lote).'
     },
     'descontinuado': {
-      title: 'Producto Deshabilitado',
-      desc: 'Los productos desactivados (con estatus NO en Activo) se atenúan con color gris en la hoja del administrador. Esto le permite llevar un control histórico sin saturar la vista operativa.'
+      title: 'Producto Descontinuado',
+      desc: 'Cuando un producto se desactiva (Activo = NO), su fila se atenúa en gris para mantener el histórico de forma visual sin sobrecargar el catálogo activo de las tiendas.'
     },
     'saldo-real': {
-      title: 'Cálculo Automático de Saldo',
-      desc: 'Muestra el stock restante calculado al instante con la fórmula de (Inventario Inicial + Entradas del día - Salidas del día). Garantiza que las cifras físicas coincidan con el libro digital en todo momento.'
+      title: 'Saldo en Kardex',
+      desc: 'Muestra el stock físico resultante calculado con la fórmula: (Inventario Inicial + Entradas por compras - Salidas hacia tiendas). Garantiza coincidencia física y digital.'
     }
   }
 };
@@ -215,7 +209,7 @@ window.showHelp = function(moduleKey, itemKey) {
   if (descEl) descEl.textContent = data.desc;
 
   // Add click highlights to cells
-  const allCells = document.querySelectorAll('.accordion-content td');
+  const allCells = document.querySelectorAll('.mock-sheet-table td');
   allCells.forEach(cell => cell.classList.remove('pulse-gold'));
 
   if (event && event.currentTarget) {
@@ -226,16 +220,17 @@ window.showHelp = function(moduleKey, itemKey) {
 // --- MANUAL SEARCH ---
 function handleManualSearch(e) {
   const query = e.target.value.toLowerCase().trim();
-  const accordionItems = document.querySelectorAll('.accordion-item');
+  const menuCards = document.querySelectorAll('.manual-menu-card');
 
-  accordionItems.forEach(item => {
-    const title = item.querySelector('button').textContent.toLowerCase();
-    const content = item.querySelector('.accordion-content').textContent.toLowerCase();
+  menuCards.forEach(card => {
+    const terms = card.getAttribute('data-search-terms') || '';
+    const title = card.querySelector('h3').textContent.toLowerCase();
+    const content = card.querySelector('p').textContent.toLowerCase();
 
-    if (query === '' || title.includes(query) || content.includes(query)) {
-      item.style.display = 'block';
+    if (query === '' || terms.includes(query) || title.includes(query) || content.includes(query)) {
+      card.style.display = 'block';
     } else {
-      item.style.display = 'none';
+      card.style.display = 'none';
     }
   });
 }
