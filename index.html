@@ -400,17 +400,17 @@
 
     </div>
 
-    <!-- ==================== MOBILE NAVIGATION BAR ==================== -->
-    <nav class="absolute bottom-0 left-0 right-0 h-16 border-t border-border bg-bg/95 backdrop-blur-md flex items-center justify-around z-40">
-      <button class="nav-btn active flex flex-col items-center justify-center gap-1 w-16 h-12 text-oro transition-colors duration-200" onclick="switchMainView('landing')">
+    <!-- ==================== MOBILE NAVIGATION BAR (FLOATING PILL) ==================== -->
+    <nav class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[calc(100%-48px)] max-w-[360px] border border-oro/20 bg-surface/90 dark:bg-surface-2/95 backdrop-blur-lg flex items-center justify-around py-2.5 px-3 rounded-full shadow-2xl z-40 transition-all duration-300">
+      <button class="nav-btn active flex flex-col items-center justify-center gap-0.5 w-16 text-oro transition-colors duration-200" onclick="switchMainView('landing')">
         <i data-lucide="home" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Inicio</span>
       </button>
-      <button class="nav-btn flex flex-col items-center justify-center gap-1 w-16 h-12 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('sheets')">
+      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('sheets')">
         <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Hojas 1:1</span>
       </button>
-      <button class="nav-btn flex flex-col items-center justify-center gap-1 w-16 h-12 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('manual')">
+      <button class="nav-btn flex flex-col items-center justify-center gap-0.5 w-16 text-text-muted hover:text-oro transition-colors duration-200" onclick="switchMainView('manual')">
         <i data-lucide="book-open" class="w-5 h-5"></i>
         <span class="text-[9px] font-bold font-sans">Manual</span>
       </button>
