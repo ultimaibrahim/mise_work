@@ -81,7 +81,7 @@
   <div id="app" class="loading-active w-full flex-1 flex flex-col">
 
     <!-- MAIN APPLICATION CONTAINER -->
-    <div class="flex-1 flex flex-col relative w-full max-w-[450px] mx-auto min-h-screen shadow-2xl bg-bg border-x border-border overflow-x-hidden pb-28 grain-overlay">
+    <div class="flex-1 flex flex-col relative w-full max-w-7xl mx-auto min-h-screen shadow-2xl bg-bg border-x border-border overflow-x-hidden pb-28 grain-overlay">
       
       <!-- Hilo de Luz de Transición (Efecto Plancha) -->
       <div id="gold-thread-transition" class="pointer-events-none"></div>
@@ -192,7 +192,7 @@
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin-slow"></i> ¿Cómo funciona mise?
           </h3>
           
-          <div class="space-y-4 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs pt-2">
             <div class="flex gap-3">
               <div class="w-5 h-5 rounded-full bg-verde text-white flex items-center justify-center shrink-0 font-bold text-[10px]">1</div>
               <div>
@@ -255,7 +255,7 @@
         </div>
 
         <!-- MENU CARDS -->
-        <div class="space-y-4" id="manual-menu-list">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="manual-menu-list">
           
           <div class="manual-menu-card premium-card group hover:border-oro transition-all duration-200 cursor-pointer space-y-2 interactive-element" onclick="switchMainView('manual-pedidos')" data-search-terms="pedidos tienda sucursal encargado pasillo surtido completo adicion reset diario">
             <div class="flex items-center justify-between">
@@ -304,79 +304,85 @@
           <p class="text-xs text-text-muted">Guía de uso diario para el levantamiento de insumos y conciliación de entregas.</p>
         </div>
 
-        <!-- Mock Sheets Window -->
-        <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-lg">
-          <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
-            <span>mise — Pedido Diario (BA)</span>
-            <span class="text-oro font-bold">Sucursal</span>
-          </div>
-          
-          <!-- Tab selector -->
-          <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
-            <button id="tab-ped-diario" class="px-4 py-2 border-r border-border bg-surface text-oro interactive-element" onclick="toggleSubSheet('ped-diario')">📋 PEDIDO DIARIO</button>
-            <button id="tab-sur-rapido" class="px-4 py-2 text-text-muted interactive-element" onclick="toggleSubSheet('sur-rapido')">🚚 SURTIDO RÁPIDO</button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Mock Sheets Window -->
+            <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-lg">
+              <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
+                <span>mise — Pedido Diario (BA)</span>
+                <span class="text-oro font-bold">Sucursal</span>
+              </div>
+              
+              <!-- Tab selector -->
+              <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
+                <button id="tab-ped-diario" class="px-4 py-2 border-r border-border bg-surface text-oro interactive-element" onclick="toggleSubSheet('ped-diario')">📋 PEDIDO DIARIO</button>
+                <button id="tab-sur-rapido" class="px-4 py-2 text-text-muted interactive-element" onclick="toggleSubSheet('sur-rapido')">🚚 SURTIDO RÁPIDO</button>
+              </div>
+
+              <!-- Pedido Diario Mock Table -->
+              <div id="sub-table-ped-diario" class="overflow-x-auto w-full scroll-hint">
+                <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
+                  <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                    <th class="p-2.5 border-r border-border">PRODUCTO</th>
+                    <th class="p-2.5 border-r border-border text-center">PEDIR</th>
+                    <th class="p-2.5 text-center">ALERTAS</th>
+                  </tr>
+                  <tr class="border-b border-border">
+                    <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+                    <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
+                      2.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                    <td class="p-2.5 text-center text-text-muted">-</td>
+                  </tr>
+                  <tr class="border-b border-border">
+                    <td class="p-2.5 border-r border-border font-bold">Nutella</td>
+                    <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
+                      1.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                    <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'adicion')">
+                      <span class="text-amber-700 font-bold bg-amber-500/20 px-1 py-0.5 rounded text-[8px]">🚨 ADICIÓN</span>
+                      <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Surtido Rápido Mock Table -->
+              <div id="sub-table-sur-rapido" class="overflow-x-auto w-full hidden scroll-hint">
+                <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
+                  <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                    <th class="p-2.5 border-r border-border">PRODUCTO</th>
+                    <th class="p-2.5 border-r border-border text-center">COMPLETO</th>
+                    <th class="p-2.5 text-center">INEXISTENTE</th>
+                  </tr>
+                  <tr class="border-b border-border">
+                    <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+                    <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-complete')">
+                      <input type="checkbox" checked disabled class="accent-oro">
+                      <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                    <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-missing')">
+                      <input type="checkbox" disabled class="accent-oro">
+                      <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
           </div>
 
-          <!-- Pedido Diario Mock Table -->
-          <div id="sub-table-ped-diario" class="overflow-x-auto w-full scroll-hint">
-            <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
-              <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-                <th class="p-2.5 border-r border-border">PRODUCTO</th>
-                <th class="p-2.5 border-r border-border text-center">PEDIR</th>
-                <th class="p-2.5 text-center">ALERTAS</th>
-              </tr>
-              <tr class="border-b border-border">
-                <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
-                <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
-                  2.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-                <td class="p-2.5 text-center text-text-muted">-</td>
-              </tr>
-              <tr class="border-b border-border">
-                <td class="p-2.5 border-r border-border font-bold">Nutella</td>
-                <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'pedir')">
-                  1.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-                <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'adicion')">
-                  <span class="text-amber-700 font-bold bg-amber-500/20 px-1 py-0.5 rounded text-[8px]">🚨 ADICIÓN</span>
-                  <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-              </tr>
-            </table>
+          <div class="lg:sticky lg:top-24 space-y-6">
+            <!-- Help panel for Pedidos -->
+            <div id="help-pedidos" class="premium-card p-5 border-oro/40 space-y-2">
+              <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
+                <i data-lucide="info" class="w-4.5 h-4.5 text-oro animate-pulse"></i>
+                <span id="help-title-pedidos">Selecciona un elemento</span>
+              </h4>
+              <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-pedidos">
+                Toca cualquier celda con el indicador <span class="text-oro font-bold">ℹ️</span> para detallar qué hace, cómo se maneja y resolver dudas operativas comunes.
+              </p>
+            </div>
           </div>
-
-          <!-- Surtido Rápido Mock Table -->
-          <div id="sub-table-sur-rapido" class="overflow-x-auto w-full hidden scroll-hint">
-            <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
-              <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-                <th class="p-2.5 border-r border-border">PRODUCTO</th>
-                <th class="p-2.5 border-r border-border text-center">COMPLETO</th>
-                <th class="p-2.5 text-center">INEXISTENTE</th>
-              </tr>
-              <tr class="border-b border-border">
-                <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
-                <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-complete')">
-                  <input type="checkbox" checked disabled class="accent-oro">
-                  <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-                <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('pedidos', 'surtido-check-missing')">
-                  <input type="checkbox" disabled class="accent-oro">
-                  <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
-        <!-- Help panel for Pedidos -->
-        <div id="help-pedidos" class="premium-card p-5 border-oro/40 space-y-2">
-          <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
-            <i data-lucide="info" class="w-4.5 h-4.5 text-oro animate-pulse"></i>
-            <span id="help-title-pedidos">Selecciona un elemento</span>
-          </h4>
-          <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-pedidos">
-            Toca cualquier celda con el indicador <span class="text-oro font-bold">ℹ️</span> para detallar qué hace, cómo se maneja y resolver dudas operativas comunes.
-          </p>
         </div>
 
         <!-- DUMMIES INTERACTIVE MANUAL TABLES -->
@@ -495,82 +501,88 @@
           <p class="text-xs text-text-muted">Administración central del catálogo maestro de insumos, entradas y cierres semanales.</p>
         </div>
 
-        <!-- Mock Sheets Window -->
-        <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-lg">
-          <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
-            <span>mise — Catálogo Maestro</span>
-            <span class="text-oro font-bold">Bodega Central</span>
-          </div>
-          
-          <!-- Tab selector -->
-          <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
-            <button id="tab-maestro" class="px-4 py-2 border-r border-border bg-surface text-oro interactive-element" onclick="toggleSubSheet('maestro')">📋 MAESTRO</button>
-            <button id="tab-kardex" class="px-4 py-2 text-text-muted interactive-element" onclick="toggleSubSheet('kardex')">📦 KARDEX_BA</button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Mock Sheets Window -->
+            <div class="border border-border bg-surface rounded-lg overflow-hidden shadow-lg">
+              <div class="bg-surface-2 px-3 py-2 border-b border-border flex items-center justify-between text-[9px] font-mono text-text-muted">
+                <span>mise — Catálogo Maestro</span>
+                <span class="text-oro font-bold">Bodega Central</span>
+              </div>
+              
+              <!-- Tab selector -->
+              <div class="flex border-b border-border text-[9px] font-bold bg-surface-2">
+                <button id="tab-maestro" class="px-4 py-2 border-r border-border bg-surface text-oro interactive-element" onclick="toggleSubSheet('maestro')">📋 MAESTRO</button>
+                <button id="tab-kardex" class="px-4 py-2 text-text-muted interactive-element" onclick="toggleSubSheet('kardex')">📦 KARDEX_BA</button>
+              </div>
+
+              <!-- Maestro Sub-Table -->
+              <div id="sub-table-maestro" class="overflow-x-auto w-full scroll-hint">
+                <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[380px] mock-sheet-table">
+                  <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                    <th class="p-2.5 border-r border-border text-center">PRODUCTO</th>
+                    <th class="p-2.5 border-r border-border text-center">ACTIVO</th>
+                    <th class="p-2.5 border-r border-border text-center">MÍN/MÁX</th>
+                    <th class="p-2.5 text-center">ACCIONES</th>
+                  </tr>
+                  <tr class="border-b border-border">
+                    <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+                    <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'activo-check')">
+                      <span class="text-emerald-700 font-bold">SÍ</span>
+                      <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                    <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'min-max')">
+                      5 / 20 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                    <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'acciones-check')">
+                      <input type="checkbox" checked disabled class="accent-oro">
+                      <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                  </tr>
+                  <tr class="border-b border-border opacity-50 bg-black/[0.03]">
+                    <td class="p-2.5 border-r border-border font-bold text-text-muted">Fresa (Descontinuado)</td>
+                    <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'descontinuado')">
+                      <span class="text-red-700 font-bold">NO</span>
+                      <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                    <td class="p-2.5 border-r border-border text-center">2 / 10</td>
+                    <td class="p-2.5 text-center"><input type="checkbox" disabled></td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- Kardex Sub-Table -->
+              <div id="sub-table-kardex" class="overflow-x-auto w-full hidden scroll-hint">
+                <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
+                  <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
+                    <th class="p-2.5 border-r border-border text-center">PRODUCTO</th>
+                    <th class="p-2.5 border-r border-border text-center">ENT/SAL</th>
+                    <th class="p-2.5 text-center">SALDO</th>
+                  </tr>
+                  <tr class="border-b border-border">
+                    <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
+                    <td class="p-2.5 border-r border-border text-center">15.0 / 2.0</td>
+                    <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'saldo-real')">
+                      13.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
           </div>
 
-          <!-- Maestro Sub-Table -->
-          <div id="sub-table-maestro" class="overflow-x-auto w-full scroll-hint">
-            <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[380px] mock-sheet-table">
-              <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-                <th class="p-2.5 border-r border-border text-center">PRODUCTO</th>
-                <th class="p-2.5 border-r border-border text-center">ACTIVO</th>
-                <th class="p-2.5 border-r border-border text-center">MÍN/MÁX</th>
-                <th class="p-2.5 text-center">ACCIONES</th>
-              </tr>
-              <tr class="border-b border-border">
-                <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
-                <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'activo-check')">
-                  <span class="text-emerald-700 font-bold">SÍ</span>
-                  <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-                <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'min-max')">
-                  5 / 20 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-                <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'acciones-check')">
-                  <input type="checkbox" checked disabled class="accent-oro">
-                  <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-              </tr>
-              <tr class="border-b border-border opacity-50 bg-black/[0.03]">
-                <td class="p-2.5 border-r border-border font-bold text-text-muted">Fresa (Descontinuado)</td>
-                <td class="p-2.5 border-r border-border text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'descontinuado')">
-                  <span class="text-red-700 font-bold">NO</span>
-                  <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-                <td class="p-2.5 border-r border-border text-center">2 / 10</td>
-                <td class="p-2.5 text-center"><input type="checkbox" disabled></td>
-              </tr>
-            </table>
+          <div class="lg:sticky lg:top-24 space-y-6">
+            <!-- Help panel for Bodega -->
+            <div id="help-bodegas" class="premium-card p-5 border-oro/40 space-y-2">
+              <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
+                <i data-lucide="info" class="w-4.5 h-4.5 text-oro animate-pulse"></i>
+                <span id="help-title-bodegas">Selecciona un elemento</span>
+              </h4>
+              <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-bodegas">
+                Toca cualquier celda con el indicador <span class="text-oro font-bold">ℹ️</span> para detallar su función operativa en bodega.
+              </p>
+            </div>
           </div>
-
-          <!-- Kardex Sub-Table -->
-          <div id="sub-table-kardex" class="overflow-x-auto w-full hidden scroll-hint">
-            <table class="w-full text-left font-mono text-[9px] border-collapse min-w-[340px] mock-sheet-table">
-              <tr class="bg-surface-2 border-b border-border text-text-muted text-[8px]">
-                <th class="p-2.5 border-r border-border text-center">PRODUCTO</th>
-                <th class="p-2.5 border-r border-border text-center">ENT/SAL</th>
-                <th class="p-2.5 text-center">SALDO</th>
-              </tr>
-              <tr class="border-b border-border">
-                <td class="p-2.5 border-r border-border font-bold">Jamón de pavo Lala</td>
-                <td class="p-2.5 border-r border-border text-center">15.0 / 2.0</td>
-                <td class="p-2.5 text-center bg-amber-500/10 cursor-pointer relative" onclick="showHelp('bodegas', 'saldo-real')">
-                  13.0 <span class="absolute right-1 top-1 text-[7px] font-bold text-oro">ℹ️</span>
-                </td>
-              </tr>
-            </table>
-          </div>
-        </div>
-
-        <!-- Help panel for Bodega -->
-        <div id="help-bodegas" class="premium-card p-5 border-oro/40 space-y-2">
-          <h4 class="text-xs font-bold text-verde dark:text-crema flex items-center gap-1.5">
-            <i data-lucide="info" class="w-4.5 h-4.5 text-oro animate-pulse"></i>
-            <span id="help-title-bodegas">Selecciona un elemento</span>
-          </h4>
-          <p class="text-[11px] text-text-muted leading-relaxed" id="help-desc-bodegas">
-            Toca cualquier celda con el indicador <span class="text-oro font-bold">ℹ️</span> para detallar su función operativa en bodega.
-          </p>
         </div>
 
         <!-- DUMMIES BODEGA TABLES -->
