@@ -62,6 +62,9 @@ function onOpen() {
     _checkAutoResetNuevoDia();
   } catch(e) {}
   try {
+    _ensureDailyResetTrigger();
+  } catch(e) {}
+  try {
     _actualizarAvisoPedido();
   } catch(e) {}
   try {
@@ -345,12 +348,25 @@ function onEdit(e) {
   // B. Manejo de la pestaña de Pedido Diario
   if (name !== SHEET_PEDIDO) return;
 
-  // 1. Botones Interactivos Móviles (Fila 2) en columnas visibles C-G
+  // 1. Botones Interactivos Móviles (Fila 2) en columnas visibles B-G
   if (row === 2) {
+    if (col === 3) { // C2 - Reset de pedido (día nuevo)
+      if (e.range.getValue() === true) {
+        e.range.setValue(false);
+        resetearPedido();
+      }
+    }
     if (col === 5) { // E2 - Surtido Rápido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         generarSurtidoRapido();
+      }
+    }
+    if (col === 7) { // G2 - Forzar sincronización de estados
+      if (e.range.getValue() === true) {
+        e.range.setValue(false);
+        sincronizarEstados();
+        try { SpreadsheetApp.getActive().toast("Estados sincronizados ✓", "⚙️ Mise", 3); } catch(err) {}
       }
     }
     return;
@@ -679,6 +695,17 @@ function _setupSync(bodegaUrl) {
   try { SpreadsheetApp.flush(); } catch(e) {}
 }
 
+// Backup del reset diario: onOpen (simple trigger) NO se dispara de forma confiable
+// al abrir la hoja desde la app móvil nativa de Sheets (solo desde navegador).
+// Este trigger instalable corre solo, sin depender de que alguien abra el archivo.
+function _ensureDailyResetTrigger() {
+  const yaExiste = ScriptApp.getProjectTriggers()
+    .some(t => t.getHandlerFunction() === "_checkAutoResetNuevoDia");
+  if (!yaExiste) {
+    ScriptApp.newTrigger("_checkAutoResetNuevoDia").timeBased().everyDays(1).atHour(4).create();
+  }
+}
+
 function instalarTriggers() {
   ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === "sincronizarEstados") ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger("sincronizarEstados").timeBased().everyMinutes(10).create();
@@ -836,19 +863,25 @@ function _buildPedidoDiario(sheet) {
   // Banner superior unificado sin merge
   sheet.getRange(1, 1, 1, NUM_COLS).clearContent().setBackground("#3D5A47");
   sheet.getRange("D1")
-    .setValue("MISE — PEDIDO DIARIO · " + BODEGA_NOMBRE + "   |   La Crêpe Parisienne")
+    .setFormula('="MISE — PEDIDO DIARIO · ' + BODEGA_NOMBRE + '   |   La Crêpe Parisienne   ·   " & TEXT(TODAY(),"dd/mmm/yyyy")')
     .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(1, 30);
 
-  // Fila 2: Botones y Fecha (Alineados a partir de Columna C que nunca se oculta)
+  // Fila 2: Botones táctiles (Alineados a partir de Columna C que nunca se oculta)
+  // Reset (B/C) y Sync (F/G) existen porque onOpen no dispara el reset/estado
+  // automático de forma confiable en la app móvil nativa de Sheets — el operario
+  // los dispara a mano marcando el checkbox.
   sheet.getRange(2, 1, 1, NUM_COLS).setBackground("#7A9E8A");
   sheet.getRange(2, 1, 1, NUM_COLS).clearContent();
 
-  sheet.getRange("F2").setValue("FECHA:").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("G2").setFormula('=TODAY()').setBackground("#FFFCD0").setFontColor("#333333").setNumberFormat("DD/MMM/YYYY").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("B2").setValue("🔄").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("C2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
 
   sheet.getRange("D2").setValue("🚚").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("E2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
+
+  sheet.getRange("F2").setValue("🔗").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("G2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
   sheet.setRowHeight(2, 24);
 
   // Fila 3: Headers estables tradicionales (10 columns)
