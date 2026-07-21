@@ -352,7 +352,6 @@ function onEdit(e) {
 
   // 1. Botones Interactivos Móviles (Fila 2) en columnas visibles B-G
   if (row === 2) {
-<<<<<<< HEAD
     if (col === 3) { // C2 - Resetear pedido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
