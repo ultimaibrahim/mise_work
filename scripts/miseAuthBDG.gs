@@ -85,6 +85,7 @@ function onOpen() {
     .addItem("➕ Agregar productos",                       "crearHojaCargaMasiva")
     .addItem("📝 Editar productos seleccionados",         "crearHojaEdicionMasiva")
     .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
+    .addItem("🧹 Eliminar productos duplicados",      "eliminarDuplicadosCatalogo")
     // .addItem("🔧 Restaurar validaciones de MAESTRO",     "restaurarValidacionesMaestro") // Deshabilitado
     .addSeparator()
     // .addItem("🧪 Correr tests",                           "runTests") // Deshabilitado
@@ -161,6 +162,7 @@ function onEdit(e) {
   if (name === "➕ AGREGAR_MÚLTIPLES") {
     if (row === 3 && col === 10) { // J3 - Confirmar
       if (e.range.getValue() === true) {
+        e.range.setValue(false); // Reset inmediato preventivo contra dobles ejecuciones
         procesarCargaMasiva();
       }
     }
@@ -171,6 +173,7 @@ function onEdit(e) {
   if (name === "✏️ EDITAR_PRODUCTOS") {
     if (row === 3 && col === 9) { // I3 - Confirmar
       if (e.range.getValue() === true) {
+        e.range.setValue(false); // Reset inmediato preventivo contra dobles ejecuciones
         procesarEdicionMasiva();
       }
     }
@@ -2014,6 +2017,101 @@ function eliminarSeleccionadosMaestro() {
   }
 }
 
+function eliminarDuplicadosCatalogo() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  if (!maestro) return;
+  const lr = maestro.getLastRow();
+  if (lr < MAESTRO_START) {
+    ui.alert("No hay productos en MAESTRO.");
+    return;
+  }
+  const count = lr - MAESTRO_START + 1;
+  const data = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS).getValues();
+  
+  // Buscar duplicados (Misma Categoría + Producto + Presentación)
+  const seenKeys = {};
+  const duplicateIndices = [];
+  const duplicateNames = [];
+  
+  for (let i = 0; i < count; i++) {
+    const cat = String(data[i][2]).trim().toUpperCase();
+    const prod = String(data[i][3]).trim().toUpperCase();
+    const pres = String(data[i][4]).trim().toUpperCase();
+    const key = `${cat}|${prod}|${pres}`;
+    
+    if (seenKeys[key]) {
+      duplicateIndices.push(i);
+      duplicateNames.push(data[i][3]); // Guardar nombre para mostrar al usuario
+    } else {
+      seenKeys[key] = true;
+    }
+  }
+  
+  if (duplicateIndices.length === 0) {
+    ui.alert("🧹 Sin duplicados", "No se encontraron productos duplicados en el catálogo.", ui.ButtonSet.OK);
+    return;
+  }
+  
+  const resp = ui.alert(
+    "🧹 Eliminar Productos Duplicados",
+    `Se encontraron ${duplicateIndices.length} producto(s) duplicado(s) en el catálogo:\n\n${duplicateNames.join(", ")}\n\n¿Deseas eliminarlos de todas las hojas (MAESTRO, KARDEX, HISTORIAL) conservando solo el primer registro de cada uno?\n\nEsta acción NO se puede deshacer.`,
+    ui.ButtonSet.YES_NO
+  );
+  if (resp !== ui.Button.YES) return;
+  
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    ui.alert("El archivo está ocupado. Inténtalo de nuevo.");
+    return;
+  }
+  
+  try {
+    SpreadsheetApp.getActive().toast("⏳ Eliminando duplicados de todas las hojas...", "🧹 Limpiar Duplicados", 5);
+    
+    // Eliminar de abajo hacia arriba para mantener estables los índices de fila
+    for (let i = duplicateIndices.length - 1; i >= 0; i--) {
+      const rowIdx = duplicateIndices[i];
+      const maestroRow = MAESTRO_START + rowIdx;
+      const kardexRow = KARDEX_START + rowIdx;
+      
+      // 1. Eliminar de MAESTRO
+      maestro.deleteRow(maestroRow);
+      
+      // 2. Eliminar de KARDEX
+      Object.values(BODEGAS).forEach(b => {
+        const kSheet = ss.getSheetByName(b.kardex);
+        if (kSheet && kardexRow <= kSheet.getLastRow()) {
+          kSheet.deleteRow(kardexRow);
+        }
+      });
+      
+      // 3. Eliminar de HISTORIAL
+      Object.values(BODEGAS).forEach(b => {
+        const hSheet = ss.getSheetByName(`HISTORIAL_${b.key}`);
+        const histRow = 4 + rowIdx; // historial starts at row 5
+        if (hSheet && histRow <= hSheet.getLastRow()) {
+          hSheet.deleteRow(histRow + 1);
+        }
+      });
+    }
+    
+    // Re-ordenar, re-numerar y actualizar vistas
+    _ordenarYRenumerarTodo();
+    _buildVista("BA");
+    _buildVista("BM");
+    
+    SpreadsheetApp.getActive().toast("✅ Duplicados eliminados con éxito", "🧹 Limpiar Duplicados", 4);
+    ui.alert("✅ Limpieza completada", `Se eliminaron ${duplicateIndices.length} producto(s) duplicado(s) de todas las hojas.`, ui.ButtonSet.OK);
+    _log("eliminarDuplicadosCatalogo", `Eliminados ${duplicateIndices.length} duplicados: ${duplicateNames.join(", ")}`);
+  } catch (err) {
+    SpreadsheetApp.getActive().toast("❌ Error al limpiar duplicados: " + err.message, "🧹 Limpiar Duplicados", 5);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function _ordenarYRenumerarTodo() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
@@ -2416,48 +2514,51 @@ function procesarCargaMasiva() {
         const lastRowK = kSheet.getLastRow();
         const startRowK = lastRowK + 1;
         
-        const kardexRows = [];
+        // Escribimos toda la fila del Kardex (30 columnas) en Batch 2D
+        const fullKardexRows = [];
         const bgsK = [];
         
         for (let i = 0; i < newProductsData.length; i++) {
           const np = newProductsData[i];
-          kardexRows.push([np.newNo, np.item.cat, np.item.prod, np.item.pres, np.item.unit]);
+          const row = new Array(KARDEX_TOTAL_COLS).fill("");
+          
+          // Estáticos
+          row[0] = np.newNo;
+          row[1] = np.item.cat;
+          row[2] = np.item.prod;
+          row[3] = np.item.pres;
+          row[4] = np.item.unit;
+          // Caducidad (5), Lote (6), Alerta Stock (7) vacíos.
+          // Saldo Inicial (8) es 0
+          row[8] = 0;
+          
+          // Fórmulas de Saldos de los 7 días
+          const rn = startRowK + i;
+          for (let d = 0; d < KARDEX_DAYS; d++) {
+            const prevCol = 9  + d * 3;
+            const entCol  = 10 + d * 3;
+            const salCol  = 11 + d * 3;
+            const sldColIdx = 11 + d * 3; // 0-indexed: Col L es 11
+            row[sldColIdx] = '=' + _col(prevCol) + rn + '+IFERROR(' + _col(entCol) + rn + ',0)-IFERROR(' + _col(salCol) + rn + ',0)';
+          }
+          
+          fullKardexRows.push(row);
           
           const rowColor = np.rowColor;
-          bgsK.push(Array(KARDEX_TOTAL_COLS).fill(rowColor));
-        }
-        
-        // Escribir bases en Kardex
-        kSheet.getRange(startRowK, 1, validRows.length, 5).setValues(kardexRows);
-        kSheet.getRange(startRowK, 6, validRows.length, 1).setNumberFormat("DD/MMM/YY");
-        kSheet.getRange(startRowK, 9, validRows.length, 1).setValue(0);
-        
-        // Fórmulas SLD y celdas de captura vacías
-        for (let d = 0; d < KARDEX_DAYS; d++) {
-          const sldCol  = 12 + d * 3;
-          const prevCol = 9  + d * 3;
-          const entCol  = 10 + d * 3;
-          const salCol  = 11 + d * 3;
-          
-          kSheet.getRange(startRowK, entCol, validRows.length, 1).setValue("");
-          kSheet.getRange(startRowK, salCol, validRows.length, 1).setValue("");
-          
-          const fSlds = [];
-          for (let i = 0; i < validRows.length; i++) {
-            const rn = startRowK + i;
-            fSlds.push(['=' + _col(prevCol) + rn + '+IFERROR(' + _col(entCol) + rn + ',0)-IFERROR(' + _col(salCol) + rn + ',0)']);
+          const bgRow = Array(KARDEX_TOTAL_COLS).fill(rowColor);
+          bgRow[8] = C.iceBlue; // Saldo Inicial
+          for (let d = 0; d < KARDEX_DAYS; d++) {
+            bgRow[9 + d * 3] = C.entBg;  // ENT
+            bgRow[10 + d * 3] = C.salBg; // SAL
+            bgRow[11 + d * 3] = C.iceBlue; // SLD
           }
-          kSheet.getRange(startRowK, sldCol, validRows.length, 1).setFormulas(fSlds);
+          bgsK.push(bgRow);
         }
         
-        // Formato de fondos
+        // Escribir bloque completo en Kardex
+        kSheet.getRange(startRowK, 1, validRows.length, KARDEX_TOTAL_COLS).setValues(fullKardexRows);
+        kSheet.getRange(startRowK, 6, validRows.length, 1).setNumberFormat("DD/MMM/YY");
         kSheet.getRange(startRowK, 1, validRows.length, KARDEX_TOTAL_COLS).setBackgrounds(bgsK);
-        kSheet.getRange(startRowK, 9, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.iceBlue]));
-        for (let d = 0; d < KARDEX_DAYS; d++) {
-          kSheet.getRange(startRowK, 10 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.entBg]));
-          kSheet.getRange(startRowK, 11 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.salBg]));
-          kSheet.getRange(startRowK, 12 + d * 3, validRows.length, 1).setBackgrounds(Array(validRows.length).fill([C.iceBlue]));
-        }
       }
     });
     
@@ -2499,6 +2600,12 @@ function procesarCargaMasiva() {
     SpreadsheetApp.getActive().toast(`✅ Se agregaron ${validRows.length} productos con éxito`, "⚙️ Agregar productos", 4);
     SpreadsheetApp.getUi().alert("✅ Carga masiva completada", `Se agregaron ${validRows.length} productos nuevos con éxito.`, SpreadsheetApp.getUi().ButtonSet.OK);
     _log("procesarCargaMasiva", `${validRows.length} productos cargados.`);
+  } catch (err) {
+    // Revertir el checkbox a false en caso de fallo para permitir reintentar
+    try { tempSheet.getRange("J3").setValue(false); } catch(e) {}
+    SpreadsheetApp.getActive().toast("❌ Error en carga masiva: " + err.message, "⚙️ Agregar productos", 6);
+    SpreadsheetApp.getUi().alert("❌ Error en Carga Masiva", "No se completó la operación debido al siguiente error:\n\n" + err.toString() + "\n\nPor favor, revisa tus datos y reintenta.", SpreadsheetApp.getUi().ButtonSet.OK);
+    _log("procesarCargaMasiva ERROR", err.toString());
   } finally {
     lock.releaseLock();
   }
@@ -2784,6 +2891,12 @@ function procesarEdicionMasiva() {
     SpreadsheetApp.getActive().toast(`✅ Se actualizaron ${validEdits.length} productos con éxito`, "📝 Editar productos", 4);
     SpreadsheetApp.getUi().alert("✅ Edición masiva completada", `Se actualizaron ${validEdits.length} productos con éxito.`, SpreadsheetApp.getUi().ButtonSet.OK);
     _log("procesarEdicionMasiva", `${validEdits.length} productos actualizados.`);
+  } catch (err) {
+    // Revertir el checkbox a false en caso de fallo para permitir reintentar
+    try { editSheet.getRange("I3").setValue(false); } catch(e) {}
+    SpreadsheetApp.getActive().toast("❌ Error en edición masiva: " + err.message, "📝 Editar productos", 6);
+    SpreadsheetApp.getUi().alert("❌ Error en Edición Masiva", "No se completó la operación debido al siguiente error:\n\n" + err.toString() + "\n\nPor favor, revisa tus datos y reintenta.", SpreadsheetApp.getUi().ButtonSet.OK);
+    _log("procesarEdicionMasiva ERROR", err.toString());
   } finally {
     lock.releaseLock();
   }
