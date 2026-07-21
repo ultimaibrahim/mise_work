@@ -70,13 +70,15 @@ function onOpen() {
   try {
     SpreadsheetApp.getUi()
       .createMenu("⚙️ Mise")
-      .addItem("🚀 Setup completo", "setupCompleto")
+      .addItem("🔧 Reparar formatos y conexión",        "repararSistemaTienda")
       .addSeparator()
       .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
       .addSeparator()
       .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
       .addSeparator()
       .addItem("🎲 Generar datos de prueba",               "generarDatosPrueba")
+      .addSeparator()
+      .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
       .addSeparator()
       .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
       .addToUi();
@@ -782,9 +784,66 @@ function avanzarSemanaInfo() {
   SpreadsheetApp.getUi().alert("📅 Avanzar semana","Esta función se ejecuta en el archivo principal Mise_Bodega.");
 }
 
+function repararSistemaTienda() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const pedido = ss.getSheetByName(SHEET_PEDIDO);
+  const sync = ss.getSheetByName(SHEET_SYNC);
+  if (!pedido) {
+    ui.alert("❌ Error", "No se encontró la pestaña '" + SHEET_PEDIDO + "'.", ui.ButtonSet.OK);
+    return;
+  }
+
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) {
+    ui.alert("El archivo está ocupado. Intenta de nuevo.");
+    return;
+  }
+
+  try {
+    SpreadsheetApp.getActive().toast("⏳ Reparando formatos y aplicando condicionales...", "🔧 Reparar Sistema", 5);
+    
+    // 1. Restaurar formato condicional nativo y visibilidad
+    _aplicarFormatosCondicionales(pedido);
+    _actualizarVisibilidadInactivos(pedido);
+    
+    // 2. Re-enlazar conexión del IMPORTRANGE con Bodega
+    const url = PropertiesService.getScriptProperties().getProperty(`BODEGA_URL_${BODEGA_KEY}`);
+    if (url && sync) {
+      const formula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
+      sync.getRange(4, 1).setFormula(formula);
+    }
+    
+    SpreadsheetApp.flush();
+    SpreadsheetApp.getActive().toast("✅ Reparación completada sin pérdida de datos", "🔧 Reparar Sistema", 4);
+    ui.alert("✅ Sistema Reparado", "Se re-aplicaron los formatos y se verificó la conexión de sincronización de manera exitosa sin alterar tus pedidos actuales.", ui.ButtonSet.OK);
+  } catch (err) {
+    SpreadsheetApp.getActive().toast("❌ Error en reparación: " + err.message, "🔧 Reparar Sistema", 5);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function setupCompleto() {
   const ui   = SpreadsheetApp.getUi();
-  const resp = ui.alert("🚀 Setup completo","¿Deseas reconstruir la arquitectura desde cero?", ui.ButtonSet.YES_NO);
+  const pResp = ui.prompt(
+    "⚠️ Restablecer sistema (Acción Destructiva)",
+    "Esta operación borrará y reconstruirá la hoja de Pedido Diario por completo.\n\nIngresa la contraseña de administrador para continuar:",
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (pResp.getSelectedButton() !== ui.Button.OK) return;
+  
+  const psw = pResp.getResponseText().trim();
+  if (psw !== "LCP-ADMIN-2026") {
+    ui.alert("❌ Contraseña incorrecta. Operación abortada.");
+    return;
+  }
+  
+  const resp = ui.alert(
+    "⚠️ Confirmación Final",
+    "¿Estás absolutamente seguro de que deseas borrar y reconstruir el archivo?",
+    ui.ButtonSet.YES_NO
+  );
   if (resp !== ui.Button.YES) return;
   PropertiesService.getScriptProperties().deleteAllProperties();
   try { SpreadsheetApp.flush(); } catch(e) {}

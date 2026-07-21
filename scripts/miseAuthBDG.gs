@@ -69,7 +69,7 @@ const C = {
 function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu("⚙️ Mise")
-    .addItem("🚀 Setup completo",                         "setupCompleto")
+    .addItem("🔒 Proteger catálogo",                      "protegerMaestroSeguro")
     .addSeparator()
     .addItem("📅 Configurar semana — Andares",          "configurarSemanaBA")
     .addItem("📅 Configurar semana — Mercado",          "configurarSemanaBM")
@@ -79,17 +79,13 @@ function onOpen() {
     .addSeparator()
     .addItem("📊 Recrear VISTA_MOVIL_BA",                 "crearVistaMóvilBA")
     .addItem("📊 Recrear VISTA_MOVIL_BM",                 "crearVistaMóvilBM")
-    // .addItem("🏷 Recrear CADUCIDADES",                    "crearCaducidades")
     .addSeparator()
-    // .addItem("🆕 Agregar producto al catálogo",           "agregarProducto") // Deshabilitado
     .addItem("➕ Agregar productos",                       "crearHojaCargaMasiva")
     .addItem("📝 Editar productos seleccionados",         "crearHojaEdicionMasiva")
     .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
     .addItem("🧹 Eliminar productos duplicados",      "eliminarDuplicadosCatalogo")
-    // .addItem("🔧 Restaurar validaciones de MAESTRO",     "restaurarValidacionesMaestro") // Deshabilitado
     .addSeparator()
-    // .addItem("🧪 Correr tests",                           "runTests") // Deshabilitado
-    // .addItem("🧹 Limpiar propiedades",                    "limpiarProps") // Deshabilitado
+    .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
     .addSeparator()
     .addItem("ℹ️ Acerca de",                               "acercaDe")
     .addToUi();
@@ -259,9 +255,22 @@ function onEdit(e) {
 // ── SETUP COMPLETO CORREGIDO SIN ERRORES DE ACCESO ───────────────────────────
 function setupCompleto() {
   const ui   = SpreadsheetApp.getUi();
+  const pResp = ui.prompt(
+    "⚠️ Restablecer sistema (Acción Destructiva)",
+    "Esta operación borrará y reconstruirá toda la base de datos de Bodega desde cero.\n\nIngresa la contraseña de administrador para continuar:",
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (pResp.getSelectedButton() !== ui.Button.OK) return;
+  
+  const psw = pResp.getResponseText().trim();
+  if (psw !== "LCP-ADMIN-2026") {
+    ui.alert("❌ Contraseña incorrecta. Operación abortada.");
+    return;
+  }
+  
   const resp = ui.alert(
-    "🚀 Setup completo",
-    "Se borrarán/reconstruirán las hojas del libro y se creará el sistema desde cero.\n\n¿Continuar?",
+    "⚠️ Confirmación Final",
+    "¿Estás absolutamente seguro de que deseas borrar los históricos y catálogo actual?",
     ui.ButtonSet.YES_NO
   );
   if (resp !== ui.Button.YES) return;
@@ -2285,7 +2294,47 @@ function _ordenarYRenumerarTodo() {
   }
   mFilterRange.createFilter();
   
+  // Re-aplicar las protecciones anti-dummies dinámicas
+  protegerMaestroSeguro();
+  
   _log("_ordenarYRenumerarTodo", `Re-ordenado y re-numerado: ${data.length} productos`);
+}
+
+function protegerMaestroSeguro() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  if (!maestro) return;
+  
+  // 1. Remover protecciones anteriores en esta hoja para evitar duplicidades
+  const protections = maestro.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+  protections.forEach(p => {
+    try { p.remove(); } catch(e) {}
+  });
+  
+  // 2. Crear una nueva protección para toda la hoja
+  const sheetProtection = maestro.protect().setDescription("Protección anti-dummies de MAESTRO");
+  
+  // Restringir a que solo el propietario y editores autorizados (incluyendo scripts) puedan modificarla
+  const me = Session.getEffectiveUser().getEmail();
+  sheetProtection.getEditors().forEach(editor => {
+    if (editor.getEmail() !== me) {
+      try { sheetProtection.removeEditor(editor); } catch(e) {}
+    }
+  });
+  
+  // 3. Definir rangos excepcionales (Libres de edición para cualquier editor de la hoja)
+  // Columna N (SELECCIONAR - columna 14) y Columnas de MÍN/MÁX de BA/BM: H, I, K, L (col 8, 9, 11, 12)
+  const lr = Math.max(maestro.getLastRow(), MAESTRO_START);
+  const rangoMinMaxBA = maestro.getRange(MAESTRO_START, 8, lr - MAESTRO_START + 1, 2); // Col H (8) e I (9)
+  const rangoMinMaxBM = maestro.getRange(MAESTRO_START, 11, lr - MAESTRO_START + 1, 2); // Col K (11) e L (12)
+  const rangoSelect = maestro.getRange(MAESTRO_START, 14, lr - MAESTRO_START + 1, 1);   // Col N (14)
+  const checkboxesFila2 = maestro.getRange("D2:J2"); // Checkboxes de acciones por lote
+  
+  sheetProtection.setUnprotectedRanges([rangoMinMaxBA, rangoMinMaxBM, rangoSelect, checkboxesFila2]);
+  
+  try {
+    SpreadsheetApp.flush();
+  } catch(e) {}
 }
 
 function restaurarValidacionesMaestro() {
