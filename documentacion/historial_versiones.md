@@ -13,12 +13,16 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **State-Locking Preventivo**: Modificación del trigger `onEdit` para desmarcar inmediatamente a `FALSE` los checkboxes confirmadores en `"➕ AGREGAR_MÚLTIPLES"` (celda `J3`) y `"✏️ EDITAR_PRODUCTOS"` (celda `I3`) antes de comenzar el procesamiento pesado, evitando ejecuciones duplicadas encoladas en caso de interrupción.
 * **Manejo de Errores Robustecido**: Implementación de bloques `try-catch-finally` con alertas informativas en pantalla y toques visuales en rojo en caso de fallo, garantizando la liberación segura de los recursos (`lock.releaseLock()`) y la consistencia del catálogo para reintentos sin riesgos.
 * **Limpiador Automático de Duplicados**: Incorporación de la función `eliminarDuplicadosCatalogo` al menú de `⚙️ Mise`. Identifica de forma inteligente registros redundantes en `MAESTRO` comparando Categoría + Nombre + Presentación, los elimina de forma atómica en todas las bases (Kardex e Historiales) y re-estructura el catálogo secuencialmente.
+* **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
+* **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
 ### 📱 Pedidos (PDA & PDM) — Operación Resiliente
 * **Fusión de Soluciones y Paridad de PRs**:
   * **Reset Diario Resiliente**: Integración de triggers de restablecimiento de pedido compatibles con dispositivos móviles y botones táctiles optimizados para reset/sincronización.
   * **Corrección de Historial Desalineado**: Solución del desfasamiento de columnas al utilizar la herramienta "Avanzar Semana" para trasladar inventarios.
   * **Emoji de Reset Móvil**: Estandarización de botones interactivos con el emoji de basurero (`🗑`) en la celda `B2` y su checkbox ejecutor silencioso en `C2`.
+  * **Reparación No Destructiva**: Creación de la función `repararSistemaTienda` para restaurar formatos condicionales, visibilidad de inactivos y conexión sin borrar datos activos en tránsito.
+  * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo de las hojas de las tiendas.
 
 ---
 
