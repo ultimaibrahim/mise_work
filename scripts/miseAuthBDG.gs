@@ -1231,8 +1231,14 @@ function _guardarHistHorizontal(key, sheet, numRows, monday, sem) {
     
     hSheet.getRange("A1:C1").merge().setValue(`HISTORIAL DE MOVIMIENTOS — ${BODEGAS[key].nombre}`)
       .setFontWeight("bold").setFontColor("#FFFFFF").setBackground(C.dark).setHorizontalAlignment("center").setVerticalAlignment("middle");
-    hSheet.getRange(1, 4, 1, hSheet.getMaxColumns() - 3).setBackground(C.dark);
-    
+    // NOTA: antes había una línea que pintaba de fondo columnas 4..maxColumns aquí.
+    // Se quitó porque el fondo (sin valor) en celdas vacías cuenta como "contenido"
+    // para getLastColumn() en Sheets, así que en la primera corrida startCol se
+    // calculaba mal (usando el ancho completo del grid, ~26 columnas, en vez de 3)
+    // y los datos de la semana 1 terminaban escritos muy lejos a la derecha (col AA+),
+    // dando la impresión de que la semana no se guardó / que la ejecución se rompió.
+    // El fondo de la fila 1 para cada bloque semanal ya se pinta más abajo (línea ~1276).
+
     hSheet.getRange("A2:A4").merge().setValue("No").setFontWeight("bold").setFontColor("#FFFFFF").setBackground(C.dark).setHorizontalAlignment("center").setVerticalAlignment("middle");
     hSheet.getRange("B2:B4").merge().setValue("PRODUCTO").setFontWeight("bold").setFontColor("#FFFFFF").setBackground(C.dark).setHorizontalAlignment("center").setVerticalAlignment("middle");
     hSheet.getRange("C2:C4").merge().setValue("UNIDAD").setFontWeight("bold").setFontColor("#FFFFFF").setBackground(C.dark).setHorizontalAlignment("center").setVerticalAlignment("middle");
