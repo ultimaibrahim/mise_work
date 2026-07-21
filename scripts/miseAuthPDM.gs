@@ -7,7 +7,7 @@
  * 
  * CAMBIOS v1.0 (Derivado del prototipo v0.5.0):
  * 1. Reset automático por día nuevo en onOpen (limpia cantidades y estados).
- * 2. Bypass de getUi() en resetearPedido() para compatibilidad móvil total.
+ * 2. Reset de pedido vía checkbox en fila 2 (C2) — sin ui.alert(), 100% móvil.
  * 3. Inserción de columna J "ALERTAS SURTIDO" y aviso de conexión en J4.
  * 4. Categorización automática y ordenamiento in-situ agrupando por Categoría (B)
  *    con ítems activos prioritarios al principio de cada grupo.
@@ -347,6 +347,14 @@ function onEdit(e) {
 
   // 1. Botones Interactivos Móviles (Fila 2) en columnas visibles C-G
   if (row === 2) {
+    if (col === 3) { // C2 - Resetear pedido
+      if (e.range.getValue() === true) {
+        e.range.setValue(false);
+        _resetearPedidoSilencioso();
+        try { SpreadsheetApp.getActive().toast("Pedido reseteado ✓", "⚙️ Mise", 3); } catch(err) {}
+      }
+      return;
+    }
     if (col === 5) { // E2 - Surtido Rápido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
@@ -690,24 +698,6 @@ function desinstalarTriggers() {
   SpreadsheetApp.getActive().toast("Trigger desinstalado.", "⚙️ Mise", 3);
 }
 
-function resetearPedido() {
-  let proceed = false;
-  try {
-    const ui = SpreadsheetApp.getUi();
-    const resp = ui.alert("🗑 Resetear pedido", "¿Confirmas limpiar el pedido actual?", ui.ButtonSet.YES_NO);
-    proceed = (resp === ui.Button.YES);
-  } catch(e) {
-    proceed = true; // Móvil bypass
-  }
-
-  if (!proceed) return;
-  _resetearPedidoSilencioso();
-
-  try {
-    SpreadsheetApp.getActive().toast("Pedido reseteado ✓", "⚙️ Mise", 3);
-  } catch(e) {}
-}
-
 function _resetearPedidoSilencioso() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_PEDIDO);
@@ -846,6 +836,9 @@ function _buildPedidoDiario(sheet) {
 
   sheet.getRange("F2").setValue("FECHA:").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("G2").setFormula('=TODAY()').setBackground("#FFFCD0").setFontColor("#333333").setNumberFormat("DD/MMM/YYYY").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+
+  sheet.getRange("B2").setValue("🗑").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("C2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
 
   sheet.getRange("D2").setValue("🚚").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("E2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
