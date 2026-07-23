@@ -1040,7 +1040,7 @@ function _aplicarFormatosCondicionales(sheet) {
       
   // Regla 1.5: Inactivos (gris)
   const ruleInactivo = SpreadsheetApp.newConditionalFormatRule()
-    .whenFormulaSatisfied('=VLOOKUP($C4, INDIRECT("\'' + SHEET_SYNC + '\'!C:I"), 7, FALSE)="NO"')
+    .whenFormulaSatisfied('=IFERROR(VLOOKUP($C4, INDIRECT("\'' + SHEET_SYNC + '\'!C:I"), 7, FALSE), "")="NO"')
     .setBackground("#EEEEEE")
     .setFontColor("#9E9E9E")
     .setItalic(true)
