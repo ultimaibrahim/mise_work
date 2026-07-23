@@ -821,7 +821,7 @@ function repararSistemaTienda() {
     const currentCount = _getProductCount();
     const DR = DATA_START_ROW;
     if (syncCount > currentCount) {
-      sheet.insertRowsAfter(DR + currentCount - 1, syncCount - currentCount);
+      pedido.insertRowsAfter(DR + currentCount - 1, syncCount - currentCount);
     }
     PropertiesService.getScriptProperties().setProperty("PRODUCT_COUNT", String(syncCount));
 
