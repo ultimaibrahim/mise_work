@@ -17,6 +17,8 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
 ### 📱 Pedidos (PDA & PDM) — Operación Resiliente
+* **Corrección de Fórmulas Corruptas (#ERROR!)**: Se solucionó la sobreescritura accidental de fórmulas de producto y categoría en `PEDIDO DIARIO`. La función `repararSistemaTienda` ahora reconstruye automáticamente los punteros dinámicos hacia `_SYNC_BA` y `_SYNC_BM` (reestableciendo productos faltantes como los de la categoría JARCERÍA).
+* **Protecciones Anti-Dummies (PDA & PDM)**: Se implementó la función `_protegerPedidoDiario`. Toda la pestaña `📋 PEDIDO DIARIO` queda completamente blindada y bloqueada contra ediciones directas o arrastres accidentales, dejando como únicos campos editables la celda `F` (**CANT. A PEDIR**) y los botones táctiles de la fila 2.
 * **Fusión de Soluciones y Paridad de PRs**:
   * **Reset Diario Resiliente**: Integración de triggers de restablecimiento de pedido compatibles con dispositivos móviles y botones táctiles optimizados para reset/sincronización.
   * **Corrección de Historial Desalineado**: Solución del desfasamiento de columnas al utilizar la herramienta "Avanzar Semana" para trasladar inventarios.
