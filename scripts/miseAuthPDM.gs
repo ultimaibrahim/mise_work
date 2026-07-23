@@ -788,8 +788,8 @@ function repararSistemaTienda() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const pedido = ss.getSheetByName(SHEET_PEDIDO);
   const sync = ss.getSheetByName(SHEET_SYNC);
-  if (!pedido) {
-    ui.alert("❌ Error", "No se encontró la pestaña '" + SHEET_PEDIDO + "'.", ui.ButtonSet.OK);
+  if (!pedido || !sync) {
+    ui.alert("❌ Error", "No se encontraron las pestañas necesarias del sistema.", ui.ButtonSet.OK);
     return;
   }
 
@@ -800,27 +800,91 @@ function repararSistemaTienda() {
   }
 
   try {
-    SpreadsheetApp.getActive().toast("⏳ Reparando formatos y aplicando condicionales...", "🔧 Reparar Sistema", 5);
+    SpreadsheetApp.getActive().toast("⏳ Reconstruyendo fórmulas, sincronizando productos y protegiendo celdas...", "🔧 Reparar Sistema", 5);
     
-    // 1. Restaurar formato condicional nativo y visibilidad
-    _aplicarFormatosCondicionales(pedido);
-    _actualizarVisibilidadInactivos(pedido);
+    // 1. Asegurar la conexión IMPORTRANGE en _SYNC
+    const url = PropertiesService.getScriptProperties().getProperty(`BODEGA_URL_${BODEGA_KEY}`) || "https://docs.google.com/spreadsheets/d/1bQR0TJUqY9jmtapblMiGY-FKCAB6xfLz535BLRgC_IY/";
+    const syncFormula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
+    sync.getRange(4, 1).clearContent();
+    SpreadsheetApp.flush();
+    sync.getRange(4, 1).setFormula(syncFormula);
+    SpreadsheetApp.flush();
     
-    // 2. Re-enlazar conexión del IMPORTRANGE con Bodega
-    const url = PropertiesService.getScriptProperties().getProperty(`BODEGA_URL_${BODEGA_KEY}`);
-    if (url && sync) {
-      const formula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
-      sync.getRange(4, 1).setFormula(formula);
+    // 2. Obtener conteo de productos sincronizados
+    const syncCount = Math.max(0, sync.getLastRow() - 3);
+    if (syncCount < 1) {
+      ui.alert("⚠️ Advertencia", "No se detectaron productos sincronizados desde Bodega. Revisa el enlace con Bodega.", ui.ButtonSet.OK);
+      return;
     }
     
+    // 3. Re-alinear filas en PEDIDO DIARIO si faltan
+    const currentCount = _getProductCount();
+    const DR = DATA_START_ROW;
+    if (syncCount > currentCount) {
+      sheet.insertRowsAfter(DR + currentCount - 1, syncCount - currentCount);
+    }
+    PropertiesService.getScriptProperties().setProperty("PRODUCT_COUNT", String(syncCount));
+
+    // 4. Re-inyectar fórmulas estables de Categoría (Col B), Producto (Col C), Unidad (Col D), Saldo (Col E) y Diferencia (Col G)
+    const sRef = "'" + SHEET_SYNC + "'";
+    const formulasB = [], formulasC = [], formulasD = [], formulasE = [], formulasG = [];
+    
+    for (let i = 0; i < syncCount; i++) {
+      const r = DR + i;
+      const sr = 4 + i;
+      formulasB.push(['=' + sRef + '!B' + sr]);
+      formulasC.push(['=' + sRef + '!C' + sr]);
+      formulasD.push(['=' + sRef + '!D' + sr]);
+      formulasE.push(['=IFERROR(' + sRef + '!E' + sr + '*1, 0) & IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "", IF(' + sRef + '!E' + sr + '<' + sRef + '!J' + sr + ', " (-" & (' + sRef + '!J' + sr + '-' + sRef + '!E' + sr + ') & ")", IF(' + sRef + '!E' + sr + '>' + sRef + '!K' + sr + ', " (+" & (' + sRef + '!E' + sr + '-' + sRef + '!K' + sr + ') & ")", " (-)")))']);
+      formulasG.push(['=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')']);
+    }
+
+    pedido.getRange(DR, 2, syncCount, 1).setFormulas(formulasB);
+    pedido.getRange(DR, 3, syncCount, 1).setFormulas(formulasC);
+    pedido.getRange(DR, 4, syncCount, 1).setFormulas(formulasD);
+    pedido.getRange(DR, 5, syncCount, 1).setFormulas(formulasE);
+    pedido.getRange(DR, 7, syncCount, 1).setFormulas(formulasG);
+
+    // 5. Aplicar visibilidad, formatos condicionales y protecciones anti-dummies
+    _aplicarFormatosCondicionales(pedido);
+    _actualizarVisibilidadInactivos(pedido);
+    _protegerPedidoDiario(pedido, syncCount);
+
     SpreadsheetApp.flush();
-    SpreadsheetApp.getActive().toast("✅ Reparación completada sin pérdida de datos", "🔧 Reparar Sistema", 4);
-    ui.alert("✅ Sistema Reparado", "Se re-aplicaron los formatos y se verificó la conexión de sincronización de manera exitosa sin alterar tus pedidos actuales.", ui.ButtonSet.OK);
+    SpreadsheetApp.getActive().toast("✅ Sistema Reparado y Protegido", "🔧 Reparar Sistema", 4);
+    ui.alert("✅ Sistema Reparado con Éxito", "Se restauraron todas las fórmulas corruptas, se sincronizaron los productos y categorías desde Bodega y se blindó la hoja con protecciones de celdas anti-dummies.", ui.ButtonSet.OK);
   } catch (err) {
     SpreadsheetApp.getActive().toast("❌ Error en reparación: " + err.message, "🔧 Reparar Sistema", 5);
   } finally {
     lock.releaseLock();
   }
+}
+
+function _protegerPedidoDiario(sheet, count) {
+  if (!sheet) return;
+  const countToProtect = count || _getProductCount();
+  
+  // Remover protecciones previas en la pestaña
+  const protections = sheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+  protections.forEach(p => {
+    try { p.remove(); } catch(e) {}
+  });
+
+  const sheetProtection = sheet.protect().setDescription("Protección anti-dummies de PEDIDO DIARIO");
+  const me = Session.getEffectiveUser().getEmail();
+  sheetProtection.getEditors().forEach(editor => {
+    if (editor.getEmail() !== me) {
+      try { sheetProtection.removeEditor(editor); } catch(e) {}
+    }
+  });
+
+  // Rangos desprotegidos (únicos donde el usuario puede escribir):
+  // 1. Fila 2 Checkboxes (C2, E2, G2)
+  const checkboxesFila2 = sheet.getRange("B2:G2");
+  // 2. Columna F (CANT. A PEDIR, de la fila 4 hasta el final de la tabla)
+  const rangeCantPedir = sheet.getRange(DATA_START_ROW, COL_CANT_PEDIR, Math.max(1, countToProtect), 1);
+
+  sheetProtection.setUnprotectedRanges([checkboxesFila2, rangeCantPedir]);
 }
 
 function setupCompleto() {
