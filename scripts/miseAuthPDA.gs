@@ -825,10 +825,28 @@ function repararSistemaTienda() {
     }
     PropertiesService.getScriptProperties().setProperty("PRODUCT_COUNT", String(syncCount));
 
-    // 4. Re-inyectar fórmulas estables de Categoría (Col B), Producto (Col C), Unidad (Col D), Saldo (Col E) y Diferencia (Col G)
+    // 4. Escaneo previo de corrupción (Detectar fondos estáticos pegados o fórmulas rotas/ausentes)
+    const rangeData = pedido.getRange(DR, 1, syncCount, NUM_COLS);
+    const currentBgs = rangeData.getBackgrounds();
+    const currentFormulas = pedido.getRange(DR, 3, syncCount, 1).getFormulas();
+    
+    let necesitaSanitizacion = false;
+    for (let i = 0; i < syncCount; i++) {
+      const bgColC = String(currentBgs[i][2] || "").toUpperCase(); // Fondo estático Col C (PRODUCTO)
+      const formulaColC = String(currentFormulas[i][0] || "");     // Fórmula en Col C
+      
+      // Si hay fondo gris estático pegado (#EEEEEE / #E0E0E0 / #D9D9D9) o la fórmula no apunta a _SYNC
+      if (bgColC === "#EEEEEE" || bgColC === "#E0E0E0" || bgColC === "#D9D9D9" || !formulaColC.includes(SHEET_SYNC)) {
+        necesitaSanitizacion = true;
+        break;
+      }
+    }
+
+    // 5. Resguardo ligero e inyección de saneamiento
     const sRef = "'" + SHEET_SYNC + "'";
     const formulasB = [], formulasC = [], formulasD = [], formulasE = [], formulasG = [];
-    
+    const cleanBgs = [];
+
     for (let i = 0; i < syncCount; i++) {
       const r = DR + i;
       const sr = 4 + i;
@@ -837,22 +855,33 @@ function repararSistemaTienda() {
       formulasD.push(['=' + sRef + '!D' + sr]);
       formulasE.push(['=IFERROR(' + sRef + '!E' + sr + '*1, 0) & IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "", IF(' + sRef + '!E' + sr + '<' + sRef + '!J' + sr + ', " (-" & (' + sRef + '!J' + sr + '-' + sRef + '!E' + sr + ') & ")", IF(' + sRef + '!E' + sr + '>' + sRef + '!K' + sr + ', " (+" & (' + sRef + '!E' + sr + '-' + sRef + '!K' + sr + ') & ")", " (-)")))']);
       formulasG.push(['=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')']);
+      
+      const rowBg = Array(NUM_COLS).fill(i % 2 === 0 ? COLORS.neutral_a : COLORS.neutral_b);
+      rowBg[4] = COLORS.blue;                    // Col E (Saldo Teórico)
+      rowBg[COL_CANT_PEDIR - 1] = COLORS.yellow; // Col F (Cant a pedir)
+      cleanBgs.push(rowBg);
     }
 
+    if (necesitaSanitizacion) {
+      // Destruir fondos estáticos corruptos pegados y restablecer colores neutrales de plantilla
+      rangeData.setBackgrounds(cleanBgs);
+    }
+
+    // Re-inyectar fórmulas estables de sincronización
     pedido.getRange(DR, 2, syncCount, 1).setFormulas(formulasB);
     pedido.getRange(DR, 3, syncCount, 1).setFormulas(formulasC);
     pedido.getRange(DR, 4, syncCount, 1).setFormulas(formulasD);
     pedido.getRange(DR, 5, syncCount, 1).setFormulas(formulasE);
     pedido.getRange(DR, 7, syncCount, 1).setFormulas(formulasG);
 
-    // 5. Aplicar visibilidad, formatos condicionales y protecciones anti-dummies
+    // 6. Aplicar visibilidad, formatos condicionales y protecciones anti-dummies
     _aplicarFormatosCondicionales(pedido);
     _actualizarVisibilidadInactivos(pedido);
     _protegerPedidoDiario(pedido, syncCount);
 
     SpreadsheetApp.flush();
-    SpreadsheetApp.getActive().toast("✅ Sistema Reparado y Protegido", "🔧 Reparar Sistema", 4);
-    ui.alert("✅ Sistema Reparado con Éxito", "Se restauraron todas las fórmulas corruptas, se sincronizaron los productos y categorías desde Bodega y se blindó la hoja con protecciones de celdas anti-dummies.", ui.ButtonSet.OK);
+    SpreadsheetApp.getActive().toast("✅ Sistema Sanitizado y Protegido", "🔧 Reparar Sistema", 4);
+    ui.alert("✅ Sistema Reparado con Éxito", "Se escanearon las celdas, se eliminaron los fondos corruptos pegados, se restauraron las fórmulas desde Bodega y se blindó la hoja con protecciones de celdas anti-dummies.", ui.ButtonSet.OK);
   } catch (err) {
     SpreadsheetApp.getActive().toast("❌ Error en reparación: " + err.message, "🔧 Reparar Sistema", 5);
   } finally {
