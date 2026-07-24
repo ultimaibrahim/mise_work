@@ -742,13 +742,17 @@ function _resetearPedidoSilencioso() {
   // Limpiar la pestaña de Surtido Rápido si existe para reiniciar recepción sin romper fórmulas
   const surtido = ss.getSheetByName("🚚 SURTIDO RÁPIDO");
   if (surtido) {
-    const lastRow = surtido.getLastRow();
-    if (lastRow >= 4) {
+    try {
+      ss.deleteSheet(surtido);
+    } catch(e) {
       try {
-        surtido.getRange(4, 1, lastRow - 3, surtido.getMaxColumns()).clearContent().clearDataValidations();
-        const protections = surtido.getProtections(SpreadsheetApp.ProtectionType.RANGE);
-        protections.forEach(p => { if (p.canEdit()) p.remove(); });
-      } catch(e) {}
+        const lastRow = surtido.getLastRow();
+        if (lastRow >= 4) {
+          surtido.getRange(4, 1, lastRow - 3, surtido.getMaxColumns()).clearContent().clearFormat().clearDataValidations();
+          const protections = surtido.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+          protections.forEach(p => { if (p.canEdit()) p.remove(); });
+        }
+      } catch(err) {}
     }
   }
 
@@ -1304,6 +1308,8 @@ function _generarSurtidoRapidoInternal(activateSheet) {
   const rows = Math.max(filtered.length, 1);
 
   if (filtered.length === 0) {
+    sSheet.clearConditionalFormatRules();
+    sSheet.getRange("A4:J50").setBackground("#FFFFFF");
     sSheet.getRange("C4")
       .setValue("No hay productos ordenados para surtir hoy (CANT. A PEDIR = 0).")
       .setFontStyle("italic").setFontColor("#C62828").setHorizontalAlignment("left").setVerticalAlignment("middle");
