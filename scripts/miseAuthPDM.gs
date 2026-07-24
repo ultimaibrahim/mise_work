@@ -817,34 +817,35 @@ function repararSistemaTienda() {
       return;
     }
     
-    // 3. Re-alinear filas en PEDIDO DIARIO si faltan
+    // 3. Resguardo de cantidades existentes (CANT. A PEDIR en Col F y RECIBIDA en Col H por Nombre de Producto)
     const currentCount = _getProductCount();
     const DR = DATA_START_ROW;
-    if (syncCount > currentCount) {
-      pedido.insertRowsAfter(DR + currentCount - 1, syncCount - currentCount);
-    }
-    PropertiesService.getScriptProperties().setProperty("PRODUCT_COUNT", String(syncCount));
-
-    // 4. Escaneo previo de corrupción (Detectar fondos estáticos pegados o fórmulas rotas/ausentes)
-    const rangeData = pedido.getRange(DR, 1, syncCount, NUM_COLS);
-    const currentBgs = rangeData.getBackgrounds();
-    const currentFormulas = pedido.getRange(DR, 3, syncCount, 1).getFormulas();
+    const backupData = {};
     
-    let necesitaSanitizacion = false;
-    for (let i = 0; i < syncCount; i++) {
-      const bgColC = String(currentBgs[i][2] || "").toUpperCase(); // Fondo estático Col C (PRODUCTO)
-      const formulaColC = String(currentFormulas[i][0] || "");     // Fórmula en Col C
+    if (currentCount > 0) {
+      const prodNames = pedido.getRange(DR, 3, currentCount, 1).getValues();
+      const cantsPedir = pedido.getRange(DR, COL_CANT_PEDIR, currentCount, 1).getValues();
+      const cantsRecibida = pedido.getRange(DR, COL_RECIBIDA, currentCount, 1).getValues();
       
-      // Si hay fondo gris estático pegado (#EEEEEE / #E0E0E0 / #D9D9D9) o la fórmula no apunta a _SYNC
-      if (bgColC === "#EEEEEE" || bgColC === "#E0E0E0" || bgColC === "#D9D9D9" || !formulaColC.includes(SHEET_SYNC)) {
-        necesitaSanitizacion = true;
-        break;
+      for (let i = 0; i < currentCount; i++) {
+        const name = String(prodNames[i][0] || "").trim();
+        if (name) {
+          backupData[name] = {
+            pedir: cantsPedir[i][0],
+            recibida: cantsRecibida[i][0]
+          };
+        }
       }
     }
 
-    // 5. Resguardo ligero e inyección de saneamiento
+    // 4. Reconstrucción Total Limpia de la Hoja (Destruye formatos grises corruptos y regenera estructura)
+    _buildPedidoDiario(pedido);
+    PropertiesService.getScriptProperties().setProperty("PRODUCT_COUNT", String(syncCount));
+
+    // 5. Re-inyectar fórmulas estables y restaurar cantidades resguardadas
     const sRef = "'" + SHEET_SYNC + "'";
     const formulasB = [], formulasC = [], formulasD = [], formulasE = [], formulasG = [];
+    const restorePedir = [], restoreRecibida = [];
     const cleanBgs = [];
 
     for (let i = 0; i < syncCount; i++) {
@@ -862,17 +863,30 @@ function repararSistemaTienda() {
       cleanBgs.push(rowBg);
     }
 
-    if (necesitaSanitizacion) {
-      // Destruir fondos estáticos corruptos pegados y restablecer colores neutrales de plantilla
-      rangeData.setBackgrounds(cleanBgs);
-    }
+    // Inyectar en bloque
+    const rangeData = pedido.getRange(DR, 1, syncCount, NUM_COLS);
+    rangeData.setBackgrounds(cleanBgs);
 
-    // Re-inyectar fórmulas estables de sincronización
     pedido.getRange(DR, 2, syncCount, 1).setFormulas(formulasB);
     pedido.getRange(DR, 3, syncCount, 1).setFormulas(formulasC);
     pedido.getRange(DR, 4, syncCount, 1).setFormulas(formulasD);
     pedido.getRange(DR, 5, syncCount, 1).setFormulas(formulasE);
     pedido.getRange(DR, 7, syncCount, 1).setFormulas(formulasG);
+
+    SpreadsheetApp.flush();
+
+    // Restablecer valores capturados desde backup por coincidencia de producto
+    if (Object.keys(backupData).length > 0) {
+      const newProdNames = pedido.getRange(DR, 3, syncCount, 1).getValues();
+      for (let i = 0; i < syncCount; i++) {
+        const name = String(newProdNames[i][0] || "").trim();
+        const b = backupData[name];
+        restorePedir.push([b && b.pedir !== "" && b.pedir !== null ? b.pedir : ""]);
+        restoreRecibida.push([b && b.recibida !== "" && b.recibida !== null ? b.recibida : ""]);
+      }
+      pedido.getRange(DR, COL_CANT_PEDIR, syncCount, 1).setValues(restorePedir);
+      pedido.getRange(DR, COL_RECIBIDA, syncCount, 1).setValues(restoreRecibida);
+    }
 
     // 6. Aplicar visibilidad, formatos condicionales y protecciones anti-dummies
     _aplicarFormatosCondicionales(pedido);
@@ -880,8 +894,8 @@ function repararSistemaTienda() {
     _protegerPedidoDiario(pedido, syncCount);
 
     SpreadsheetApp.flush();
-    SpreadsheetApp.getActive().toast("✅ Sistema Sanitizado y Protegido", "🔧 Reparar Sistema", 4);
-    ui.alert("✅ Sistema Reparado con Éxito", "Se escanearon las celdas, se eliminaron los fondos corruptos pegados, se restauraron las fórmulas desde Bodega y se blindó la hoja con protecciones de celdas anti-dummies.", ui.ButtonSet.OK);
+    SpreadsheetApp.getActive().toast("✅ Reconstrucción Limpia Completada", "🔧 Reparar Sistema", 4);
+    ui.alert("✅ Sistema Reconstruido y Sanitizado", "Se guardaron tus cantidades de pedido, se reconstruyó la plantilla desde cero eliminando formatos corruptos y se blindaron las celdas.", ui.ButtonSet.OK);
   } catch (err) {
     SpreadsheetApp.getActive().toast("❌ Error en reparación: " + err.message, "🔧 Reparar Sistema", 5);
   } finally {
