@@ -17,6 +17,10 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
 ### 📱 Pedidos (PDA & PDM) — Operación Resiliente
+* **Solución a Bug GH#26 (Surtido Rápido & Adiciones Fantasma)**:
+  * **Reset Destructivo de Surtido Rápido**: Al reiniciar el pedido diario (`_resetearPedidoSilencioso`), la pestaña `🚚 SURTIDO RÁPIDO` ahora se elimina físicamente del libro (`ss.deleteSheet`) para erradicar cualquier residuo de formato o regla de formato condicional previa.
+  * **Saneamiento del Estado Vacío**: Cuando no hay productos pedidos (`filtered.length === 0`), se limpian explícitamente las reglas condicionales y los fondos estáticos en Surtido Rápido, evitando que la hoja se pinte de amarillo sin productos.
+  * **Reinicio de Banderas de Adición**: Se asegura la desactivación de las banderas `IS_ORDER_SORTED` e `IS_SURTIDO_ACTIVE` a `"false"`, impidiendo que los productos de un nuevo pedido se marquen falsamente como `🚨 ADICIÓN`.
 * **Reconstrucción Limpia con Resguardo de Datos**: La función `repararSistemaTienda` fue potenciada para respaldar en memoria las cantidades capturadas por el usuario (`CANT. A PEDIR` y `RECIBIDA`), ejecutar una reconstrucción limpia completa de la pestaña (`_buildPedidoDiario`) destruyendo cualquier formato o color fantasma corrupto, re-inyectar las fórmulas desde Bodega y restaurar las cantidades capturadas del usuario.
 * **Protección de Regla de Inactivos (Filas Grises)**: Envolviendo la búsqueda `VLOOKUP` con `IFERROR(..., "")` en la regla condicional de productos inactivos. Esto elimina los falsos positivos que pintaban filas activas de color gris por lentitud de carga de red o errores de referencia.
 * **Corrección de Fórmulas Corruptas (#ERROR!)**: Se solucionó la sobreescritura accidental de fórmulas de producto y categoría en `PEDIDO DIARIO`. La función `repararSistemaTienda` ahora reconstruye automáticamente los punteros dinámicos hacia `_SYNC_BA` y `_SYNC_BM` (reestableciendo productos faltantes como los de la categoría JARCERÍA).
