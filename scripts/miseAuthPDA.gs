@@ -353,22 +353,37 @@ function onEdit(e) {
     if (col === 3) { // C2 - Resetear pedido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
-        _resetearPedidoSilencioso();
-        try { SpreadsheetApp.getActive().toast("Pedido reseteado ✓", "⚙️ Mise", 3); } catch(err) {}
+        try {
+          _resetearPedidoSilencioso();
+          registrarLog("resetearPedido", "SUCCESS", "Pedido reseteado desde botón táctil C2.");
+          try { SpreadsheetApp.getActive().toast("Pedido reseteado ✓", "⚙️ Mise", 3); } catch(err) {}
+        } catch(err) {
+          registrarLog("resetearPedido", "ERROR", err.message);
+        }
       }
       return;
     }
     if (col === 5) { // E2 - Surtido Rápido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
-        generarSurtidoRapido();
+        try {
+          generarSurtidoRapido();
+          registrarLog("surtidoRapido", "SUCCESS", "Pestaña de Surtido Rápido generada desde botón E2.");
+        } catch(err) {
+          registrarLog("surtidoRapido", "ERROR", err.message);
+        }
       }
     }
     if (col === 7) { // G2 - Forzar sincronización de estados
       if (e.range.getValue() === true) {
         e.range.setValue(false);
-        sincronizarEstados();
-        try { SpreadsheetApp.getActive().toast("Estados sincronizados ✓", "⚙️ Mise", 3); } catch(err) {}
+        try {
+          sincronizarEstados();
+          registrarLog("sincronizarEstados", "SUCCESS", "Estados sincronizados con Bodega desde botón G2.");
+          try { SpreadsheetApp.getActive().toast("Estados sincronizados ✓", "⚙️ Mise", 3); } catch(err) {}
+        } catch(err) {
+          registrarLog("sincronizarEstados", "ERROR", err.message);
+        }
       }
     }
     return;
@@ -901,9 +916,11 @@ function repararSistemaTienda() {
     _protegerPedidoDiario(pedido, syncCount);
 
     SpreadsheetApp.flush();
+    registrarLog("repararSistemaTienda", "SUCCESS", "Reconstrucción limpia completada y fórmulas reestablecidas.");
     SpreadsheetApp.getActive().toast("✅ Reconstrucción Limpia Completada", "🔧 Reparar Sistema", 4);
     ui.alert("✅ Sistema Reconstruido y Sanitizado", "Se guardaron tus cantidades de pedido, se reconstruyó la plantilla desde cero eliminando formatos corruptos y se blindaron las celdas.", ui.ButtonSet.OK);
   } catch (err) {
+    registrarLog("repararSistemaTienda", "ERROR", err.message);
     SpreadsheetApp.getActive().toast("❌ Error en reparación: " + err.message, "🔧 Reparar Sistema", 5);
   } finally {
     lock.releaseLock();
@@ -1018,6 +1035,8 @@ function setupCompleto() {
   if (t) {
     try { ss.deleteSheet(t); } catch(e) {}
   }
+  
+  registrarLog("setupCompleto", "SUCCESS", "Sistema de Pedido Diario reestructurado desde cero.");
 }
 
 function _buildPedidoDiario(sheet) {
@@ -1508,8 +1527,42 @@ function generarDatosPrueba() {
     rangeF.setValues(valuesF);
     
     SpreadsheetApp.flush();
-    SpreadsheetApp.getActive().toast(`Se generaron datos de prueba para ${numToOrder} productos ✓`, "🎲 Prueba", 4);
+    registrarLog("generarDatosPrueba", "SUCCESS", `Se generaron datos de prueba aleatorios para ${numToOrder} productos.`);
+    try { SpreadsheetApp.getActive().toast(`Se generaron datos de prueba para ${numToOrder} productos ✓`, "🎲 Prueba", 4); } catch(e) {}
+  } catch(err) {
+    registrarLog("generarDatosPrueba", "ERROR", err.message);
   } finally {
     lock.releaseLock();
   }
+}
+
+// ── SISTEMA DE REGISTRO TRANSACCIONAL Y AUDITORÍA DE LOGS ─────────────────────
+function registrarLog(accion, estado, detalle) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let logSheet = ss.getSheetByName("_LOGS");
+    
+    if (!logSheet) {
+      logSheet = ss.insertSheet("_LOGS");
+      try { logSheet.hideSheet(); } catch(e) {}
+      logSheet.getRange("A1:E1").merge().setBackground("#3D5A47")
+        .setValue(`MISE — REGISTRO DE AUDITORÍA Y LOGS (${BODEGA_NOMBRE})`)
+        .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(10).setHorizontalAlignment("center");
+      logSheet.getRange(2, 1, 1, 5).setValues([["FECHA / HORA", "USUARIO", "ACCIÓN", "ESTADO", "DETALLE / MENSAJE"]])
+        .setBackground("#7A9E8A").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9);
+      logSheet.setFrozenRows(2);
+    }
+    
+    const user = Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail() || "Usuario Móvil";
+    const fecha = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-6", "yyyy-MM-dd HH:mm:ss");
+    
+    logSheet.appendRow([fecha, user, accion, estado, String(detalle || "")]);
+    
+    // Auto-limpieza si sobrepasa los 500 registros para proteger rendimiento
+    const maxLogs = 500;
+    const currentRows = logSheet.getLastRow();
+    if (currentRows > maxLogs + 2) {
+      logSheet.deleteRows(3, currentRows - maxLogs - 2);
+    }
+  } catch(e) {}
 }
