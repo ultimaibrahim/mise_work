@@ -96,22 +96,20 @@ function _actualizarAvisoPedido() {
     sync.getRange(4, 1).getValue() !== "" &&
     String(sync.getRange(4, 1).getValue()).indexOf("#") !== 0;
 
-  // Autoconexión inicial con la URL por defecto si no está activo
+  // Autoconexión inicial desde Propiedades del Script
   if (!syncActivo) {
     const props = PropertiesService.getScriptProperties();
     const propKey = `BODEGA_URL_${BODEGA_KEY}`;
-    let url = props.getProperty(propKey);
-    if (!url) {
-      url = "https://docs.google.com/spreadsheets/d/1bQR0TJUqY9jmtapblMiGY-FKCAB6xfLz535BLRgC_IY/";
-      props.setProperty(propKey, url);
+    const url = props.getProperty(propKey);
+    if (url) {
+      try {
+        _setupSync(url);
+        sync = ss.getSheetByName(SHEET_SYNC);
+        syncActivo = sync && sync.getLastRow() > 3 &&
+          sync.getRange(4, 1).getValue() !== "" &&
+          String(sync.getRange(4, 1).getValue()).indexOf("#") !== 0;
+      } catch(err) {}
     }
-    try {
-      _setupSync(url);
-      sync = ss.getSheetByName(SHEET_SYNC);
-      syncActivo = sync && sync.getLastRow() > 3 &&
-        sync.getRange(4, 1).getValue() !== "" &&
-        String(sync.getRange(4, 1).getValue()).indexOf("#") !== 0;
-    } catch(err) {}
   }
 
   if (!syncActivo) {
@@ -665,11 +663,11 @@ function configurarBodega() {
   const ui    = SpreadsheetApp.getUi();
   const props = PropertiesService.getScriptProperties();
   const propKey = `BODEGA_URL_${BODEGA_KEY}`;
-  const urlActual = props.getProperty(propKey) || "https://docs.google.com/spreadsheets/d/1bQR0TJUqY9jmtapblMiGY-FKCAB6xfLz535BLRgC_IY/";
+  const urlActual = props.getProperty(propKey) || "SIN CONFIGURAR";
   const resp = ui.prompt(
     `🔗 Configurar ${BODEGA_NOMBRE}`,
     `Pega aquí la URL del archivo Bodegas:\n\n` +
-    `URL configurada: ${urlActual.substring(0, 60)}…\n\n`,
+    `URL configurada: ${urlActual.length > 60 ? urlActual.substring(0, 60) + '…' : urlActual}\n\n`,
     ui.ButtonSet.OK_CANCEL
   );
   if (resp.getSelectedButton() !== ui.Button.OK) return;
@@ -683,7 +681,8 @@ function configurarBodega() {
 }
 
 function _setupSync(bodegaUrl) {
-  const url = bodegaUrl || PropertiesService.getScriptProperties().getProperty(`BODEGA_URL_${BODEGA_KEY}`) || "https://docs.google.com/spreadsheets/d/1bQR0TJUqY9jmtapblMiGY-FKCAB6xfLz535BLRgC_IY/";
+  const url = bodegaUrl || PropertiesService.getScriptProperties().getProperty(`BODEGA_URL_${BODEGA_KEY}`);
+  if (!url) throw new Error(`Falta configurar la propiedad BODEGA_URL_${BODEGA_KEY} en Propiedades del Script.`);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let syncSheet = ss.getSheetByName(SHEET_SYNC);
   if (!syncSheet) {
@@ -807,7 +806,11 @@ function repararSistemaTienda() {
     SpreadsheetApp.getActive().toast("⏳ Reconstruyendo fórmulas, sincronizando productos y protegiendo celdas...", "🔧 Reparar Sistema", 5);
     
     // 1. Asegurar la conexión IMPORTRANGE en _SYNC
-    const url = PropertiesService.getScriptProperties().getProperty(`BODEGA_URL_${BODEGA_KEY}`) || "https://docs.google.com/spreadsheets/d/1bQR0TJUqY9jmtapblMiGY-FKCAB6xfLz535BLRgC_IY/";
+    const url = PropertiesService.getScriptProperties().getProperty(`BODEGA_URL_${BODEGA_KEY}`);
+    if (!url) {
+      ui.alert("❌ Error de Conexión", `No se ha configurado la propiedad BODEGA_URL_${BODEGA_KEY} en las Propiedades del Script.\n\nVe al menú ⚙️ Mise -> Configurar Bodega para enlazar el archivo.`, ui.ButtonSet.OK);
+      return;
+    }
     const syncFormula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
     sync.getRange(4, 1).clearContent();
     SpreadsheetApp.flush();
@@ -944,7 +947,8 @@ function setupCompleto() {
   if (pResp.getSelectedButton() !== ui.Button.OK) return;
   
   const psw = pResp.getResponseText().trim();
-  if (psw !== "LCP-ADMIN-2026") {
+  const adminPsw = PropertiesService.getScriptProperties().getProperty("ADMIN_PASSWORD") || "LCP-ADMIN-2026";
+  if (psw !== adminPsw) {
     ui.alert("❌ Contraseña incorrecta. Operación abortada.");
     return;
   }

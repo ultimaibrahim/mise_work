@@ -263,7 +263,8 @@ function setupCompleto() {
   if (pResp.getSelectedButton() !== ui.Button.OK) return;
   
   const psw = pResp.getResponseText().trim();
-  if (psw !== "LCP-ADMIN-2026") {
+  const adminPsw = PropertiesService.getScriptProperties().getProperty("ADMIN_PASSWORD") || "LCP-ADMIN-2026";
+  if (psw !== adminPsw) {
     ui.alert("❌ Contraseña incorrecta. Operación abortada.");
     return;
   }
