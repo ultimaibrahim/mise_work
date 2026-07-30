@@ -958,9 +958,16 @@ function setupCompleto() {
     "¿Estás absolutamente seguro de que deseas borrar y reconstruir el archivo?",
     ui.ButtonSet.YES_NO
   );
-  if (resp !== ui.Button.YES) return;
-  PropertiesService.getScriptProperties().deleteAllProperties();
+  // Purgar estados de sesión pero PRESERVAR configuraciones de infraestructura (BODEGA_URL y ADMIN_PASSWORD)
+  const props = PropertiesService.getScriptProperties();
+  const bodegaUrl = props.getProperty(`BODEGA_URL_${BODEGA_KEY}`);
+  const adminPswProp = props.getProperty("ADMIN_PASSWORD");
+
+  props.deleteAllProperties();
   try { SpreadsheetApp.flush(); } catch(e) {}
+  
+  if (bodegaUrl) props.setProperty(`BODEGA_URL_${BODEGA_KEY}`, bodegaUrl);
+  if (adminPswProp) props.setProperty("ADMIN_PASSWORD", adminPswProp);
   
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
   // Forzar configuración regional de México para evitar errores de análisis de fórmula (Inglés + comas)

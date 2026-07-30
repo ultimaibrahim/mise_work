@@ -276,9 +276,14 @@ function setupCompleto() {
   );
   if (resp !== ui.Button.YES) return;
 
-  // 1. Limpiar propiedades de versiones anteriores
-  PropertiesService.getScriptProperties().deleteAllProperties();
-  try { SpreadsheetApp.flush(); } catch(e) {} // 🔥 FIX 1: Forzar el borrado inmediato en los servidores de Google
+  // Purgar estados de sesión pero PRESERVAR contraseña de administrador
+  const props = PropertiesService.getScriptProperties();
+  const adminPswProp = props.getProperty("ADMIN_PASSWORD");
+
+  props.deleteAllProperties();
+  try { SpreadsheetApp.flush(); } catch(e) {}
+  
+  if (adminPswProp) props.setProperty("ADMIN_PASSWORD", adminPswProp);
 
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
