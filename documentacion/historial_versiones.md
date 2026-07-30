@@ -16,7 +16,8 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
-### 📱 Pedidos (PDA & PDM) — Operación Resiliente
+### 📱 Pedidos (PDA & PDM) y 🏬 Bodega (BDG) — Arquitectura & Staging
+* **Desacoplamiento Total de Entornos (`ScriptProperties`)**: Se eliminaron los fallbacks de URLs de producción pegados en código (`hardcoded`). Las URLs de conexión con Bodega (`BODEGA_URL_BA`/`BODEGA_URL_BM`) y la contraseña de administrador (`ADMIN_PASSWORD`) ahora dependen 100% de las Propiedades del Script de Google Apps Script. Esto permite clonar libros de trabajo para Staging o Pruebas (`[DEV]`) sin riesgo de alterar o escribir accidentalmente en las hojas de Producción.
 * **Solución a Bug GH#26 (Surtido Rápido & Adiciones Fantasma)**:
   * **Reset Destructivo de Surtido Rápido**: Al reiniciar el pedido diario (`_resetearPedidoSilencioso`), la pestaña `🚚 SURTIDO RÁPIDO` ahora se elimina físicamente del libro (`ss.deleteSheet`) para erradicar cualquier residuo de formato o regla de formato condicional previa.
   * **Saneamiento del Estado Vacío**: Cuando no hay productos pedidos (`filtered.length === 0`), se limpian explícitamente las reglas condicionales y los fondos estáticos en Surtido Rápido, evitando que la hoja se pinte de amarillo sin productos.
