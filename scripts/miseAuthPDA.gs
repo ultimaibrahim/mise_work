@@ -1025,9 +1025,9 @@ function _buildPedidoDiario(sheet) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), Math.max(1, NUM_COLS - sheet.getMaxColumns()));
   }
 
-  // Banner superior unificado sin merge
+  // Banner superior unificado alineado al centro en C1 (columna siempre visible en móvil)
   sheet.getRange(1, 1, 1, NUM_COLS).clearContent().setBackground("#3D5A47");
-  sheet.getRange("D1")
+  sheet.getRange("C1")
     .setFormula('="MISE — PEDIDO DIARIO · ' + BODEGA_NOMBRE + '   |   La Crêpe Parisienne   ·   " & TEXT(TODAY(),"dd/mmm/yyyy")')
     .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(1, 30);
