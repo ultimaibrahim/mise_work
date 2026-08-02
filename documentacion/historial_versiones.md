@@ -16,6 +16,13 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🚀 v1.3.1-PERF (Optimizaciones de Surtido Rápido & Menú Limpio) — 2026-08-01
+
+### 📱 Pedidos (PDA & PDM)
+* **Generación Instantánea de Surtido Rápido**: Se refactorizó la tabla de resumen (`RESUMEN SURTIDO` en Col I:J) en `_generarSurtidoRapidoInternal` para estampar los conteos en lote con una sola llamada `.setFormulas()`, acelerando la generación a **<0.5 segundos**.
+* **Menú Operativo Protegido**: Se reorganizó `onOpen` creando la sección `🧪 Herramientas de Prueba` e introduciendo `🎲 Generar datos de prueba` en un sub-menú para prevenir ejecuciones accidentales por parte de los gerentes en producción.
+* **Purga de Latencia Residual**: Se eliminó la llamada `SpreadsheetApp.flush()` restante en `_setupSync()`.
+
 ## 🚀 v1.3.0-PERF (Optimizaciones de Latencia, Dinamización & SemVer) — 2026-08-01
 
 ### 📱 Pedidos (PDA & PDM) y 🏬 Bodega (BDG) — Arquitectura & Staging
