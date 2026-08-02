@@ -288,35 +288,30 @@ function setupCompleto() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
   // Forzar configuración regional de México para evitar errores de análisis de fórmula (Inglés + comas)
-  try {
-    ss.setSpreadsheetLocale('es_MX');
-    SpreadsheetApp.flush();
-  } catch(e) {}
+  try { ss.setSpreadsheetLocale('es_MX'); } catch(e) {}
   
-  // Borrar todo excepto una hoja temporal (Sheets necesita mínimo 1)
-  let temp = ss.getSheetByName("__temp__");
-  if (!temp) {
-    temp = ss.insertSheet("__temp__");
-  } else {
-    temp.clear();
-  }
-  
-  // Hojas del sistema que queremos conservar y reconstruir
-  const systemSheetNames = [SHEET_MAESTRO];
+  // Hojas del sistema que queremos conservar (incluye 🗒 LOG)
+  const systemSheetNames = [SHEET_MAESTRO, SHEET_LOG];
   Object.values(BODEGAS).forEach(b => {
     systemSheetNames.push(b.kardex);
     systemSheetNames.push(b.vista);
   });
   
-  // Intentar borrar hojas que NO pertenecen al sistema básico
-  ss.getSheets().forEach(s => {
-    const name = s.getName();
-    if (name !== "__temp__" && !systemSheetNames.includes(name)) {
-      try { ss.deleteSheet(s); } catch(e) {}
-    }
-  });
+  const sheets = ss.getSheets();
+  if (sheets.length > systemSheetNames.length) {
+    let temp = ss.getSheetByName("__temp__");
+    if (!temp) temp = ss.insertSheet("__temp__");
+    
+    sheets.forEach(s => {
+      const name = s.getName();
+      if (name !== "__temp__" && !systemSheetNames.includes(name)) {
+        try { ss.deleteSheet(s); } catch(e) {}
+      }
+    });
+    
+    if (temp) try { ss.deleteSheet(temp); } catch(e) {}
+  }
 
-  // Función auxiliar interna para obtener una hoja vacía y limpia (creándola o reutilizándola)
   function getOrCreateSheet(name) {
     let s = ss.getSheetByName(name);
     if (s) {
@@ -326,12 +321,6 @@ function setupCompleto() {
       s.setFrozenRows(0);
       s.setFrozenColumns(0);
       try { s.showSheet(); } catch(e) {}
-      const maxRows = s.getMaxRows();
-      const maxCols = s.getMaxColumns();
-      if (maxRows > 0 && maxCols > 0) {
-        try { s.getRange(1, 1, maxRows, maxCols).breakAtMerge(); } catch(e) {}
-        try { s.getRange(1, 1, maxRows, maxCols).writeDataValidation(null); } catch(e) {}
-      }
     } else {
       s = ss.insertSheet(name);
     }
@@ -342,7 +331,6 @@ function setupCompleto() {
   SpreadsheetApp.getActive().toast("Creando MAESTRO...", "⚙️ Mise", 3);
   const maestro = getOrCreateSheet(SHEET_MAESTRO);
   _buildMaestro(maestro);
-  try { SpreadsheetApp.flush(); } catch(e) {} // 🔥 FIX 2: Forzar a que los 131 productos se escriban en físico YA antes de avanzar
 
   // 3. KARDEX
   SpreadsheetApp.getActive().toast("Creando KARDEX...", "⚙️ Mise", 3);
@@ -351,17 +339,10 @@ function setupCompleto() {
     _buildKardex(k, b.nombre);
     _poblarKardex(k);
   });
-  try { SpreadsheetApp.flush(); } catch(e) {} // 🔥 FIX 3: Asegurar que las fórmulas de los Kardex se asienten bien
 
   // 4. VISTAS MÓVIL
   SpreadsheetApp.getActive().toast("Creando VISTAS MÓVIL...", "⚙️ Mise", 3);
   Object.keys(BODEGAS).forEach(key => _buildVista(key));
-
-  // Eliminar hoja temporal
-  const t = ss.getSheetByName("__temp__");
-  if (t) {
-    try { ss.deleteSheet(t); } catch(e) {}
-  }
 
   _log("setupCompleto", "Sistema creado desde cero");
   ui.alert("✅ Setup completo", `Sistema listo.\n\nPróximos pasos:\n1. ⚙️ Mise → Configurar semana\n2. ⚙️ Mise → Correr tests\n3. Configurar IMPORTRANGE en Pedidos Andares o Pedidos Mercado`, ui.ButtonSet.OK);
