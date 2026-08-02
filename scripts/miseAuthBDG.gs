@@ -66,28 +66,32 @@ const C = {
 
 // ── MENÚ ──────────────────────────────────────────────────────────────────────
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu("⚙️ Mise")
-    .addItem("🔒 Proteger catálogo",                      "protegerMaestroSeguro")
-    .addSeparator()
-    .addItem("📅 Configurar semana — Andares",          "configurarSemanaBA")
-    .addItem("📅 Configurar semana — Mercado",          "configurarSemanaBM")
-    .addSeparator()
-    .addItem("📅 Avanzar semana — Andares",             "avanzarSemanaBA")
-    .addItem("📅 Avanzar semana — Mercado",             "avanzarSemanaBM")
-    .addSeparator()
-    .addItem("📊 Recrear VISTA_MOVIL_BA",                 "crearVistaMóvilBA")
-    .addItem("📊 Recrear VISTA_MOVIL_BM",                 "crearVistaMóvilBM")
-    .addSeparator()
-    .addItem("➕ Agregar productos",                       "crearHojaCargaMasiva")
-    .addItem("📝 Editar productos seleccionados",         "crearHojaEdicionMasiva")
-    .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
-    .addItem("🧹 Eliminar productos duplicados",      "eliminarDuplicadosCatalogo")
-    .addSeparator()
-    .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
-    .addSeparator()
-    .addItem("ℹ️ Acerca de",                               "acercaDe")
-    .addToUi();
+  try {
+    const ui = SpreadsheetApp.getUi();
+    const menu = ui.createMenu("⚙️ Mise")
+      .addItem("📅 Configurar semana — Andares",          "configurarSemanaBA")
+      .addItem("📅 Configurar semana — Mercado",          "configurarSemanaBM")
+      .addSeparator()
+      .addItem("📅 Avanzar semana — Andares",             "avanzarSemanaBA")
+      .addItem("📅 Avanzar semana — Mercado",             "avanzarSemanaBM")
+      .addSeparator()
+      .addItem("🔒 Proteger catálogo",                      "protegerMaestroSeguro")
+      .addSeparator()
+      .addSubMenu(ui.createMenu("🛠️ Gestión de Productos")
+        .addItem("➕ Agregar productos",                   "crearHojaCargaMasiva")
+        .addItem("📝 Editar productos seleccionados",     "crearHojaEdicionMasiva")
+        .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
+        .addItem("🧹 Eliminar productos duplicados",      "eliminarDuplicadosCatalogo"))
+      .addSeparator()
+      .addSubMenu(ui.createMenu("📊 Mantenimiento de Vistas")
+        .addItem("📊 Recrear VISTA_MOVIL_BA",             "crearVistaMóvilBA")
+        .addItem("📊 Recrear VISTA_MOVIL_BM",             "crearVistaMóvilBM"))
+      .addSeparator()
+      .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
+      .addSeparator()
+      .addItem("ℹ️ Acerca de",                               "acercaDe");
+    menu.addToUi();
+  } catch(e) {}
 }
 
 // ── onEdit: REGISTRO TRANSACCIONAL Y ACCIONES ──────────────────────────────────
@@ -1136,7 +1140,6 @@ function _configurarSemana(key) {
   }
 
   sheet.getRange("G4").setValue(monday).setNumberFormat("DD/MMM/YYYY");
-  SpreadsheetApp.flush();
   const sem = sheet.getRange("E4").getValue();
   const sun = sheet.getRange("I4").getValue();
   ui.alert(`✅ Semana ${sem} configurada\n${_fmt(monday)} → ${sun instanceof Date ? _fmt(sun) : sun}`);
@@ -2309,10 +2312,6 @@ function protegerMaestroSeguro() {
   const checkboxesFila2 = maestro.getRange("D2:J2"); // Checkboxes de acciones por lote
   
   sheetProtection.setUnprotectedRanges([rangoMinMaxBA, rangoMinMaxBM, rangoSelect, checkboxesFila2]);
-  
-  try {
-    SpreadsheetApp.flush();
-  } catch(e) {}
 }
 
 function restaurarValidacionesMaestro() {
