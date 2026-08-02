@@ -16,6 +16,13 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🌌 v1.4.0 Altair Orbit (Mapeo Dinámico por Encabezados & Migración No-Destructiva) — 2026-08-01
+
+### 🏬 Bodega (BDG)
+* **Arquitectura Zero Hardcoded (`Header-Based Dynamic Mapping`)**: Se implementó `_getMaestroHeaderMap(sheet)` y `_colToLetter(col)`. El script inspecciona la Fila 3 en tiempo de ejecución para ubicar cada campo por su nombre (`"PRODUCTO"`, `"MÍN_BA"`, `"MÁX_BA"`, `"ACTIVO"`, `"SELECCIONAR"`). El código es 100% inmune a futuros cambios de posición de columnas.
+* **Migración In-Situ No Destructiva de 14 a 13 Columnas**: Se creó `migrarEstructuraMaestro13Cols()`. Detecta si el catálogo en producción conserva la columna legacy `ID_FAMILIA` y la elimina atómicamente (`deleteColumn(2)`), **preservando el 100% de los productos, configuraciones MÍN/MÁX y saldos de la tienda**.
+* **Dinamización Atómica de Kardex y Vistas**: Se actualizaron `_aplicarReglasMaestro()`, `_poblarKardex()`, `_buildVista()`, `_ordenarYRenumerarTodo()` y `protegerMaestroSeguro()`. Las fórmulas de semáforo y desprotección de celdas se construyen con letras y rangos calculados dinámicamente.
+
 ## 🌌 v1.3.4 Altair (Nomenclatura Oficial de Generaciones Estelares) — 2026-08-01
 
 ### 📱 Pedidos (PDA & PDM) y 🏬 Bodega (BDG)
