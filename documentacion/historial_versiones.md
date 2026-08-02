@@ -16,6 +16,12 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🌌 v1.3.4 Altair Minus (Estandarización de Épocas & Identidad Estelar) — 2026-08-01
+
+### 📱 Pedidos (PDA & PDM) y 🏬 Bodega (BDG)
+* **Adopción del Sistema de Versionamiento por Épocas (`Epoch System`)**: Se estandarizó la nomenclatura formal de la suite adoptando nombres estelares inspirados en la constelación madre **Altair** (`1.x.x`) y la tabla de 10 sufijos de evolución (`Genesis`, `Dawn`, `Pulse`, `Minus`, `Orbit`, `Apex`, `Aura`, `Major`, `Zenith`, `Eclipse`).
+* **Visualización de Versión en Diálogos**: Se actualizó el cuadro emergente `acercaDe()` en `PDA`, `PDM` y `BDG` para reflejar con orgullo la versión oficial: **`Mise — v1.3.4 Altair Minus`**.
+
 ## 🚀 v1.3.3-FIX (Fix a Tabla de Resumen en Surtido Rápido) — 2026-08-01
 
 ### 📱 Pedidos (PDA & PDM)
