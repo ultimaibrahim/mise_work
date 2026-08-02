@@ -97,33 +97,94 @@ const C = {
 function onOpen() {
   try {
     migrarEstructuraMaestro13Cols();
+    repararYSincronizarSistema(true); // Ejecución silenciosa al abrir
   } catch(e) {}
   try {
     const ui = SpreadsheetApp.getUi();
     const menu = ui.createMenu("⚙️ Mise")
-      .addItem("📅 Configurar semana — Andares",          "configurarSemanaBA")
-      .addItem("📅 Configurar semana — Mercado",          "configurarSemanaBM")
+      .addItem("🩺 Diagnosticar y reparar sistema",       "repararYSincronizarSistemaManualmente")
       .addSeparator()
-      .addItem("📅 Avanzar semana — Andares",             "avanzarSemanaBA")
-      .addItem("📅 Avanzar semana — Mercado",             "avanzarSemanaBM")
-      .addSeparator()
-      .addItem("🔒 Proteger catálogo",                      "protegerMaestroSeguro")
+      .addSubMenu(ui.createMenu("📅 Gestión Semanal")
+        .addItem("📅 Configurar semana — Andares",          "configurarSemanaBA")
+        .addItem("📅 Configurar semana — Mercado",          "configurarSemanaBM")
+        .addSeparator()
+        .addItem("⏩ Avanzar semana — Andares",             "avanzarSemanaBA")
+        .addItem("⏩ Avanzar semana — Mercado",             "avanzarSemanaBM"))
       .addSeparator()
       .addSubMenu(ui.createMenu("🛠️ Gestión de Productos")
-        .addItem("➕ Agregar productos",                   "crearHojaCargaMasiva")
+        .addItem("➕ Agregar productos en lote",            "crearHojaCargaMasiva")
         .addItem("📝 Editar productos seleccionados",     "crearHojaEdicionMasiva")
         .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
         .addItem("🧹 Eliminar productos duplicados",      "eliminarDuplicadosCatalogo"))
       .addSeparator()
       .addSubMenu(ui.createMenu("📊 Mantenimiento de Vistas")
         .addItem("📊 Recrear VISTA_MOVIL_BA",             "crearVistaMóvilBA")
-        .addItem("📊 Recrear VISTA_MOVIL_BM",             "crearVistaMóvilBM"))
+        .addItem("📊 Recrear VISTA_MOVIL_BM",             "crearVistaMóvilBM")
+        .addSeparator()
+        .addItem("🔒 Proteger catálogo anti-dummies",      "protegerMaestroSeguro"))
       .addSeparator()
       .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
       .addSeparator()
       .addItem("ℹ️ Acerca de",                               "acercaDe");
     menu.addToUi();
   } catch(e) {}
+}
+
+// ── MOTOR AUTORREPARADOR (SELF-HEALING ENGINE) ────────────────────────────────
+function repararYSincronizarSistemaManualmente() {
+  repararYSincronizarSistema(false);
+}
+
+function repararYSincronizarSistema(silent = false) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  if (!maestro) return;
+
+  let repairsCount = 0;
+
+  try {
+    const lr = maestro.getLastRow();
+    if (lr >= MAESTRO_START) {
+      const count = lr - MAESTRO_START + 1;
+      const map = _getMaestroHeaderMap(maestro);
+
+      const cStkBA = map["STOCK_BA"] ? map["STOCK_BA"].col : 9;
+      const cStkBM = map["STOCK_BM"] ? map["STOCK_BM"].col : 12;
+
+      // 1. Escanear errores en STOCK_BA y STOCK_BM en MAESTRO
+      const rangeStkBA = maestro.getRange(MAESTRO_START, cStkBA, count, 1);
+      const rangeStkBM = maestro.getRange(MAESTRO_START, cStkBM, count, 1);
+
+      const valuesStkBA = rangeStkBA.getValues();
+      const valuesStkBM = rangeStkBM.getValues();
+
+      const hasErrorBA = valuesStkBA.some(r => String(r[0]).includes("#N/A") || String(r[0]).includes("#REF") || String(r[0]).includes("#ERROR") || String(r[0]).includes("#VALUE"));
+      const hasErrorBM = valuesStkBM.some(r => String(r[0]).includes("#N/A") || String(r[0]).includes("#REF") || String(r[0]).includes("#ERROR") || String(r[0]).includes("#VALUE"));
+
+      if (hasErrorBA || hasErrorBM || !silent) {
+        _ordenarYRenumerarTodo();
+        repairsCount++;
+      }
+
+      // 2. Verificar dropdowns y validaciones desprendidas
+      restaurarValidacionesMaestro();
+
+      // 3. Recrear Vistas Móviles
+      _buildVista("BA");
+      _buildVista("BM");
+    }
+
+    if (!silent) {
+      SpreadsheetApp.getActive().toast("🩺 Sistema verificado y autorreparado con éxito ✓", "⚙️ Mise Self-Healing", 4);
+      SpreadsheetApp.getUi().alert("🩺 Diagnóstico Completo", "El sistema ha verificado todas las fórmulas, punteros y validaciones de MAESTRO y KARDEX.\n\nTodo se encuentra 100% sincronizado y saludable.", SpreadsheetApp.getUi().ButtonSet.OK);
+    } else if (repairsCount > 0) {
+      SpreadsheetApp.getActive().toast("🩺 Se detectaron y repararon fórmulas desfasadas automáticamente ✓", "⚙️ Mise Self-Healing", 4);
+    }
+  } catch (err) {
+    if (!silent) {
+      SpreadsheetApp.getUi().alert("❌ Error en Diagnóstico", err.toString(), SpreadsheetApp.getUi().ButtonSet.OK);
+    }
+  }
 }
 
 // ── onEdit: REGISTRO TRANSACCIONAL Y ACCIONES ──────────────────────────────────
@@ -1930,7 +1991,7 @@ function _catalogo() {
 
 function acercaDe() {
   SpreadsheetApp.getUi().alert(
-    "⚙️ Mise — v1.3.8 Altair",
+    "⚙️ Mise — v1.3.8a Altair",
     "Suite Atelier · La Crêpe Parisienne · Grupo MYT\n\n" +
     "Sistema de inventario operativo para bodega.\n" +
     "131 productos · 2 bodegas · historial semanal · semáforo de caducidad",

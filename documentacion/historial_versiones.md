@@ -16,6 +16,12 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🌌 v1.3.8a Altair (Hotfix: Motor Auto-Reparador Self-Healing & Sub-menús de Menú Operativo) — 2026-08-02
+
+### 🏬 Bodega (BDG)
+* **Motor Autorreparador (`repararYSincronizarSistema`)**: Se implementó el motor Self-Healing ejecutable manualmente y de forma silenciosa en cada `onOpen()`. Escanea celdas de stock e identifica errores (`#N/A`, `#REF!`, `#ERROR!`, `#VALUE!`), re-inyectando fórmulas limpias, restaurando dropdowns desprendidos y reconstruyendo las Vistas Móviles de Andares y Mercado.
+* **Organización de Menú Operativo**: Se agruparon las acciones de "Configurar semana" y "Avanzar semana" dentro del nuevo sub-menú `📅 Gestión Semanal`. Se añadió el acceso directo principal `🩺 Diagnosticar y reparar sistema`.
+
 ## 🌌 v1.3.8 Altair (Fix de Conteo de Columnas en VLOOKUP de Kardex a Domingo) — 2026-08-02
 
 ### 🏬 Bodega (BDG)
