@@ -457,9 +457,7 @@ function sincronizarEstados() {
   const formula = sync.getRange(4, 1).getFormula();
   if (formula) {
     sync.getRange(4, 1).clearContent();
-    try { SpreadsheetApp.flush(); } catch(e) {}
     sync.getRange(4, 1).setFormula(formula);
-    try { SpreadsheetApp.flush(); } catch(e) {}
   } else {
     const props = PropertiesService.getScriptProperties();
     const url = props.getProperty(`BODEGA_URL_${BODEGA_KEY}`);
@@ -828,9 +826,7 @@ function repararSistemaTienda() {
     }
     const syncFormula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
     sync.getRange(4, 1).clearContent();
-    SpreadsheetApp.flush();
     sync.getRange(4, 1).setFormula(syncFormula);
-    SpreadsheetApp.flush();
     
     // 2. Obtener conteo de productos sincronizados
     const syncCount = Math.max(0, sync.getLastRow() - 3);
