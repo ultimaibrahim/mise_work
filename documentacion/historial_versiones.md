@@ -16,6 +16,11 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🌌 v1.3.8 Altair (Fix de Conteo de Columnas en VLOOKUP de Kardex a Domingo) — 2026-08-02
+
+### 🏬 Bodega (BDG)
+* **Fix de Cálculo de Stock Final (`VLOOKUP(..., 26, FALSE)`)**: Al eliminar la Columna B (`ID_FAMILIA`), el rango `C:AD` de Kardex ahora abarca 26 columnas (de la C a la AD) en lugar de 28. El parámetro estático `28` provocaba que la fórmula buscara una columna inexistente o desfasada, arrojando el error `#N/A`. Se corrigió el índice de columna de búsqueda a **`26`**.
+
 ## 🌌 v1.3.7 Altair (Fix de Desfasamiento VLOOKUP en STOCK_BA y STOCK_BM) — 2026-08-02
 
 ### 🏬 Bodega (BDG)
