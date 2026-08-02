@@ -1000,8 +1000,8 @@ function setupCompleto() {
     temp.clear();
   }
   
-  // Hojas del sistema que queremos conservar
-  const systemSheetNames = [SHEET_PEDIDO, SHEET_SYNC];
+  // Hojas del sistema que queremos conservar (incluye _LOGS)
+  const systemSheetNames = [SHEET_PEDIDO, SHEET_SYNC, "_LOGS"];
   ss.getSheets().forEach(s => {
     const name = s.getName();
     if (name !== "__temp__" && !systemSheetNames.includes(name)) {
