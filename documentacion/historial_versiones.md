@@ -16,6 +16,12 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🚀 v1.3.2-PERF (Estructuración de Menú & Purga de Latencia en Bodega BDG) — 2026-08-01
+
+### 🏬 Bodega (BDG)
+* **Reorganización Estructurada del Menú (`onOpen`)**: Se agruparon las 12 opciones dispersas en sub-menús limpios (`🛠️ Gestión de Productos` y `📊 Mantenimiento de Vistas`), dejando la raíz del menú enfocada en las operaciones semanales cotidianas.
+* **Purga de Latencia en Red**: Se eliminaron las pausas innecesarias `SpreadsheetApp.flush()` en `_configurarSemana()` y `_protegerMaestroInterno()`, acelerando la asignación de permisos y fechas a milisegundos.
+
 ## 🚀 v1.3.1-PERF (Optimizaciones de Surtido Rápido & Menú Limpio) — 2026-08-01
 
 ### 📱 Pedidos (PDA & PDM)
