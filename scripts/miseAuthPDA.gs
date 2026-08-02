@@ -51,20 +51,21 @@ function onOpen() {
     _actualizarAvisoPedido();
   } catch(e) {}
   try {
-    SpreadsheetApp.getUi()
-      .createMenu("⚙️ Mise")
+    const ui = SpreadsheetApp.getUi();
+    const menu = ui.createMenu("⚙️ Mise")
       .addItem("🔧 Reparar formatos y conexión",        "repararSistemaTienda")
       .addSeparator()
       .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
       .addSeparator()
       .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
       .addSeparator()
-      .addItem("🎲 Generar datos de prueba",               "generarDatosPrueba")
-      .addSeparator()
       .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
       .addSeparator()
-      .addItem("ℹ️ Acerca de Mise",                        "acercaDe")
-      .addToUi();
+      .addSubMenu(ui.createMenu("🧪 Herramientas de Prueba")
+        .addItem("🎲 Generar datos de prueba",             "generarDatosPrueba"))
+      .addSeparator()
+      .addItem("ℹ️ Acerca de Mise",                        "acercaDe");
+    menu.addToUi();
   } catch(e) {}
 }
 
@@ -691,7 +692,6 @@ function _setupSync(bodegaUrl) {
   if (lastRow >= 4) syncSheet.getRange(4, 1, lastRow - 3, 11).clearContent();
   const formula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
   syncSheet.getRange(4, 1).setFormula(formula);
-  try { SpreadsheetApp.flush(); } catch(e) {}
 }
 
 // Backup del reset diario: onOpen (simple trigger) NO se dispara de forma confiable
@@ -1399,17 +1399,12 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     .setFontSize(9).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sSheet.setRowHeight(3, 28);
     
-  sSheet.getRange("I4").setValue("✅ Completos");
-  sSheet.getRange("J4").setFormula("=COUNTIF(F4:F" + (3 + rows) + ", TRUE)");
-  
-  sSheet.getRange("I5").setValue("⚠️ Incompletos");
-  sSheet.getRange("J5").setFormula("=COUNTIFS(D4:D" + (3 + rows) + ", \">0\", E4:E" + (3 + rows) + ", \">0\", F4:F" + (3 + rows) + ", FALSE, G4:G" + (3 + rows) + ", FALSE)");
-  
-  sSheet.getRange("I6").setValue("❌ Inexistentes");
-  sSheet.getRange("J6").setFormula("=COUNTIF(G4:G" + (3 + rows) + ", TRUE)");
-  
-  sSheet.getRange("I7").setValue("🚨 Adiciones");
-  sSheet.getRange("J7").setFormula("=COUNTIF(H4:H" + (3 + rows) + ", \"🚨 ADICIÓN\")");
+  sSheet.getRange("I4:J7").setFormulas([
+    ["✅ Completos", "=COUNTIF(F4:F" + (3 + rows) + ", TRUE)"],
+    ["⚠️ Incompletos", "=COUNTIFS(D4:D" + (3 + rows) + ", \">0\", E4:E" + (3 + rows) + ", \">0\", F4:F" + (3 + rows) + ", FALSE, G4:G" + (3 + rows) + ", FALSE)"],
+    ["❌ Inexistentes", "=COUNTIF(G4:G" + (3 + rows) + ", TRUE)"],
+    ["🚨 Adiciones", "=COUNTIF(H4:H" + (3 + rows) + ", \"🚨 ADICIÓN\")"]
+  ]);
 
   sSheet.getRange("I4:J4").setBackground("#E8F5E9");
   sSheet.getRange("I5:J5").setBackground("#FFF3E0");
