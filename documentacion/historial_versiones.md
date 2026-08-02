@@ -16,11 +16,15 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
-## 📜 v1.3.4 Altair Leviticus (Adopción de Épocas Bíblicas & Reglas Estrictas) — 2026-08-01
+## 🌌 v1.3.4 Altair (Nomenclatura Oficial de Generaciones Estelares) — 2026-08-01
 
 ### 📱 Pedidos (PDA & PDM) y 🏬 Bodega (BDG)
-* **Sistema Místico/Bíblico de Épocas (`Epoch System`)**: Se estandarizó la nomenclatura formal combinando constelaciones estelares Madre para la generación (`Altair`, `Vega`, `Sirius`) con los 10 Pasajes Bíblicos para el sufijo de evolución (`Genesis`, `Exodus`, `Psalms`, `Leviticus`, `Covenant`, `Wisdom`, `Sanctuary`, `Chronicles`, `Triumph`, `Revelation`).
-* **Visualización de Versión en Diálogos**: Se actualizaron los cuadros emergentes `acercaDe()` en `PDA`, `PDM` y `BDG` con el nombre oficial: **`Mise — v1.3.4 Altair Leviticus`**.
+* **Estándar Minimalista de Épocas (`Epoch System`)**: Se formalizó la hoja de ruta de generaciones mediante nombres de constelaciones únicas por cada versión `MAJOR`:
+  - **Generación 1.x.x**: **Altair** *(Velocidad, Agilidad & Optimización Sub-segundo)*
+  - **Generación 2.x.x**: **Atlas** *(Soporte Estructural, Robustez & Arquitectura)*
+  - **Generación 3.x.x**: **Aethel** *(Sofisticación & Refinamiento Crystal)*
+  - **Generación 4.x.x**: **Antares** *(Potencia Máxima & Ecosistema Multi-región)*
+* **Visualización en Pantalla**: Diálogos `acercaDe()` actualizados a **`Mise — v1.3.4 Altair`**.
 
 ## 🚀 v1.3.3-FIX (Fix a Tabla de Resumen en Surtido Rápido) — 2026-08-01
 
