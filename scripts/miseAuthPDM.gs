@@ -1027,36 +1027,27 @@ function _buildPedidoDiario(sheet) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), Math.max(1, NUM_COLS - sheet.getMaxColumns()));
   }
 
-  // OPERACIÓN BATCH MÁSIMA 2D: Estampar Filas 1, 2 y 3 en un solo llamado de red
-  const headerValues = Array(3).fill(null).map(() => Array(NUM_COLS).fill(""));
-  headerValues[0][2] = '="MISE — PEDIDO DIARIO · ' + BODEGA_NOMBRE + '   |   La Crêpe Parisienne   ·   " & TEXT(TODAY(),"dd/mmm/yyyy")'; // C1
-  headerValues[1][1] = "🗑"; // B2
-  headerValues[1][3] = "🚚"; // D2
-  headerValues[1][5] = "🔗"; // F2
-  headerValues[2]    = ["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","","",""]; // Row 3
-
-  const rangeHeader = sheet.getRange(1, 1, 3, NUM_COLS);
-  rangeHeader.clearContent();
-  rangeHeader.setFormulas([
-    headerValues[0],
-    headerValues[1],
-    headerValues[2]
-  ]);
-
-  // Colores y Alturas en Bloque
-  sheet.getRange(1, 1, 1, NUM_COLS).setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
-  sheet.getRange(2, 1, 1, NUM_COLS).setBackground("#7A9E8A");
-  sheet.getRange(3, 1, 1, NUM_COLS).setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
-
-  sheet.getRange("B2").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("C2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-  sheet.getRange("D2").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("E2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-  sheet.getRange("F2").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("G2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-
+  // Banner superior en C1 (Fórmula)
+  sheet.getRange(1, 1, 1, NUM_COLS).clearContent().setBackground("#3D5A47");
+  sheet.getRange("C1")
+    .setFormula('="MISE — PEDIDO DIARIO · ' + BODEGA_NOMBRE + '   |   La Crêpe Parisienne   ·   " & TEXT(TODAY(),"dd/mmm/yyyy")')
+    .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(1, 30);
+
+  // Fila 2: Fondo y Botones
+  sheet.getRange(2, 1, 1, NUM_COLS).setBackground("#7A9E8A").clearContent();
+  sheet.getRange("B2").setValue("🗑").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("C2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
+  sheet.getRange("D2").setValue("🚚").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("E2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
+  sheet.getRange("F2").setValue("🔗").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("G2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
   sheet.setRowHeight(2, 24);
+
+  // Fila 3: Headers (Valores Puros)
+  sheet.getRange(3, 1, 1, NUM_COLS)
+    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","","",""]])
+    .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.setRowHeight(3, 34);
   
   // Inmovilización blindada móvil
