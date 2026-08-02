@@ -988,26 +988,26 @@ function setupCompleto() {
   
   const ss   = SpreadsheetApp.getActiveSpreadsheet();
   // Forzar configuración regional de México para evitar errores de análisis de fórmula (Inglés + comas)
-  try {
-    ss.setSpreadsheetLocale('es_MX');
-    SpreadsheetApp.flush();
-  } catch(e) {}
-  
-  let temp = ss.getSheetByName("__temp__");
-  if (!temp) {
-    temp = ss.insertSheet("__temp__");
-  } else {
-    temp.clear();
-  }
+  try { ss.setSpreadsheetLocale('es_MX'); } catch(e) {}
   
   // Hojas del sistema que queremos conservar (incluye _LOGS)
   const systemSheetNames = [SHEET_PEDIDO, SHEET_SYNC, "_LOGS"];
-  ss.getSheets().forEach(s => {
-    const name = s.getName();
-    if (name !== "__temp__" && !systemSheetNames.includes(name)) {
-      try { ss.deleteSheet(s); } catch(e) {}
-    }
-  });
+  const sheets = ss.getSheets();
+  
+  // Eliminar pestañas basura sólo si existen otras además del pedido y sync
+  if (sheets.length > systemSheetNames.length) {
+    let temp = ss.getSheetByName("__temp__");
+    if (!temp) temp = ss.insertSheet("__temp__");
+    
+    sheets.forEach(s => {
+      const name = s.getName();
+      if (name !== "__temp__" && !systemSheetNames.includes(name)) {
+        try { ss.deleteSheet(s); } catch(e) {}
+      }
+    });
+    
+    if (temp) try { ss.deleteSheet(temp); } catch(e) {}
+  }
 
   // Reutilizar o crear SHEET_PEDIDO
   let pedido = ss.getSheetByName(SHEET_PEDIDO);
@@ -1018,24 +1018,11 @@ function setupCompleto() {
     pedido.setFrozenRows(0);
     pedido.setFrozenColumns(0);
     try { pedido.showSheet(); } catch(e) {}
-    const maxRows = pedido.getMaxRows();
-    const maxCols = pedido.getMaxColumns();
-    if (maxRows > 0 && maxCols > 0) {
-      try { pedido.getRange(1, 1, maxRows, maxCols).breakAtMerge(); } catch(e) {}
-      try { pedido.getRange(1, 1, maxRows, maxCols).writeDataValidation(null); } catch(e) {}
-    }
   } else {
     pedido = ss.insertSheet(SHEET_PEDIDO);
   }
 
   _buildPedidoDiario(pedido);
-
-  // Eliminar hoja temporal
-  const t = ss.getSheetByName("__temp__");
-  if (t) {
-    try { ss.deleteSheet(t); } catch(e) {}
-  }
-  
   registrarLog("setupCompleto", "SUCCESS", "Sistema de Pedido Diario reestructurado desde cero.");
 }
 
@@ -1044,34 +1031,36 @@ function _buildPedidoDiario(sheet) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), Math.max(1, NUM_COLS - sheet.getMaxColumns()));
   }
 
-  // Banner superior unificado alineado al centro en C1 (columna siempre visible en móvil)
-  sheet.getRange(1, 1, 1, NUM_COLS).clearContent().setBackground("#3D5A47");
-  sheet.getRange("C1")
-    .setFormula('="MISE — PEDIDO DIARIO · ' + BODEGA_NOMBRE + '   |   La Crêpe Parisienne   ·   " & TEXT(TODAY(),"dd/mmm/yyyy")')
-    .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
-  sheet.setRowHeight(1, 30);
+  // OPERACIÓN BATCH MÁSIMA 2D: Estampar Filas 1, 2 y 3 en un solo llamado de red
+  const headerValues = Array(3).fill(null).map(() => Array(NUM_COLS).fill(""));
+  headerValues[0][2] = '="MISE — PEDIDO DIARIO · ' + BODEGA_NOMBRE + '   |   La Crêpe Parisienne   ·   " & TEXT(TODAY(),"dd/mmm/yyyy")'; // C1
+  headerValues[1][1] = "🗑"; // B2
+  headerValues[1][3] = "🚚"; // D2
+  headerValues[1][5] = "🔗"; // F2
+  headerValues[2]    = ["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","","",""]; // Row 3
 
-  // Fila 2: Botones táctiles (Alineados a partir de Columna C que nunca se oculta)
-  // Reset (B/C) y Sync (F/G) existen porque onOpen no dispara el reset/estado
-  // automático de forma confiable en la app móvil nativa de Sheets — el operario
-  // los dispara a mano marcando el checkbox.
+  const rangeHeader = sheet.getRange(1, 1, 3, NUM_COLS);
+  rangeHeader.clearContent();
+  rangeHeader.setFormulas([
+    headerValues[0],
+    headerValues[1],
+    headerValues[2]
+  ]);
+
+  // Colores y Alturas en Bloque
+  sheet.getRange(1, 1, 1, NUM_COLS).setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sheet.getRange(2, 1, 1, NUM_COLS).setBackground("#7A9E8A");
-  sheet.getRange(2, 1, 1, NUM_COLS).clearContent();
+  sheet.getRange(3, 1, 1, NUM_COLS).setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
 
-  sheet.getRange("B2").setValue("🗑").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("B2").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("C2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-
-  sheet.getRange("D2").setValue("🚚").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("D2").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("E2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-
-  sheet.getRange("F2").setValue("🔗").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
+  sheet.getRange("F2").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
   sheet.getRange("G2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-  sheet.setRowHeight(2, 24);
 
-  // Fila 3: Headers estables tradicionales (10 columns)
-  sheet.getRange(3, 1, 1, NUM_COLS)
-    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","","",""]])
-    .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sheet.setRowHeight(1, 30);
+  sheet.setRowHeight(2, 24);
   sheet.setRowHeight(3, 34);
   
   // Inmovilización blindada móvil
