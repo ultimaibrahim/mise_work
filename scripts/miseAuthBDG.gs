@@ -1,7 +1,6 @@
 /**
- * MISE — Bodegas Script v1.0 (Lanzamiento Oficial)
+ * MISE — Bodegas Script v1.3.0-PERF (Optimizaciones & Auditoría)
  * Suite Atelier · La Crêpe Parisienne · Grupo MYT
- * (Reemplaza a los prototipos de la serie v0.5.0)
  *
  * INSTALAR EN: Bodegas (Google Sheets)
  * Extensiones → Apps Script → reemplazar todo → guardar → recargar hoja

@@ -16,7 +16,11 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🚀 v1.3.0-PERF (Optimizaciones de Latencia, Dinamización & SemVer) — 2026-08-01
+
 ### 📱 Pedidos (PDA & PDM) y 🏬 Bodega (BDG) — Arquitectura & Staging
+* **Dinamización Total de Entornos (`BODEGA_KEY` y `BODEGA_NOMBRE`)**: Se desacoplaron las claves fijas en favor de lecturas dinámicas desde `ScriptProperties` (`BODEGA_KEY` / `BODEGA_NOMBRE`). Duplicar scripts o crear tiendas nuevas ya no requiere editar el código `.gs`.
+* **Depuración de Constantes Heredadas**: Se eliminaron las constantes inactivas de prototipos antiguos `SHEET_MOVIL` y `SHEET_LOG`, garantizando cero código muerto y máxima claridad en la arquitectura.
 * **Eliminación Total de Hojas Temporales (`__temp__`)**: Se purgó por completo la rutina legacy que creaba y eliminaba la pestaña `__temp__` durante la reconstrucción del sistema en `BDG`, `PDA` y `PDM`. La pantalla ya no muestra pestañas parpadeantes y la ejecución es limpia e in-situ.
 * **Fix a Error `#NAME?` en Encabezados**: Se separó la inyección de la Fila 1 (fórmula de banner en C1 con `setFormula`) de la Fila 3 (encabezados de columnas con `setValues`). Esto evita que Google Sheets interprete textos planos como `"PRODUCTO"` o `"CATEGORÍA"` como nombres de intervalos o fórmulas no válidas.
 * **Optimización de Rendimiento en Bodega (`miseAuthBDG.gs`)**: Se aplicó la misma arquitectura de velocidad a `setupCompleto()` en Bodega, eliminando la creación/destrucción pesada de hojas temporales `__temp__`, protegiendo la pestaña `🗒 LOG` y purgando las pausas de `SpreadsheetApp.flush()`.

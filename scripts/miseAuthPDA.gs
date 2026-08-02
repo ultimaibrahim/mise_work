@@ -1,36 +1,19 @@
 /**
- * MISE — Pedidos Andares Script v1.1 (Lanzamiento Oficial)
+ * MISE — Pedidos Andares Script v1.3.0-PERF (Optimizaciones & Auditoría)
  * Suite Atelier · La Crêpe Parisienne · Grupo MYT
- * (Reemplaza a los prototipos de la serie v0.5.0)
  *
  * INSTALAR EN: Pedidos Andares (Google Sheets de B-Andares)
- * 
- * CAMBIOS v1.0 (Derivado del prototipo v0.5.0):
- * 1. Reset automático por día nuevo en onOpen (limpia cantidades y estados).
- * 2. Reset de pedido vía checkbox en fila 2 (C2) — sin ui.alert(), 100% móvil.
- * 3. Inserción de columna J "ALERTAS SURTIDO" y aviso de conexión en J4.
- * 4. Categorización automática y ordenamiento in-situ agrupando por Categoría (B)
- *    con ítems activos prioritarios al principio de cada grupo.
- * 5. Sincronización robusta que añade productos nuevos al final con fondo morado.
- * 6. Detección de adiciones de última hora pintando la fila de naranja brillante (#FFD54F)
- *    mediante regla condicional ligada a "🚨 ADICIÓN" en Col J, autolimpiable al ordenar.
- *    La alerta se dispara SI Y SOLO SI el pedido ya fue ordenado previamente (flag IS_ORDER_SORTED).
- * 7. Botones de fila 2 alineados a partir de Columna C (visible) para evitar
- *    que se oculten cuando las columnas A y B están colapsadas.
- * 8. Autoconexión por defecto mediante URL de Bodega provista para evitar configuraciones manuales.
- * 9. FIX DE BUG DE BORRADO DE CANTIDADES Y BLOQUEO DE COLOR AMARILLO.
  */
 
-// ── BODEGA ──────────────────────────────────────────────────────────────────
-const BODEGA_KEY    = "BA";
-const BODEGA_NOMBRE = "Andares";
-const VISTA_MOVIL   = "VISTA_MOVIL_BA";
-const SHEET_SYNC    = "_SYNC_BA";
+// ── BODEGA & CONFIGURACIÓN DINÁMICA DE ENTORNO ──────────────────────────────
+const props = PropertiesService.getScriptProperties();
+const BODEGA_KEY    = props.getProperty("BODEGA_KEY") || "BA";
+const BODEGA_NOMBRE = props.getProperty("BODEGA_NOMBRE") || "Andares";
+const VISTA_MOVIL   = `VISTA_MOVIL_${BODEGA_KEY}`;
+const SHEET_SYNC    = `_SYNC_${BODEGA_KEY}`;
 
 // ── CONSTANTES ──────────────────────────────────────────────────────────────
 const SHEET_PEDIDO   = "📋 PEDIDO DIARIO";
-const SHEET_MOVIL    = "📊 VISTA_MÓVIL";
-const SHEET_LOG      = "🗒 LOG";
 const COL_CANT_PEDIR = 6;   // F — CANT. A PEDIR
 const COL_RECIBIDA   = 8;   // H — CANT. RECIBIDA (oculta)
 const COL_ESTADO     = 9;   // I — ESTADO (oculta)
