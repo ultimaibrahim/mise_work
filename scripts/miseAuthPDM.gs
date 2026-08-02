@@ -1128,7 +1128,7 @@ function _aplicarFormatosCondicionales(sheet) {
 }
 
 function acercaDe() {
-  SpreadsheetApp.getUi().alert("⚙️ Mise — v1.3.4 Altair Minus", `Suite Atelier · La Crêpe Parisienne · ${BODEGA_NOMBRE}\n\nDiseño optimizado a sub-segundos para dispositivos móviles de 9 columnas con surtido y fórmulas integradas.`, SpreadsheetApp.getUi().ButtonSet.OK);
+  SpreadsheetApp.getUi().alert("⚙️ Mise — v1.3.4 Altair Leviticus", `Suite Atelier · La Crêpe Parisienne · ${BODEGA_NOMBRE}\n\nDiseño optimizado a sub-segundos para dispositivos móviles de 9 columnas con surtido y fórmulas integradas.`, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function _actualizarVisibilidadInactivos(sheet) {
