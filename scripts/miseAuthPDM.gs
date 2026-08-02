@@ -1398,12 +1398,21 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(9).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
   sSheet.setRowHeight(3, 28);
-    
-  sSheet.getRange("I4:J7").setFormulas([
-    ["✅ Completos", "=COUNTIF(F4:F" + (3 + rows) + ", TRUE)"],
-    ["⚠️ Incompletos", "=COUNTIFS(D4:D" + (3 + rows) + ", \">0\", E4:E" + (3 + rows) + ", \">0\", F4:F" + (3 + rows) + ", FALSE, G4:G" + (3 + rows) + ", FALSE)"],
-    ["❌ Inexistentes", "=COUNTIF(G4:G" + (3 + rows) + ", TRUE)"],
-    ["🚨 Adiciones", "=COUNTIF(H4:H" + (3 + rows) + ", \"🚨 ADICIÓN\")"]
+
+  // Inyectar etiquetas como texto puro (Col I)
+  sSheet.getRange("I4:I7").setValues([
+    ["✅ Completos"],
+    ["⚠️ Incompletos"],
+    ["❌ Inexistentes"],
+    ["🚨 Adiciones"]
+  ]);
+
+  // Inyectar fórmulas dinámicas (Col J)
+  sSheet.getRange("J4:J7").setFormulas([
+    ["=COUNTIF(F4:F" + (3 + rows) + ", TRUE)"],
+    ["=COUNTIFS(D4:D" + (3 + rows) + ", \">0\", E4:E" + (3 + rows) + ", \">0\", F4:F" + (3 + rows) + ", FALSE, G4:G" + (3 + rows) + ", FALSE)"],
+    ["=COUNTIF(G4:G" + (3 + rows) + ", TRUE)"],
+    ["=COUNTIF(H4:H" + (3 + rows) + ", \"🚨 ADICIÓN\")"]
   ]);
 
   sSheet.getRange("I4:J4").setBackground("#E8F5E9");
