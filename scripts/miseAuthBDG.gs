@@ -1930,7 +1930,7 @@ function _catalogo() {
 
 function acercaDe() {
   SpreadsheetApp.getUi().alert(
-    "⚙️ Mise — v1.3.6 Altair",
+    "⚙️ Mise — v1.3.7 Altair",
     "Suite Atelier · La Crêpe Parisienne · Grupo MYT\n\n" +
     "Sistema de inventario operativo para bodega.\n" +
     "131 productos · 2 bodegas · historial semanal · semáforo de caducidad",
@@ -2230,16 +2230,22 @@ function _ordenarYRenumerarTodo() {
 
   const cCat  = map["CATEGORÍA"]    ? map["CATEGORÍA"].index    : 1;
   const cProd = map["PRODUCTO"]     ? map["PRODUCTO"].index     : 2;
+  const cPres = map["PRESENTACION"] ? map["PRESENTACION"].index : 3;
+  const cUni  = map["UNIDAD"]       ? map["UNIDAD"].index       : 4;
   const cSel  = map["SELECCIONAR"] ? map["SELECCIONAR"].index : 12;
   const lProd = map["PRODUCTO"] ? map["PRODUCTO"].letter : "C";
 
   const lMinBA = map["MÍN_BA"]   ? map["MÍN_BA"].letter   : "G";
   const lMaxBA = map["MÁX_BA"]   ? map["MÁX_BA"].letter   : "H";
   const cStkBA = map["STOCK_BA"] ? map["STOCK_BA"].col    : 9;
+  const idxMinBA = map["MÍN_BA"] && map["PRODUCTO"] ? (map["MÍN_BA"].col - map["PRODUCTO"].col + 1) : 5;
+  const idxMaxBA = map["MÁX_BA"] && map["PRODUCTO"] ? (map["MÁX_BA"].col - map["PRODUCTO"].col + 1) : 6;
 
   const lMinBM = map["MÍN_BM"]   ? map["MÍN_BM"].letter   : "J";
   const lMaxBM = map["MÁX_BM"]   ? map["MÁX_BM"].letter   : "K";
   const cStkBM = map["STOCK_BM"] ? map["STOCK_BM"].col    : 12;
+  const idxMinBM = map["MÍN_BM"] && map["PRODUCTO"] ? (map["MÍN_BM"].col - map["PRODUCTO"].col + 1) : 8;
+  const idxMaxBM = map["MÁX_BM"] && map["PRODUCTO"] ? (map["MÁX_BM"].col - map["PRODUCTO"].col + 1) : 9;
   
   // 1. Leer datos de MAESTRO
   const range = maestro.getRange(MAESTRO_START, 1, count, maestro.getLastColumn());
@@ -2309,24 +2315,24 @@ function _ordenarYRenumerarTodo() {
     // Re-construir datos del kardex en el nuevo orden del MAESTRO
     const newKData = [];
     for (let i = 0; i < data.length; i++) {
-      const prodName = String(data[i][3]).trim(); // MAESTRO col D = PRODUCTO
+      const prodName = String(data[i][cProd]).trim(); // MAESTRO col PRODUCTO
       const existing = kMap[prodName];
       if (existing) {
         // Actualizar No y Categoría, preservar todo lo demás
-        existing[0] = data[i][0]; // No
-        existing[1] = data[i][2]; // CATEGORÍA
-        existing[2] = data[i][3]; // PRODUCTO
-        existing[3] = data[i][4]; // PRESENTACIÓN
-        existing[4] = data[i][5]; // UNIDAD
+        existing[0] = data[i][0];     // No
+        existing[1] = data[i][cCat];  // CATEGORÍA
+        existing[2] = data[i][cProd]; // PRODUCTO
+        existing[3] = data[i][cPres]; // PRESENTACIÓN
+        existing[4] = data[i][cUni];  // UNIDAD
         newKData.push(existing);
       } else {
         // Producto nuevo sin datos previos
         const row = new Array(KARDEX_TOTAL_COLS).fill('');
-        row[0] = data[i][0]; // No
-        row[1] = data[i][2]; // CATEGORÍA
-        row[2] = data[i][3]; // PRODUCTO
-        row[3] = data[i][4]; // PRESENTACIÓN
-        row[4] = data[i][5]; // UNIDAD
+        row[0] = data[i][0];     // No
+        row[1] = data[i][cCat];  // CATEGORÍA
+        row[2] = data[i][cProd]; // PRODUCTO
+        row[3] = data[i][cPres]; // PRESENTACIÓN
+        row[4] = data[i][cUni];  // UNIDAD
         newKData.push(row);
       }
     }

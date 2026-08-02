@@ -16,6 +16,12 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🌌 v1.3.7 Altair (Fix de Desfasamiento VLOOKUP en STOCK_BA y STOCK_BM) — 2026-08-02
+
+### 🏬 Bodega (BDG)
+* **Fix de Búsqueda de Stock (`STOCK_BA`)**: Al eliminar la Columna B (`ID_FAMILIA`), el nombre de producto en `MAESTRO` pasó de la Columna D (4) a la Columna C (3). La fórmula VLOOKUP en `STOCK_BA` buscaba `D6` en `KARDEX_BA!C:AD`, arrojando `#N/A` porque el nombre ahora vive en `C6`. Se corrigió para evaluar la letra exacta de la columna de producto (`C6`).
+* **Sincronización Total de Índices**: Se actualizaron todos los punteros estáticos a arreglos de `data[i]` en `_ordenarYRenumerarTodo()` para usar las variables dinámicas de `map["CATEGORÍA"]`, `map["PRODUCTO"]`, `map["PRESENTACION"]` y `map["UNIDAD"]`.
+
 ## 🌌 v1.3.6 Altair (Dinamización de Carga y Edición Masiva en Bodega) — 2026-08-02
 
 ### 🏬 Bodega (BDG)
