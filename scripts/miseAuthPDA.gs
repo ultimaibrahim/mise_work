@@ -988,22 +988,12 @@ function setupCompleto() {
   
   // Hojas del sistema que queremos conservar (incluye _LOGS)
   const systemSheetNames = [SHEET_PEDIDO, SHEET_SYNC, "_LOGS"];
-  const sheets = ss.getSheets();
-  
-  // Eliminar pestañas basura sólo si existen otras además del pedido y sync
-  if (sheets.length > systemSheetNames.length) {
-    let temp = ss.getSheetByName("__temp__");
-    if (!temp) temp = ss.insertSheet("__temp__");
-    
-    sheets.forEach(s => {
-      const name = s.getName();
-      if (name !== "__temp__" && !systemSheetNames.includes(name)) {
-        try { ss.deleteSheet(s); } catch(e) {}
-      }
-    });
-    
-    if (temp) try { ss.deleteSheet(temp); } catch(e) {}
-  }
+  ss.getSheets().forEach(s => {
+    const name = s.getName();
+    if (!systemSheetNames.includes(name)) {
+      try { ss.deleteSheet(s); } catch(e) {}
+    }
+  });
 
   // Reutilizar o crear SHEET_PEDIDO
   let pedido = ss.getSheetByName(SHEET_PEDIDO);

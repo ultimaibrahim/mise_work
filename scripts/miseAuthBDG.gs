@@ -297,20 +297,12 @@ function setupCompleto() {
     systemSheetNames.push(b.vista);
   });
   
-  const sheets = ss.getSheets();
-  if (sheets.length > systemSheetNames.length) {
-    let temp = ss.getSheetByName("__temp__");
-    if (!temp) temp = ss.insertSheet("__temp__");
-    
-    sheets.forEach(s => {
-      const name = s.getName();
-      if (name !== "__temp__" && !systemSheetNames.includes(name)) {
-        try { ss.deleteSheet(s); } catch(e) {}
-      }
-    });
-    
-    if (temp) try { ss.deleteSheet(temp); } catch(e) {}
-  }
+  ss.getSheets().forEach(s => {
+    const name = s.getName();
+    if (!systemSheetNames.includes(name)) {
+      try { ss.deleteSheet(s); } catch(e) {}
+    }
+  });
 
   function getOrCreateSheet(name) {
     let s = ss.getSheetByName(name);
