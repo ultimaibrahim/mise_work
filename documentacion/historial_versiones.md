@@ -16,6 +16,12 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🌌 v1.3.6 Altair (Dinamización de Carga y Edición Masiva en Bodega) — 2026-08-02
+
+### 🏬 Bodega (BDG)
+* **Dinamización de Carga Masiva (`procesarCargaMasiva`)**: Se actualizó el procesador en lote de `➕ AGREGAR_MÚLTIPLES` para escribir dinámicamente en las 13 columnas de `MAESTRO` usando `_getMaestroHeaderMap`, eliminando referencias hardcodeadas a `ID_FAMILIA`.
+* **Dinamización de Edición Masiva (`crearHojaEdicionMasiva` & `procesarEdicionMasiva`)**: Se dinamizó la lectura y actualización en lote de `✏️ EDITAR_PRODUCTOS` utilizando el mapeo dinámico de encabezados.
+
 ## 🌌 v1.3.5 Altair (Mapeo Dinámico por Encabezados & Migración No-Destructiva) — 2026-08-01
 
 ### 🏬 Bodega (BDG)

@@ -1930,7 +1930,7 @@ function _catalogo() {
 
 function acercaDe() {
   SpreadsheetApp.getUi().alert(
-    "⚙️ Mise — v1.3.5 Altair",
+    "⚙️ Mise — v1.3.6 Altair",
     "Suite Atelier · La Crêpe Parisienne · Grupo MYT\n\n" +
     "Sistema de inventario operativo para bodega.\n" +
     "131 productos · 2 bodegas · historial semanal · semáforo de caducidad",
@@ -2638,6 +2638,11 @@ function procesarCargaMasiva() {
     const nos = maestro.getRange(MAESTRO_START, 1, lrM - MAESTRO_START + 1, 1).getValues();
     let lastNo = nos.reduce((max, r) => Math.max(max, parseInt(r[0]) || 0), 0);
     
+    const map = _getMaestroHeaderMap(maestro);
+    const cCat = map["CATEGORÍA"] ? map["CATEGORÍA"].col : 2;
+    const cAct = map["ACTIVO"]    ? map["ACTIVO"].col    : 6;
+    const cSel = map["SELECCIONAR"] ? map["SELECCIONAR"].col : 13;
+
     const maestroRows = [];
     const bgsM = [];
     
@@ -2646,18 +2651,18 @@ function procesarCargaMasiva() {
     for (let i = 0; i < validRows.length; i++) {
       const item = validRows[i];
       const newNo = ++lastNo;
-      maestroRows.push([newNo, item.idFam, item.cat, item.prod, item.pres, item.unit, "SÍ", item.minBa, item.maxBa, "", item.minBm, item.maxBm, "", false]);
+      maestroRows.push([newNo, item.cat, item.prod, item.pres, item.unit, "SÍ", item.minBa, item.maxBa, "", item.minBm, item.maxBm, "", false]);
       
       const rowColor = (newNo % 2 === 1) ? C.rowA : C.rowB;
-      bgsM.push(Array(MAESTRO_COLS).fill(rowColor));
+      bgsM.push(Array(maestro.getLastColumn()).fill(rowColor));
       
       newProductsData.push({ newNo, item, rowColor });
     }
     
     // 1. Escribir en MAESTRO
     const startRowM = lrM + 1;
-    maestro.getRange(startRowM, 1, validRows.length, MAESTRO_COLS).setValues(maestroRows);
-    maestro.getRange(startRowM, 1, validRows.length, MAESTRO_COLS).setBackgrounds(bgsM);
+    maestro.getRange(startRowM, 1, validRows.length, maestro.getLastColumn()).setValues(maestroRows);
+    maestro.getRange(startRowM, 1, validRows.length, maestro.getLastColumn()).setBackgrounds(bgsM);
     
     // Agregar validación y checkboxes en MAESTRO
     const validationRule = SpreadsheetApp.newDataValidation()
@@ -2665,14 +2670,14 @@ function procesarCargaMasiva() {
       .setAllowInvalid(false)
       .setHelpText("Selecciona SÍ o NO para activar/desactivar el producto.")
       .build();
-    maestro.getRange(startRowM, 7, validRows.length, 1).setDataValidation(validationRule);
+    maestro.getRange(startRowM, cAct, validRows.length, 1).setDataValidation(validationRule);
     const catValidationCM = SpreadsheetApp.newDataValidation()
       .requireValueInList(CATEGORIAS_LISTA, true)
       .setAllowInvalid(false)
       .setHelpText("Selecciona la categoría del producto.")
       .build();
-    maestro.getRange(startRowM, 3, validRows.length, 1).setDataValidation(catValidationCM);
-    maestro.getRange(startRowM, 14, validRows.length, 1).insertCheckboxes().setValue(false);
+    maestro.getRange(startRowM, cCat, validRows.length, 1).setDataValidation(catValidationCM);
+    maestro.getRange(startRowM, cSel, validRows.length, 1).insertCheckboxes().setValue(false);
     
     SpreadsheetApp.getActive().toast("⏳ Paso 2/4: Extendiendo KARDEX de Andares y Mercado...", "⚙️ Agregar productos", 5);
     // 2. Insertar en KARDEX_BA y KARDEX_BM
@@ -2790,23 +2795,35 @@ function crearHojaEdicionMasiva() {
     return;
   }
   
-  // Obtener seleccionados (14 columnas)
+  // Obtener seleccionados
   const count = lr - MAESTRO_START + 1;
-  const data = maestro.getRange(MAESTRO_START, 1, count, MAESTRO_COLS).getValues();
+  const map = _getMaestroHeaderMap(maestro);
+  const data = maestro.getRange(MAESTRO_START, 1, count, maestro.getLastColumn()).getValues();
+
+  const cNo    = map["NO"]           ? map["NO"].index           : 0;
+  const cCat   = map["CATEGORÍA"]    ? map["CATEGORÍA"].index    : 1;
+  const cProd  = map["PRODUCTO"]     ? map["PRODUCTO"].index     : 2;
+  const cPres  = map["PRESENTACION"] ? map["PRESENTACION"].index : 3;
+  const cUni   = map["UNIDAD"]       ? map["UNIDAD"].index       : 4;
+  const cMinBA = map["MÍN_BA"]      ? map["MÍN_BA"].index      : 6;
+  const cMaxBA = map["MÁX_BA"]      ? map["MÁX_BA"].index      : 7;
+  const cMinBM = map["MÍN_BM"]      ? map["MÍN_BM"].index      : 9;
+  const cMaxBM = map["MÁX_BM"]      ? map["MÁX_BM"].index      : 10;
+  const cSel   = map["SELECCIONAR"] ? map["SELECCIONAR"].index : 12;
+
   const selectedProds = [];
   for (let i = 0; i < count; i++) {
-    if (data[i][13] === true) { // Columna 14 (index 13) es SELECCIONAR
+    if (data[i][cSel] === true) {
       selectedProds.push({
-        no: data[i][0],
-        idFam: data[i][1],
-        cat: data[i][2],
-        prod: data[i][3],
-        pres: data[i][4],
-        unit: data[i][5],
-        minBa: data[i][7], // Col 8 (index 7)
-        maxBa: data[i][8], // Col 9 (index 8)
-        minBm: data[i][10], // Col 11 (index 10)
-        maxBm: data[i][11] // Col 12 (index 11)
+        no: data[i][cNo],
+        cat: data[i][cCat],
+        prod: data[i][cProd],
+        pres: data[i][cPres],
+        unit: data[i][cUni],
+        minBa: data[i][cMinBA],
+        maxBa: data[i][cMaxBA],
+        minBm: data[i][cMinBM],
+        maxBm: data[i][cMaxBM]
       });
     }
   }
@@ -2978,22 +2995,32 @@ function procesarEdicionMasiva() {
     const maestro = ss.getSheetByName(SHEET_MAESTRO);
     const lrM = maestro.getLastRow();
     if (lrM >= MAESTRO_START) {
-      const rangeM = maestro.getRange(MAESTRO_START, 1, lrM - MAESTRO_START + 1, MAESTRO_COLS);
+      const map = _getMaestroHeaderMap(maestro);
+      const cCat = map["CATEGORÍA"]    ? map["CATEGORÍA"].index    : 1;
+      const cProd = map["PRODUCTO"]     ? map["PRODUCTO"].index     : 2;
+      const cPres = map["PRESENTACION"] ? map["PRESENTACION"].index : 3;
+      const cUni  = map["UNIDAD"]       ? map["UNIDAD"].index       : 4;
+      const cMinBA = map["MÍN_BA"]      ? map["MÍN_BA"].index      : 6;
+      const cMaxBA = map["MÁX_BA"]      ? map["MÁX_BA"].index      : 7;
+      const cMinBM = map["MÍN_BM"]      ? map["MÍN_BM"].index      : 9;
+      const cMaxBM = map["MÁX_BM"]      ? map["MÁX_BM"].index      : 10;
+      const cSel   = map["SELECCIONAR"] ? map["SELECCIONAR"].index : 12;
+
+      const rangeM = maestro.getRange(MAESTRO_START, 1, lrM - MAESTRO_START + 1, maestro.getLastColumn());
       const dataM = rangeM.getValues();
       for (let i = 0; i < validEdits.length; i++) {
         const item = validEdits[i];
         const idx = item.no - 1;
         if (idx >= 0 && idx < dataM.length) {
-          dataM[idx][1] = item.idFam;
-          dataM[idx][2] = item.cat;
-          dataM[idx][3] = item.prod;
-          dataM[idx][4] = item.pres;
-          dataM[idx][5] = item.unit;
-          dataM[idx][7] = item.minBa;
-          dataM[idx][8] = item.maxBa;
-          dataM[idx][10] = item.minBm;
-          dataM[idx][11] = item.maxBm;
-          dataM[idx][13] = false; // Desmarcar (columna 14 = index 13)
+          dataM[idx][cCat]   = item.cat;
+          dataM[idx][cProd]  = item.prod;
+          dataM[idx][cPres]  = item.pres;
+          dataM[idx][cUni]   = item.unit;
+          dataM[idx][cMinBA] = item.minBa;
+          dataM[idx][cMaxBA] = item.maxBa;
+          dataM[idx][cMinBM] = item.minBm;
+          dataM[idx][cMaxBM] = item.maxBm;
+          dataM[idx][cSel]   = false; // Desmarcar
         }
       }
       rangeM.setValues(dataM);
