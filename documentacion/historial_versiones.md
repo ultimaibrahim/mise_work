@@ -16,7 +16,7 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
-## 🌌 v1.4.0 Altair Orbit (Mapeo Dinámico por Encabezados & Migración No-Destructiva) — 2026-08-01
+## 🌌 v1.3.5 Altair (Mapeo Dinámico por Encabezados & Migración No-Destructiva) — 2026-08-01
 
 ### 🏬 Bodega (BDG)
 * **Arquitectura Zero Hardcoded (`Header-Based Dynamic Mapping`)**: Se implementó `_getMaestroHeaderMap(sheet)` y `_colToLetter(col)`. El script inspecciona la Fila 3 en tiempo de ejecución para ubicar cada campo por su nombre (`"PRODUCTO"`, `"MÍN_BA"`, `"MÁX_BA"`, `"ACTIVO"`, `"SELECCIONAR"`). El código es 100% inmune a futuros cambios de posición de columnas.
