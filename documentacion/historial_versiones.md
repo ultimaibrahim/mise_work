@@ -16,6 +16,11 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🚀 v1.3.3-FIX (Fix a Tabla de Resumen en Surtido Rápido) — 2026-08-01
+
+### 📱 Pedidos (PDA & PDM)
+* **Fix a Error `#ERROR!` en Resumen de Surtido Rápido**: Se separó la inyección de las etiquetas de texto de la Columna I (`setValues`) de las fórmulas de conteo de la Columna J (`setFormulas`). Esto evita que Google Sheets interprete los emojis y textos `✅ Completos`, `⚠️ Incompletos`, `❌ Inexistentes` y `🚨 Adiciones` como fórmulas no válidas.
+
 ## 🚀 v1.3.2-PERF (Estructuración de Menú & Purga de Latencia en Bodega BDG) — 2026-08-01
 
 ### 🏬 Bodega (BDG)
