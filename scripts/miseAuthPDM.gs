@@ -1,5 +1,5 @@
 /**
- * MISE — Pedidos Mercado Script v1.3.0-PERF (Optimizaciones & Auditoría)
+ * MISE — Pedidos Mercado Script v1.5.0 Altair (Quiosco de Picking & Categorías Dinámicas)
  * Suite Atelier · La Crêpe Parisienne · Grupo MYT
  *
  * INSTALAR EN: Pedidos Mercado (Google Sheets de B-Mercado)
@@ -18,7 +18,7 @@ const COL_CANT_PEDIR = 6;   // F — CANT. A PEDIR
 const COL_RECIBIDA   = 8;   // H — CANT. RECIBIDA (oculta)
 const COL_ESTADO     = 9;   // I — ESTADO (oculta)
 const DATA_START_ROW = 4;
-const NUM_COLS       = 10;
+const NUM_COLS       = 11;
 
 // Colores institucionales
 const COLORS = {
@@ -57,6 +57,7 @@ function onOpen() {
       .addSeparator()
       .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
       .addSeparator()
+      .addItem("🖐️ Ordenar picking",                    "ordenarPedido")
       .addItem("🚚 Surtido Rápido (móvil)",                "generarSurtidoRapido")
       .addSeparator()
       .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
@@ -117,7 +118,8 @@ function _actualizarAvisoPedido() {
   
   const existente = pedido.getRange(DR, 3).getValue(); 
   if (existente !== "" && existente !== null) {
-    _aplicarAnchosColumnas(pedido); 
+    _aplicarAnchosColumnas(pedido);
+    _aplicarOcultamientoColumnas(pedido);
     return;
   }
 
@@ -169,31 +171,39 @@ function _actualizarAvisoPedido() {
   pedido.getRange(DR, 4, count, 1).setHorizontalAlignment("center"); 
   pedido.getRange(DR, 5, count, 1).setHorizontalAlignment("right");  
   pedido.getRange(DR, 7, count, 1).setHorizontalAlignment("center"); 
+  pedido.getRange(DR, 11, count, 1).setHorizontalAlignment("center"); 
   
   _aplicarAnchosColumnas(pedido);
+  _aplicarOcultamientoColumnas(pedido);
   _aplicarFormatosCondicionales(pedido);
-  
-  // Mostrar Categoría (Col B) y ocultar No (Col A) para permitir filtrado móvil
+}
+
+function _aplicarOcultamientoColumnas(sheet) {
   try {
-    pedido.hideColumns(1);
-    pedido.showColumns(2);
-    let filter = pedido.getFilter();
+    sheet.showColumns(1, 11);  // Asegurar estado base limpio hasta Col 11
+    sheet.hideColumns(1, 2);   // Ocultar Col A (No) y Col B (CATEGORÍA)
+    sheet.showColumns(3);      // Mostrar Col C (PRODUCTO)
+    sheet.hideColumns(4, 2);   // Ocultar Col D (UNIDAD) y Col E (SALDO TEÓRICO)
+    sheet.showColumns(6);      // Mostrar Col F (CANT. A PEDIR)
+    sheet.hideColumns(7, 4);   // Ocultar Col G (DIFERENCIA), Col H (RECIBIDA), Col I (ESTADO), Col J (ADICIÓN)
+    sheet.showColumns(11);     // Mostrar Col K (MÍN/MÁX QUIOSCO)
+    
+    let filter = sheet.getFilter();
     if (filter) filter.remove();
-    pedido.getRange(3, 2, count + 1, 6).createFilter(); // B3:G (Headers Row 3 to last product Row)
   } catch(err) {}
 }
 
 function _aplicarAnchosColumnas(sheet) {
   sheet.setColumnWidth(1, 40);   // No
   sheet.setColumnWidth(2, 115);  // CATEGORÍA
-  sheet.setColumnWidth(3, 210);  // PRODUCTO
+  sheet.setColumnWidth(3, 260);  // PRODUCTO (VISIBLE)
   sheet.setColumnWidth(4, 65);   // UNIDAD
   sheet.setColumnWidth(5, 110);  // SALDO TEÓRICO
-  sheet.setColumnWidth(6, 110);  // CANT. A PEDIR
+  sheet.setColumnWidth(6, 120);  // CANT. A PEDIR (VISIBLE)
   sheet.setColumnWidth(7, 100);  // DIFERENCIA
-  sheet.setColumnWidth(8, 120);  // H - Surtido label
-  sheet.setColumnWidth(9, 60);   // I - Checkbox
-  sheet.setColumnWidth(10, 40);  // J - Alerta Adición (oculto)
+  sheet.setColumnWidth(8, 120);  // H
+  sheet.setColumnWidth(9, 60);   // I
+  sheet.setColumnWidth(10, 40);  // J
 }
 
 function _getProductCount() {
@@ -332,14 +342,14 @@ function onEdit(e) {
   // B. Manejo de la pestaña de Pedido Diario
   if (name !== SHEET_PEDIDO) return;
 
-  // 1. Botones Interactivos Móviles (Fila 2) en columnas visibles B-G
-  if (row === 2) {
-    if (col === 3) { // C2 - Resetear pedido
+  // 1. Botones Interactivos Móviles (Checkboxes en Fila 3) en columnas visibles (C3, F3, K3)
+  if (row === 3) {
+    if (col === 3) { // C3 - Resetear pedido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         try {
           _resetearPedidoSilencioso();
-          registrarLog("resetearPedido", "SUCCESS", "Pedido reseteado desde botón táctil C2.");
+          registrarLog("resetearPedido", "SUCCESS", "Pedido reseteado desde botón táctil C3.");
           try { SpreadsheetApp.getActive().toast("Pedido reseteado ✓", "⚙️ Mise", 3); } catch(err) {}
         } catch(err) {
           registrarLog("resetearPedido", "ERROR", err.message);
@@ -347,23 +357,23 @@ function onEdit(e) {
       }
       return;
     }
-    if (col === 5) { // E2 - Surtido Rápido
+    if (col === 6) { // F3 - Surtido Rápido
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         try {
           generarSurtidoRapido();
-          registrarLog("surtidoRapido", "SUCCESS", "Pestaña de Surtido Rápido generada desde botón E2.");
+          registrarLog("surtidoRapido", "SUCCESS", "Pestaña de Surtido Rápido generada desde botón F3.");
         } catch(err) {
           registrarLog("surtidoRapido", "ERROR", err.message);
         }
       }
     }
-    if (col === 7) { // G2 - Forzar sincronización de estados
+    if (col === 11) { // K3 - Forzar sincronización de estados
       if (e.range.getValue() === true) {
         e.range.setValue(false);
         try {
           sincronizarEstados();
-          registrarLog("sincronizarEstados", "SUCCESS", "Estados sincronizados con Bodega desde botón G2.");
+          registrarLog("sincronizarEstados", "SUCCESS", "Estados sincronizados con Bodega desde botón K3.");
           try { SpreadsheetApp.getActive().toast("Estados sincronizados ✓", "⚙️ Mise", 3); } catch(err) {}
         } catch(err) {
           registrarLog("sincronizarEstados", "ERROR", err.message);
@@ -450,6 +460,11 @@ function sincronizarEstados() {
     }
   }
 
+  // Reordenar automáticamente la lista según el nuevo ranking de picking de Bodega
+  try {
+    ordenarPedido();
+  } catch(e) {}
+
   const syncCount = Math.max(0, sync.getLastRow() - 3);
   const currentCount = _getProductCount();
 
@@ -501,6 +516,7 @@ function sincronizarEstados() {
     sheet.getRange(insertStartRow, 4, diff, 1).setHorizontalAlignment("center");
     sheet.getRange(insertStartRow, 5, diff, 1).setHorizontalAlignment("right");
     sheet.getRange(insertStartRow, 7, diff, 1).setHorizontalAlignment("center");
+    sheet.getRange(insertStartRow, 11, diff, 1).setHorizontalAlignment("center");
 
     _aplicarFormatosCondicionales(sheet);
 
@@ -547,12 +563,19 @@ function ordenarPedido() {
   const values = range.getValues();
 
   const sync = ss.getSheetByName(SHEET_SYNC);
-  const syncValues = sync ? sync.getRange(4, 3, count, 7).getValues() : [];
+  const syncLr = sync ? sync.getLastRow() : 3;
+  const syncCount = Math.max(syncLr - 3, 0);
+  const syncValues = (sync && syncCount > 0) ? sync.getRange(4, 1, syncCount, 12).getValues() : [];
   const activeMap = {};
+  const pickingMap = {};
   for (let i = 0; i < syncValues.length; i++) {
-    const prodName = String(syncValues[i][0]).trim();
-    const activo = String(syncValues[i][6]).trim();
-    activeMap[prodName] = activo;
+    const prodName = String(syncValues[i][2]).trim();  // Col C = PRODUCTO (index 2)
+    const activo   = String(syncValues[i][8]).trim();  // Col I = ACTIVO (index 8)
+    const picking  = parseInt(syncValues[i][11]) || 0; // Col L = PICKING (index 11)
+    if (prodName) {
+      activeMap[prodName]  = activo;
+      pickingMap[prodName] = picking;
+    }
   }
 
   const items = [];
@@ -562,18 +585,26 @@ function ordenarPedido() {
     });
   }
 
-  // Ordenar por Categoría (B) ascendente, activos primero, inactivos después, y luego por pedidos (F > 0)
+  // Ordenar con Detección Automática Universal
   items.sort((a, b) => {
-    const catA = String(a.vals[1] || "").trim();
-    const catB = String(b.vals[1] || "").trim();
-    if (catA !== catB) {
-      return catA.localeCompare(catB);
-    }
-    const isInactiveA = (activeMap[String(a.vals[2]).trim()] === "NO") ? 1 : 0;
-    const isInactiveB = (activeMap[String(b.vals[2]).trim()] === "NO") ? 1 : 0;
+    const nameA = String(a.vals[2] || "").trim();
+    const nameB = String(b.vals[2] || "").trim();
+
+    // 1. Inactivos siempre al final
+    const isInactiveA = (activeMap[nameA] === "NO") ? 1 : 0;
+    const isInactiveB = (activeMap[nameB] === "NO") ? 1 : 0;
     if (isInactiveA !== isInactiveB) {
       return isInactiveA - isInactiveB;
     }
+
+    // 2. FEATURE DETECTION: ¿La sucursal tiene un orden custom de picking configurado (rank > 0)?
+    const rankA = pickingMap[nameA] || 0;
+    const rankB = pickingMap[nameB] || 0;
+    if (rankA > 0 && rankB > 0 && rankA !== rankB) {
+      return rankA - rankB;
+    }
+
+    // 3. Si no hay orden custom o son iguales, colocar productos solicitados (F > 0) arriba
     const valA = parseFloat(a.vals[5]) || 0;
     const valB = parseFloat(b.vals[5]) || 0;
     const hasA = valA > 0 ? 1 : 0;
@@ -581,10 +612,28 @@ function ordenarPedido() {
     if (hasA !== hasB) {
       return hasB - hasA;
     }
+
+
+    // 4. FALLBACK UNIVERSAL: Si no hay orden custom configurado, ordena por Categoría alfabética
+    const catA = String(a.vals[1] || "").trim();
+    const catB = String(b.vals[1] || "").trim();
+    if (catA !== catB) {
+      return catA.localeCompare(catB);
+    }
+
     const numA = parseInt(a.vals[0]) || 0;
     const numB = parseInt(b.vals[0]) || 0;
     return numA - numB;
   });
+
+  // Crear mapa de nombres de producto -> Fila en _SYNC (4-indexed)
+  const syncRowMap = {};
+  for (let i = 0; i < syncValues.length; i++) {
+    const pName = String(syncValues[i][2]).trim(); // Col C = PRODUCTO (index 2)
+    if (pName) {
+      syncRowMap[pName] = 4 + i;
+    }
+  }
 
   const bgs = [];
   const cleanFonts = [];
@@ -593,8 +642,9 @@ function ordenarPedido() {
   const sRef = "'" + SHEET_SYNC + "'";
   for (let i = 0; i < items.length; i++) {
     const r = DATA_START_ROW + i;
-    const prodNo = parseInt(items[i].vals[0]);
-    const sr = prodNo ? prodNo + 3 : (4 + i);
+    const prodNo = parseInt(items[i].vals[0]) || (i + 1);
+    const prodName = String(items[i].vals[2] || "").trim();
+    const sr = syncRowMap[prodName] || (prodNo + 3);
     
     // Generar fondos estándar
     const bgRow = i % 2 === 0 ? COLORS.neutral_a : COLORS.neutral_b;
@@ -608,7 +658,7 @@ function ordenarPedido() {
     rowFont[COL_CANT_PEDIR - 1] = "bold";
     cleanFonts.push(rowFont);
 
-    // Generar fórmulas y valores limpios (Col G es DIFERENCIA con VLOOKUP)
+    // Generar fórmulas y valores limpios (Col G es DIFERENCIA, Col K es MÍN/MÁX QUIOSCO)
     outputData.push([
       prodNo,                                       // Col A (No)
       '=' + sRef + '!B' + sr,                       // Col B (CATEGORÍA)
@@ -619,7 +669,8 @@ function ordenarPedido() {
       '=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')', // Col G (DIFERENCIA)
       items[i].vals[7] === "" ? "" : items[i].vals[7], // Col H (CANT. RECIBIDA)
       items[i].vals[8] || "",                       // Col I (ESTADO)
-      items[i].vals[9] || ""                        // Col J (ADICIÓN)
+      items[i].vals[9] || "",                       // Col J (ADICIÓN)
+      '=IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "—", ' + sRef + '!J' + sr + ' & "  |  " & ' + sRef + '!K' + sr + ')' // Col K (MÍN | MÁX QUIOSCO)
     ]);
   }
 
@@ -637,6 +688,7 @@ function ordenarPedido() {
   sheet.getRange(DATA_START_ROW, 4, count, 1).setHorizontalAlignment("center");
   sheet.getRange(DATA_START_ROW, 5, count, 1).setHorizontalAlignment("right");
   sheet.getRange(DATA_START_ROW, 7, count, 1).setHorizontalAlignment("center");
+  sheet.getRange(DATA_START_ROW, 11, count, 1).setHorizontalAlignment("center");
 
   _aplicarFormatosCondicionales(sheet);
   _actualizarVisibilidadInactivos(sheet);
@@ -644,7 +696,7 @@ function ordenarPedido() {
 
   PropertiesService.getScriptProperties().setProperty("IS_ORDER_SORTED", "true");
   try {
-    SpreadsheetApp.getActive().toast("Pedido ordenado por categorías ✓", "⚙️ Ordenar", 3);
+    SpreadsheetApp.getActive().toast("Pedido ordenado por secuencia de picking de quiosco ✓", "⚙️ Ordenar", 3);
   } catch(e) {}
 
   // Actualizar Surtido Rápido silenciosamente si existe
@@ -686,11 +738,11 @@ function _setupSync(bodegaUrl) {
     syncSheet = ss.insertSheet(SHEET_SYNC);
     syncSheet.hideSheet();
     syncSheet.getRange(1, 1).setValue(`⚙️ SINCRONIZACIÓN ${BODEGA_NOMBRE} — NO EDITAR`);
-    syncSheet.getRange(3, 1, 1, 11).setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO","🚦","ENT_HOY","SAL_HOY","ACTIVO","MÍN","MÁX"]]);
+    syncSheet.getRange(3, 1, 1, 12).setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO","🚦","ENT_HOY","SAL_HOY","ACTIVO","MÍN","MÁX","PICKING"]]);
   }
   const lastRow = Math.max(syncSheet.getLastRow(), 4);
-  if (lastRow >= 4) syncSheet.getRange(4, 1, lastRow - 3, 11).clearContent();
-  const formula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
+  if (lastRow >= 4) syncSheet.getRange(4, 1, lastRow - 3, 12).clearContent();
+  const formula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:L")';
   syncSheet.getRange(4, 1).setFormula(formula);
 }
 
@@ -807,7 +859,7 @@ function repararSistemaTienda() {
       ui.alert("❌ Error de Conexión", `No se ha configurado la propiedad BODEGA_URL_${BODEGA_KEY} en las Propiedades del Script.\n\nVe al menú ⚙️ Mise -> Configurar Bodega para enlazar el archivo.`, ui.ButtonSet.OK);
       return;
     }
-    const syncFormula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:K")';
+    const syncFormula = '=IMPORTRANGE("' + url + '", "'  + VISTA_MOVIL + '!A4:L")';
     sync.getRange(4, 1).clearContent();
     sync.getRange(4, 1).setFormula(syncFormula);
     
@@ -845,7 +897,7 @@ function repararSistemaTienda() {
 
     // 5. Re-inyectar fórmulas estables y restaurar cantidades resguardadas
     const sRef = "'" + SHEET_SYNC + "'";
-    const formulasB = [], formulasC = [], formulasD = [], formulasE = [], formulasG = [];
+    const formulasB = [], formulasC = [], formulasD = [], formulasE = [], formulasG = [], formulasK = [];
     const restorePedir = [], restoreRecibida = [];
     const cleanBgs = [];
 
@@ -857,6 +909,7 @@ function repararSistemaTienda() {
       formulasD.push(['=' + sRef + '!D' + sr]);
       formulasE.push(['=IFERROR(' + sRef + '!E' + sr + '*1, 0) & IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "", IF(' + sRef + '!E' + sr + '<' + sRef + '!J' + sr + ', " (-" & (' + sRef + '!J' + sr + '-' + sRef + '!E' + sr + ') & ")", IF(' + sRef + '!E' + sr + '>' + sRef + '!K' + sr + ', " (+" & (' + sRef + '!E' + sr + '-' + sRef + '!K' + sr + ') & ")", " (-)")))']);
       formulasG.push(['=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')']);
+      formulasK.push(['=IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "—", ' + sRef + '!J' + sr + ' & "  |  " & ' + sRef + '!K' + sr + ')']);
       
       const rowBg = Array(NUM_COLS).fill(i % 2 === 0 ? COLORS.neutral_a : COLORS.neutral_b);
       rowBg[4] = COLORS.blue;                    // Col E (Saldo Teórico)
@@ -873,6 +926,7 @@ function repararSistemaTienda() {
     pedido.getRange(DR, 4, syncCount, 1).setFormulas(formulasD);
     pedido.getRange(DR, 5, syncCount, 1).setFormulas(formulasE);
     pedido.getRange(DR, 7, syncCount, 1).setFormulas(formulasG);
+    pedido.getRange(DR, 11, syncCount, 1).setFormulas(formulasK);
 
     SpreadsheetApp.flush();
 
@@ -1000,28 +1054,31 @@ function _buildPedidoDiario(sheet) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), Math.max(1, NUM_COLS - sheet.getMaxColumns()));
   }
 
-  // Banner superior en C1 (Fórmula)
-  sheet.getRange(1, 1, 1, NUM_COLS).clearContent().setBackground("#3D5A47");
+  // Banner superior partiendo de la Columna C visible (C1)
+  sheet.getRange(1, 1, 1, NUM_COLS).clearContent().setBackground(null);
+  sheet.getRange(1, 3, 1, NUM_COLS - 2).clearContent().setBackground("#3D5A47");
   sheet.getRange("C1")
     .setFormula('="MISE — PEDIDO DIARIO · ' + BODEGA_NOMBRE + '   |   La Crêpe Parisienne   ·   " & TEXT(TODAY(),"dd/mmm/yyyy")')
-    .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
+    .setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(10).setFontFamily("Arial").setHorizontalAlignment("left").setVerticalAlignment("middle");
   sheet.setRowHeight(1, 30);
 
-  // Fila 2: Fondo y Botones
-  sheet.getRange(2, 1, 1, NUM_COLS).setBackground("#7A9E8A").clearContent();
-  sheet.getRange("B2").setValue("🗑").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("C2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-  sheet.getRange("D2").setValue("🚚").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("E2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-  sheet.getRange("F2").setValue("🔗").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("center").setVerticalAlignment("middle").setFontSize(9);
-  sheet.getRange("G2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
-  sheet.setRowHeight(2, 24);
+  // Fila 2: Botón Interactivo Único (F2 = 🚚 Surtido Rápido)
+  sheet.getRange("A2:ZZ2").setBackground(null).clearContent().clearDataValidations();
+  sheet.getRange(2, 1, 1, NUM_COLS).setBackground("#7A9E8A");
+  sheet.getRange(3, 1, 1, NUM_COLS).setBackground(null).clearContent().clearDataValidations();
 
-  // Fila 3: Headers (Valores Puros)
+  // Col C: Etiqueta explicativa del botón único
+  sheet.getRange("C2").setValue("🚚  Surtido Rápido:").setFontWeight("bold").setFontColor("#FFFFFF").setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
+  
+  // Col F: Casilla táctil interactiva que acciona el Surtido Rápido
+  sheet.getRange("F2").insertCheckboxes().setValue(false).setBackground("#FFFCD0");
+  sheet.setRowHeight(2, 26);
+
+  // Fila 3: Headers (Encabezados institucionales de la tabla)
   sheet.getRange(3, 1, 1, NUM_COLS)
-    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","","",""]])
+    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO TEÓRICO","CANT. A PEDIR","DIFERENCIA","","","","MÍN  |  MÁX"]])
     .setBackground("#3D5A47").setFontColor("#FFFFFF").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
-  sheet.setRowHeight(3, 34);
+  sheet.setRowHeight(3, 32);
   
   // Inmovilización blindada móvil
   sheet.setFrozenRows(3);
@@ -1033,17 +1090,14 @@ function _buildPedidoDiario(sheet) {
   _actualizarVisibilidadInactivos(sheet);
 
   _aplicarAnchosColumnas(sheet);
-  sheet.hideColumns(1);  // Ocultar No
-  sheet.hideColumns(COL_RECIBIDA, 2); // Ocultar Cant. Recibida (H) y Estado (I)
-  sheet.hideColumns(10); // Ocultar Alerta Adición (Col J)
-  sheet.showColumns(2);  // Mostrar Categoría
+  _aplicarOcultamientoColumnas(sheet);
   
-  // Crear filtro
+  // Crear filtro partiendo estrictamente de la Fila 3 de Encabezados
   try {
     let filter = sheet.getFilter();
     if (filter) filter.remove();
     const lastRow = Math.max(sheet.getLastRow(), DATA_START_ROW);
-    sheet.getRange(3, 2, lastRow - 2, 6).createFilter(); // Columns B to G (6 columns)
+    sheet.getRange(3, 2, lastRow - 2, 10).createFilter(); // Columns B to K partiendo de Fila 3
   } catch(err) {}
   
   _actualizarAvisoPedido();
@@ -1128,7 +1182,7 @@ function _aplicarFormatosCondicionales(sheet) {
 }
 
 function acercaDe() {
-  SpreadsheetApp.getUi().alert("⚙️ Mise — v1.3.8 Altair", `Suite Atelier · La Crêpe Parisienne · ${BODEGA_NOMBRE}\n\nDiseño optimizado a sub-segundos para dispositivos móviles de 9 columnas con surtido y fórmulas integradas.`, SpreadsheetApp.getUi().ButtonSet.OK);
+  SpreadsheetApp.getUi().alert("⚙️ Mise — v1.6.0 Altair", `Suite Atelier · La Crêpe Parisienne · ${BODEGA_NOMBRE}\n\nQuiosco de Picking · Vista Móvil 3-Cols · Stock de Quiosco · Diseñado para celulares.`, SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function _actualizarVisibilidadInactivos(sheet) {

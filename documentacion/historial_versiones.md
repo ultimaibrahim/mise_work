@@ -16,6 +16,39 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 * **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
 * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
+## 🌌 v1.6.0 Altair (Powerhouse: Quiosco de Picking, Stock de Quiosco & Remote Push Auto-Sync) — 2026-08-05
+
+### 🏬 Bodega (BDG) — Quiosco de Picking & Sincronización Remota
+* **Constructor Visual de Orden de Picking**: Implementación del modal HTML completo (`PickingDialog.html`) para reorganizar visualmente la secuencia en que los productos se recorren durante el surtido. Diseño Crystal Squircle con badges de posición oscuros, drag & drop con SortableJS y vistas alternables entre `📄 Lista Plana` y `📁 Por Categorías`.
+* **Gestión Visual de Categorías Globales**: Se agregó la capacidad de crear, renombrar y eliminar categorías de producto directamente desde el Quiosco, con efecto inmediato en todas las sucursales (Andares y Mercado). Badge `🌍 Categorías Globales` para indicar el alcance del cambio.
+* **Modales In-App Crystal**: Se reemplazaron todos los `prompt()` y `confirm()` nativos del navegador por overlays HTML internos con estética Crystal (creación de categoría, confirmación de eliminación, confirmación de reset), eliminando popups feos del navegador.
+* **Eliminación Segura de Categorías**: Botón `🗑️ Eliminar` en headers de categoría que transfiere automáticamente los productos a `"SIN CATEGORÍA"` antes de borrar, evitando pérdida de datos.
+* **Indicador de Cambios Sin Guardar Exclusivo**: Badge animado `⚠️ Cambios sin guardar` en el header del modal, con badges `● Editado` asignados estrictamente a los productos arrastrados o modificados manualmente por el usuario (vía `touchedItems` Set), evitando falsos positivos por desplazamiento.
+* **Botón ✕ In-App**: Cierre controlado del modal con confirmación interna si hay modificaciones pendientes.
+* **Preferencia de Zoom/Densidad**: Selector de zoom (`100%`, `115%`, `130%`) persistido en `localStorage` para adaptar la densidad visual al dispositivo.
+* **Salto Directo por Posición**: Campo de entrada para navegar instantáneamente a una posición específica tipeando su número.
+* **Botones Un-Clic `🔝 Top` y `🔻 Bot`**: Envío rápido de productos al inicio o final de la lista con un solo clic.
+* **Sincronización Dinámica de Categorías MAESTRO → VISTA_MOVIL**: Se actualizó `_buildVista(key)` para leer las categorías en tiempo real directamente de la columna B de `MAESTRO`, eliminando la lectura estática de `KARDEX` que causaba desincronización de categorías entre sucursales.
+* **Conexión Dinámica e Inmediata VISTA_MOVIL ➔ MAESTRO**: Se sustituyó el cálculo numérico estático de MÍN/MÁX en VISTA_MOVIL por fórmulas vivas apuntando directamente a `MAESTRO` (`='MAESTRO'!N4`, `='MAESTRO'!O4`, `='MAESTRO'!P4`). Cualquier cambio en los límites de stock de quiosco en Bodega se refleja al instante en las tiendas vía `IMPORTRANGE`.
+* **Auto-Sincronización Remota Push (Remote Auto-Sync)**: Integración de `sincronizarRemotamenteTiendasPush()`. Al guardar el orden en el Quiosco de Bodega, el backend re-calcula las vistas móviles y fuerza un refresco atómico en los libros remotos de Andares y Mercado sin necesidad de intervención manual.
+* **Auto-Creación de Columnas de Stock Quiosco**: Incorporación de `_asegurarColumnasQuioscoEnMaestro()` para inyectar y formatear automáticamente con verde `C.sage` las columnas `MÍN_Q_BA`, `MÁX_Q_BA`, `MÍN_Q_BM` y `MÁX_Q_BM` en `MAESTRO` al diagnosticar o sanitizar el sistema.
+
+### 📱 Pedidos (PDA & PDM) — Simplificación de Vistas & Experiencia Móvil
+* **Simplificación Visual a 3 Columnas Fundamentales**: Ocultamiento dinámico mediante `sheet.hideColumns()` para mostrar en pantalla únicamente las columnas clave de operación móvil: `PRODUCTO` (Columna C), `CANT. A PEDIR` (Columna F) y `MÍN  |  MÁX` (Columna K).
+* **Columna `MÍN  |  MÁX` Específica de Quiosco**: Mapea e inyecta dinámicamente los mínimos y máximos de stock de quiosco desde `_SYNC` (`Cols J y K`) con formato visual limpio y centrado (`1  |  2` o `—`).
+* **Barra de Acción Única Táctil (Fila 2)**: Diseño desacoplado en Fila 2 que incluye la etiqueta explicativa `🚚 Surtido Rápido:` en `C2` y su casilla de verificación interactiva (`Checkbox`) en `F2` sobre la columna de pedido.
+* **Alineación Impecable del Banner Superior (Fila 1)**: El título del banner `MISE — PEDIDO DIARIO...` arranca exactamente desde la Columna C1 visible, eliminando desfasamientos tipográficos a la izquierda.
+* **Auto-Reordenamiento Automático**: `sincronizarEstados()` invoca automáticamente `ordenarPedido()`. Al recibir la señal remota de Bodega, las tiendas reordenan inmediatamente sus productos según el nuevo ranking del Quiosco.
+* **Sanitizado y Blindaje Aumentado (`repararSistemaTienda`)**: Se incluyó la inyección de `formulasK` en el motor de reparación para auto-corregir anomalías en la Fila 4 y re-formatear la tabla sin perder cantidades resguardadas.
+
+## 🌌 v1.4.0 Altair (Feature: Orden de Picking Personalizado Dinámico en PDA — Issue 4 & GH#5) — 2026-08-02
+
+### 🏬 Bodega (BDG)
+* **Soporte Multi-Bodega de Picking (`VISTA_MOVIL_BA`)**: Se incluyó la Columna 12 (`PICKING`) en `VISTA_MOVIL_BA` y `VISTA_MOVIL_BM`. Mapea dinámicamente la columna `PICKING_BA` de `MAESTRO` (si existe) o devuelve el número de posición `No` original como secuencia por defecto.
+
+### 📱 Pedidos Andares (PDA)
+* **Algoritmo de Ordenamiento por Quiosco**: Se sincronizan las 12 columnas desde `VISTA_MOVIL_BA` (`A4:L`) vía `IMPORTRANGE`. Al ejecutar `_poblarPedidoDesdeBodega`, los productos se ordenan dinámicamente siguiendo la secuencia física real del quiosco (`PICKING_BA`), manteniendo activos primero e inactivos al final.
+
 ## 🌌 v1.3.8a Altair (Hotfix: Motor Auto-Reparador Self-Healing & Sub-menús de Menú Operativo) — 2026-08-02
 
 ### 🏬 Bodega (BDG)

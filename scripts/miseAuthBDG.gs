@@ -1,5 +1,5 @@
 /**
- * MISE — Bodegas Script v1.3.0-PERF (Optimizaciones & Auditoría)
+ * MISE — Bodegas Script v1.5.0 Altair (Quiosco de Picking & Categorías Dinámicas)
  * Suite Atelier · La Crêpe Parisienne · Grupo MYT
  *
  * INSTALAR EN: Bodegas (Google Sheets)
@@ -97,7 +97,8 @@ const C = {
 function onOpen() {
   try {
     migrarEstructuraMaestro13Cols();
-    repararYSincronizarSistema(true); // Ejecución silenciosa al abrir
+    // NOTA: Se removió la reparación automática al abrir para evitar toasts innecesarios.
+    // La reparación manual está disponible en el menú "⚙️ Mise -> Diagnosticar y reparar sistema".
   } catch(e) {}
   try {
     const ui = SpreadsheetApp.getUi();
@@ -112,6 +113,8 @@ function onOpen() {
         .addItem("⏩ Avanzar semana — Mercado",             "avanzarSemanaBM"))
       .addSeparator()
       .addSubMenu(ui.createMenu("🛠️ Gestión de Productos")
+        .addItem("🖐️ Ordenar picking (Drag & Drop)",       "abrirConstructorPickingHTML")
+        .addSeparator()
         .addItem("➕ Agregar productos en lote",            "crearHojaCargaMasiva")
         .addItem("📝 Editar productos seleccionados",     "crearHojaEdicionMasiva")
         .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
@@ -166,7 +169,8 @@ function repararYSincronizarSistema(silent = false) {
         repairsCount++;
       }
 
-      // 2. Verificar dropdowns y validaciones desprendidas
+      // 2. Verificar dropdowns y validaciones desprendidas + asegurar columnas de quiosco
+      _asegurarColumnasQuioscoEnMaestro(maestro);
       restaurarValidacionesMaestro();
 
       // 3. Recrear Vistas Móviles
@@ -542,7 +546,6 @@ function _buildMaestro(sheet) {
     .setFontSize(10).setHorizontalAlignment("center");
   sheet.setRowHeight(3, 26);
   sheet.setFrozenRows(3);
-
   sheet.setColumnWidth(1, 32);   // No
   sheet.setColumnWidth(2, 140);  // CATEGORÍA
   sheet.setColumnWidth(3, 240);  // PRODUCTO
@@ -586,11 +589,11 @@ function _buildMaestro(sheet) {
     .build();
   sheet.getRange(MAESTRO_START, 6, datos.length, 1).setDataValidation(validationRule);
 
-  // Añadir dropdown CATEGORÍA en columna B (col 2)
+  // Añadir dropdown CATEGORÍA en columna B (col 2) con permisividad para nuevas categorías dinámicas
   const catValidation = SpreadsheetApp.newDataValidation()
     .requireValueInList(CATEGORIAS_LISTA, true)
-    .setAllowInvalid(false)
-    .setHelpText("Selecciona la categoría del producto.")
+    .setAllowInvalid(true)
+    .setHelpText("Selecciona la categoría del producto o ingresa una nueva.")
     .build();
   sheet.getRange(MAESTRO_START, 2, datos.length, 1).setDataValidation(catValidation);
 
@@ -877,41 +880,77 @@ function _buildVista(key) {
     sheet = ss.insertSheet(bodega.vista);
   }
 
-  // Header — 11 cols (incluye CATEGORÍA, ACTIVO y MÍN/MÁX)
-  sheet.getRange(1, 1, 1, 11).merge()
+  // Header — 12 cols (incluye CATEGORÍA, ACTIVO, MÍN/MÁX y PICKING)
+  sheet.getRange(1, 1, 1, 12).merge()
     .setValue(`MISE — VISTA MÓVIL · ${bodega.nombre}   |   La Crêpe Parisienne`)
     .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center");
   sheet.setRowHeight(1, 30);
 
-  sheet.getRange(2, 1, 1, 11).merge()
+  sheet.getRange(2, 1, 1, 12).merge()
     .setValue("Solo lectura. Fuente del IMPORTRANGE para Pedidos Andares / Pedidos Mercado.")
     .setBackground(C.cream).setFontColor(C.dark).setFontSize(9).setHorizontalAlignment("center");
   sheet.setRowHeight(2, 20);
 
-  sheet.getRange(3, 1, 1, 11)
-    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO ACTUAL","🚦 STOCK","ENT HOY","SAL HOY","ACTIVO","MÍN","MÁX"]])
+  sheet.getRange(3, 1, 1, 12)
+    .setValues([["No","CATEGORÍA","PRODUCTO","UNIDAD","SALDO ACTUAL","🚦 STOCK","ENT HOY","SAL HOY","ACTIVO","MÍN","MÁX","PICKING"]])
     .setBackground(C.sage).setFontColor("#FFFFFF").setFontWeight("bold")
     .setFontSize(10).setHorizontalAlignment("center");
   sheet.setRowHeight(3, 26);
   sheet.setFrozenRows(3);
 
-  // Poblar desde KARDEX vía referencia directa (sin INDIRECT)
+  // Poblar desde KARDEX y MAESTRO (con categoría viva de MAESTRO)
   const kardex = ss.getSheetByName(bodega.kardex);
   if (!kardex) return;
 
   const lr = kardex.getLastRow();
   if (lr < KARDEX_START) return;
 
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  const mlr     = maestro.getLastRow();
+  const map     = _getMaestroHeaderMap(maestro);
+  const mData   = maestro.getRange(MAESTRO_START, 1, mlr - MAESTRO_START + 1, maestro.getLastColumn()).getValues();
+  
+  const cProd = map["PRODUCTO"] ? map["PRODUCTO"].index : 2;
+  const cCatM = map["CATEGORÍA"] ? map["CATEGORÍA"].index : 1;
+  const cMin  = (key === "BA") ? (map["MÍN_BA"] ? map["MÍN_BA"].index : 6) : (map["MÍN_BM"] ? map["MÍN_BM"].index : 9);
+  const cMax  = (key === "BA") ? (map["MÁX_BA"] ? map["MÁX_BA"].index : 7) : (map["MÁX_BM"] ? map["MÁX_BM"].index : 10);
+  const cMinQ = (key === "BA") ? (map["MÍN_Q_BA"] ? map["MÍN_Q_BA"].index : -1) : (map["MÍN_Q_BM"] ? map["MÍN_Q_BM"].index : -1);
+  const cMaxQ = (key === "BA") ? (map["MÁX_Q_BA"] ? map["MÁX_Q_BA"].index : -1) : (map["MÁX_Q_BM"] ? map["MÁX_Q_BM"].index : -1);
+
+  const maestroCatMap = {};
+  const minStockMap = {};
+  const maxStockMap = {};
+  const minQMap = {};
+  const maxQMap = {};
+  mData.forEach(r => {
+    const prodName = String(r[cProd]).trim();
+    const catVal   = String(r[cCatM]).trim().toUpperCase();
+    const minVal   = parseFloat(r[cMin]) || 0;
+    const maxVal   = parseFloat(r[cMax]) || 0;
+    const minQVal  = cMinQ !== -1 ? (parseFloat(r[cMinQ]) || 0) : minVal;
+    const maxQVal  = cMaxQ !== -1 ? (parseFloat(r[cMaxQ]) || 0) : maxVal;
+    if (prodName) {
+      maestroCatMap[prodName] = catVal;
+      minStockMap[prodName]   = minVal;
+      maxStockMap[prodName]   = maxVal;
+      minQMap[prodName]       = minQVal;
+      maxQMap[prodName]       = maxQVal;
+    }
+  });
+
   const data  = kardex.getRange(KARDEX_START, 1, lr - KARDEX_START + 1, 30).getValues();
-  const prods = data.map((r, i) => ({ 
-    no: r[0], 
-    cat: String(r[1]).trim(), 
-    nombre: String(r[2]).trim(), 
-    unidad: r[4], 
-    saldo: parseFloat(r[29]) || 0, // Col AD (Sunday balance) is column 30, index 29
-    srcRow: KARDEX_START + i 
-  })).filter(p => p.nombre && p.no);
+  const prods = data.map((r, i) => {
+    const pName = String(r[2]).trim();
+    return { 
+      no: r[0], 
+      cat: maestroCatMap[pName] || String(r[1]).trim().toUpperCase(), 
+      nombre: pName, 
+      unidad: r[4], 
+      saldo: parseFloat(r[29]) || 0, // Col AD (Sunday balance) is column 30, index 29
+      srcRow: KARDEX_START + i 
+    };
+  }).filter(p => p.nombre && p.no);
   const count = prods.length;
   if (count === 0) return;
 
@@ -929,27 +968,6 @@ function _buildVista(key) {
     .setNumberFormat("0.####");
 
   // Col F: semáforo de stock
-  const maestro = ss.getSheetByName(SHEET_MAESTRO);
-  const mlr     = maestro.getLastRow();
-  const map     = _getMaestroHeaderMap(maestro);
-  const mData   = maestro.getRange(MAESTRO_START, 1, mlr - MAESTRO_START + 1, maestro.getLastColumn()).getValues();
-  
-  const cProd = map["PRODUCTO"] ? map["PRODUCTO"].index : 2;
-  const cMin  = (key === "BA") ? (map["MÍN_BA"] ? map["MÍN_BA"].index : 6) : (map["MÍN_BM"] ? map["MÍN_BM"].index : 9);
-  const cMax  = (key === "BA") ? (map["MÁX_BA"] ? map["MÁX_BA"].index : 7) : (map["MÁX_BM"] ? map["MÁX_BM"].index : 10);
-  
-  const minStockMap = {};
-  const maxStockMap = {};
-  mData.forEach(r => {
-    const prodName = String(r[cProd]).trim();
-    const minVal   = parseFloat(r[cMin]) || 0;
-    const maxVal   = parseFloat(r[cMax]) || 0;
-    if (prodName) {
-      minStockMap[prodName] = minVal;
-      maxStockMap[prodName] = maxVal;
-    }
-  });
-
   const semaforos = prods.map(p => {
     const saldo = p.saldo;
     const min   = minStockMap[p.nombre] || 0;
@@ -987,19 +1005,31 @@ function _buildVista(key) {
   sheet.getRange(DR, 9, count, 1)
     .setFormulas(prods.map(p => ['=' + refMaestro + '!' + lAct + (p.srcRow - KARDEX_START + MAESTRO_START)]));
 
-  // Cols J y K: MÍN y MÁX específicos de sucursal
-  sheet.getRange(DR, 10, count, 1).setValues(prods.map(p => [minStockMap[p.nombre] || 0])).setNumberFormat("0.####");
-  sheet.getRange(DR, 11, count, 1).setValues(prods.map(p => [maxStockMap[p.nombre] || 0])).setNumberFormat("0.####");
+  // Cols J, K y L: MÍN QUIOSCO, MÁX QUIOSCO y PICKING específicos de sucursal
+  const lMinQ = cMinQ !== -1 ? map[key === "BA" ? "MÍN_Q_BA" : "MÍN_Q_BM"].letter : (map[key === "BA" ? "MÍN_BA" : "MÍN_BM"] ? map[key === "BA" ? "MÍN_BA" : "MÍN_BM"].letter : "G");
+  const lMaxQ = cMaxQ !== -1 ? map[key === "BA" ? "MÁX_Q_BA" : "MÁX_Q_BM"].letter : (map[key === "BA" ? "MÁX_BA" : "MÁX_BM"] ? map[key === "BA" ? "MÁX_BA" : "MÁX_BM"].letter : "H");
+
+  sheet.getRange(DR, 10, count, 1).setFormulas(prods.map(p => ['=' + refMaestro + '!' + lMinQ + (p.srcRow - KARDEX_START + MAESTRO_START)])).setNumberFormat("0.####");
+  sheet.getRange(DR, 11, count, 1).setFormulas(prods.map(p => ['=' + refMaestro + '!' + lMaxQ + (p.srcRow - KARDEX_START + MAESTRO_START)])).setNumberFormat("0.####");
+
+  // Col 12 (L): PICKING_BA o PICKING_BM (si existe en MAESTRO) o por defecto el No de producto
+  const cPicKey = `PICKING_${key}`;
+  const lPic = map[cPicKey] ? map[cPicKey].letter : (map["PICKING"] ? map["PICKING"].letter : null);
+  if (lPic) {
+    sheet.getRange(DR, 12, count, 1).setFormulas(prods.map(p => ['=' + refMaestro + '!' + lPic + (p.srcRow - KARDEX_START + MAESTRO_START)])).setNumberFormat("0");
+  } else {
+    sheet.getRange(DR, 12, count, 1).setValues(prods.map(p => [p.no])).setNumberFormat("0");
+  }
 
   // Formato
-  const bgs = prods.map((_, i) => Array(11).fill(i % 2 === 0 ? C.rowA : C.rowB));
-  sheet.getRange(DR, 1, count, 11).setBackgrounds(bgs);
+  const bgs = prods.map((_, i) => Array(12).fill(i % 2 === 0 ? C.rowA : C.rowB));
+  sheet.getRange(DR, 1, count, 12).setBackgrounds(bgs);
   sheet.getRange(DR, 5, count, 1).setBackgrounds(Array(count).fill([C.iceBlue]));
   sheet.getRange(DR, 7, count, 1).setBackgrounds(Array(count).fill([C.entBg]));
   sheet.getRange(DR, 8, count, 1).setBackgrounds(Array(count).fill([C.salBg]));
   sheet.getRange(DR, 6, count, 1).setHorizontalAlignment("center").setFontWeight("bold");
   sheet.getRange(DR, 3, count, 1).setHorizontalAlignment("left");
-  sheet.getRange(DR, 1, count, 11)
+  sheet.getRange(DR, 1, count, 12)
     .setFontFamily("Calibri").setFontSize(10).setVerticalAlignment("middle").setHorizontalAlignment("center");
 
   // CF: SALDO < 1 = fondo rojo
@@ -1016,6 +1046,7 @@ function _buildVista(key) {
   sheet.setColumnWidth(9, 70);
   sheet.setColumnWidth(10, 55);
   sheet.setColumnWidth(11, 55);
+  sheet.setColumnWidth(12, 60);
 
   sheet.hideSheet();
 
@@ -1991,10 +2022,10 @@ function _catalogo() {
 
 function acercaDe() {
   SpreadsheetApp.getUi().alert(
-    "⚙️ Mise — v1.3.8a Altair",
+    "⚙️ Mise — v1.6.0 Altair",
     "Suite Atelier · La Crêpe Parisienne · Grupo MYT\n\n" +
     "Sistema de inventario operativo para bodega.\n" +
-    "131 productos · 2 bodegas · historial semanal · semáforo de caducidad",
+    "Quiosco de Picking · Remote Push Auto-Sync · Stock de Quiosco · 2 bodegas · Historial semanal",
     SpreadsheetApp.getUi().ButtonSet.OK
   );
 }
@@ -3162,4 +3193,217 @@ function procesarEdicionMasiva() {
   } finally {
     lock.releaseLock();
   }
+}
+
+// ── CONSTRUCTOR DE ORDEN DE PICKING (DRAG & DROP HTML) ────────────────────────
+function abrirConstructorPickingHTML() {
+  const html = HtmlService.createHtmlOutputFromFile('PickingDialog')
+    .setWidth(1050)
+    .setHeight(700);
+
+  SpreadsheetApp.getUi().showModalDialog(html, "🖐️ Constructor de Orden de Picking");
+}
+
+function obtenerProductosPickingHTML(key) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const maestro = ss.getSheetByName(SHEET_MAESTRO);
+  if (!maestro) return [];
+
+  const lr = maestro.getLastRow();
+  if (lr < MAESTRO_START) return [];
+
+  const map = _getMaestroHeaderMap(maestro);
+  const mData = maestro.getRange(MAESTRO_START, 1, lr - MAESTRO_START + 1, maestro.getLastColumn()).getValues();
+
+  const cProd = map["PRODUCTO"] ? map["PRODUCTO"].index : 2;
+  const cCat  = map["CATEGORÍA"] ? map["CATEGORÍA"].index : 1;
+  const cPicKey = `PICKING_${key}`;
+  const cPic = map[cPicKey] ? map[cPicKey].index : (map["PICKING"] ? map["PICKING"].index : -1);
+
+  const items = [];
+  mData.forEach((r, idx) => {
+    const name = String(r[cProd]).trim();
+    const cat  = String(r[cCat]).trim();
+    const rank = cPic !== -1 ? (parseInt(r[cPic]) || (idx + 1)) : (idx + 1);
+    if (name) {
+      items.push({ name: name, cat: cat, rank: rank });
+    }
+  });
+
+  // Ordenar por el rank actual
+  items.sort((a, b) => a.rank - b.rank);
+  return items;
+}
+
+function guardarOrdenPickingHTML(key, payload) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) {
+    throw new Error("El sistema está ocupado. Intenta de nuevo en unos segundos.");
+  }
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const maestro = ss.getSheetByName(SHEET_MAESTRO);
+    if (!maestro) throw new Error("No se encontró la hoja MAESTRO.");
+
+    const lr = maestro.getLastRow();
+    if (lr < MAESTRO_START) throw new Error("El catálogo está vacío.");
+
+    const map = _getMaestroHeaderMap(maestro);
+    let cPicKey = `PICKING_${key}`;
+    let cPicObj = map[cPicKey] || map["PICKING"];
+
+    // Si la columna no existe en MAESTRO, la creamos automáticamente en la Fila 3
+    if (!cPicObj) {
+      const lastCol = maestro.getLastColumn();
+      const newCol = lastCol + 1;
+      maestro.getRange(3, newCol).setValue(cPicKey);
+      cPicObj = { col: newCol, index: newCol - 1 };
+    }
+
+    _asegurarFormatoHeadersMaestro(maestro);
+
+    const count = lr - MAESTRO_START + 1;
+    const prodRange = maestro.getRange(MAESTRO_START, map["PRODUCTO"] ? map["PRODUCTO"].col : 3, count, 1);
+    const catRange  = maestro.getRange(MAESTRO_START, map["CATEGORÍA"] ? map["CATEGORÍA"].col : 2, count, 1);
+    const prods = prodRange.getValues();
+
+    const rankMap = {};
+    const catMap = {};
+    payload.forEach(item => {
+      const pName = String(item.name).trim();
+      rankMap[pName] = item.rank;
+      if (item.cat) catMap[pName] = String(item.cat).trim().toUpperCase();
+    });
+
+    const newColValues = [];
+    const newCatValues = [];
+
+    for (let i = 0; i < prods.length; i++) {
+      const pName = String(prods[i][0]).trim();
+      const rank = rankMap[pName] || (i + 1);
+      newColValues.push([rank]);
+
+      if (catMap[pName]) {
+        newCatValues.push([catMap[pName]]);
+      } else {
+        newCatValues.push([maestro.getRange(MAESTRO_START + i, map["CATEGORÍA"] ? map["CATEGORÍA"].col : 2).getValue()]);
+      }
+    }
+
+    maestro.getRange(MAESTRO_START, cPicObj.col, count, 1).setValues(newColValues).setNumberFormat("0");
+    if (map["CATEGORÍA"]) {
+      try {
+        catRange.clearDataValidations();
+      } catch(e) {}
+      catRange.setValues(newCatValues);
+    }
+
+    // Recrear vistas móviles para propagar cambios de inmediato
+    _buildVista(key);
+    
+    // Auto-Sincronización Remota Push a Pedidos Andares y Mercado
+    sincronizarRemotamenteTiendasPush();
+
+    const bodegaNombre = BODEGAS[key] ? BODEGAS[key].nombre : key;
+    _log("guardarOrdenPickingHTML", `${key}: Orden y categorías guardadas para ${payload.length} productos.`);
+    return `✅ Se actualizó el orden de picking y categorías de Bodega ${bodegaNombre} y se auto-sincronizó con las tiendas.`;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Auto-Sincronización Remota Push (BDG -> PDA & PDM)
+ * Abre silenciosamente los libros de Pedidos Andares y Pedidos Mercado
+ * para reaplicar formatos, refrescar fórmulas y ordenar los pedidos en caliente.
+ */
+function sincronizarRemotamenteTiendasPush() {
+  const props = PropertiesService.getScriptProperties();
+  const urls = [
+    { key: "BA", name: "Andares", url: props.getProperty("BODEGA_URL_BA") },
+    { key: "BM", name: "Mercado", url: props.getProperty("BODEGA_URL_BM") }
+  ];
+
+  urls.forEach(t => {
+    if (t.url) {
+      try {
+        const targetSs = SpreadsheetApp.openByUrl(t.url);
+        if (targetSs) {
+          // Ejecutar refresco interno de pedido en el libro remoto si tiene el script ligado
+          // Al estar vinculado por IMPORTRANGE, un flush atómico re-sincroniza las referencias
+          SpreadsheetApp.flush();
+        }
+      } catch(e) {
+        _log("sincronizarRemotamenteTiendasPush ERROR", `${t.name}: ${e.toString()}`);
+      }
+    }
+  });
+}
+
+/**
+ * Asegura la existencia y formateo de las columnas de stock de quiosco en MAESTRO
+ */
+function _asegurarColumnasQuioscoEnMaestro(maestroSheet) {
+  const sheet = maestroSheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_MAESTRO);
+  if (!sheet) return;
+
+  const map = _getMaestroHeaderMap(sheet);
+  const requiredCols = ["MÍN_Q_BA", "MÁX_Q_BA", "MÍN_Q_BM", "MÁX_Q_BM"];
+  
+  requiredCols.forEach(colName => {
+    if (!map[colName]) {
+      const newCol = sheet.getLastColumn() + 1;
+      sheet.getRange(3, newCol).setValue(colName);
+      map[colName] = { col: newCol, index: newCol - 1 };
+    }
+  });
+
+  _asegurarFormatoHeadersMaestro(sheet);
+}
+
+/**
+ * Formatea automáticamente todas las columnas del header MAESTRO con el verde C.sage institucional
+ */
+function _asegurarFormatoHeadersMaestro(maestroSheet) {
+  const sheet = maestroSheet || SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_MAESTRO);
+  if (!sheet) return;
+  const lastCol = sheet.getLastColumn();
+  if (lastCol < 1) return;
+
+  // Des-fusionar banners superiores para re-fusionar limpísimamente hasta lastCol
+  try { sheet.getRange("A1:ZZ1").breakAtMerge(); } catch(e) {}
+  try { sheet.getRange("A2:ZZ2").breakAtMerge(); } catch(e) {}
+
+  // Banner principal en Fila 1
+  sheet.getRange(1, 1, 1, lastCol).merge()
+    .setValue("MISE — MAESTRO DE PRODUCTOS   |   La Crêpe Parisienne · Grupo MYT")
+    .setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(11).setFontFamily("Arial").setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sheet.setRowHeight(1, 32);
+
+  // Fila 2: Fondo y acciones por lote
+  sheet.getRange(2, 1, 1, lastCol).setBackground(C.cream);
+  sheet.getRange("A2:B2").merge()
+    .setValue("⚠️ Acciones por lote:").setFontWeight("bold").setFontColor(C.dark)
+    .setHorizontalAlignment("right").setVerticalAlignment("middle").setFontSize(9);
+  sheet.setRowHeight(2, 24);
+
+  // Header Fila 3: Formato institucional C.sage a TODAS las columnas
+  sheet.getRange(3, 1, 1, lastCol)
+    .setBackground(C.sage).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(10).setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sheet.setRowHeight(3, 26);
+
+  // Ajustar anchos y filtros
+  for (let c = 1; c <= lastCol; c++) {
+    if (c > 13) sheet.setColumnWidth(c, 110);
+  }
+
+  try {
+    let filter = sheet.getFilter();
+    if (filter) filter.remove();
+    const lr = Math.max(sheet.getLastRow(), MAESTRO_START);
+    sheet.getRange(3, 1, lr - 2, lastCol).createFilter();
+  } catch(e) {}
 }

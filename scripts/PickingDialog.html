@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <style>
+    :root {
+      --bg: #F5EFE6;
+      --surface: #FFFFFF;
+      --dark: #3D5A47;
+      --sage: #7A9E8A;
+      --border: #E2D9CC;
+      --text: #1A1A1A;
+      --text-muted: #666666;
+      --accent: #2E5D4B;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); color: var(--text); }
+    body { padding: 10px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+    header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: flex-start; }
+    h2 { font-size: 14px; font-weight: 700; color: var(--dark); display: flex; align-items: center; gap: 6px; }
+    p { font-size: 10px; color: var(--text-muted); }
+    
+    .view-toggle { display: flex; gap: 2px; background: #E2D9CC; padding: 2px; border-radius: 6px; }
+    .toggle-btn { padding: 3px 8px; font-size: 10px; font-weight: 600; border: none; background: none; color: #555; cursor: pointer; border-radius: 4px; transition: all 0.15s ease; }
+    .toggle-btn.active { background: var(--surface); color: var(--dark); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    .controls { flex-shrink: 0; display: flex; gap: 6px; align-items: center; }
+    select, input { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; outline: none; }
+    select { background: var(--surface); color: var(--dark); font-weight: 600; cursor: pointer; max-width: 160px; }
+    input[type="text"] { flex: 1; background: var(--surface); min-width: 0; }
+    
+    .batch-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; background: #E8F0EA; border: 1px solid var(--sage); border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--dark); }
+    .batch-actions { display: flex; gap: 4px; align-items: center; }
+    .batch-btn { padding: 3px 8px; font-size: 10px; background: var(--dark); color: #FFF; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: transform 0.1s ease; }
+    .batch-btn:active { transform: scale(0.95); }
+    .batch-btn:hover { background: var(--accent); }
+
+    .list-container { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; position: relative; user-select: none; transition: background 0.2s ease; }
+    
+    /* Oscurecimiento al 50% de la lista al arrastrar para dar protagonismo al mazo */
+    .list-container.is-dragging { background: #DCD3C7 !important; }
+    .list-container.is-dragging .item-card:not(.selected):not(.sortable-ghost) { opacity: 0.5; filter: blur(0.3px); }
+
+    /* Marquee Box Selection */
+    .selection-box { position: absolute; border: 1px solid #3D5A47; background: rgba(61, 90, 71, 0.2); pointer-events: none; z-index: 100; display: none; }
+
+    /* Categoría Acordeón */
+    .cat-group { margin-bottom: 8px; border: 1px solid #E5E0D8; border-radius: 6px; overflow: hidden; background: #FFF; }
+    .cat-header { background: #EAE3D9; padding: 6px 10px; font-size: 11px; font-weight: 700; color: var(--dark); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+    .cat-header:hover { background: #E2D9CC; }
+    .cat-body { padding: 4px; }
+
+    .item-card { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin-bottom: 4px; background: #FAFAFA; border: 1px solid #EFEFEF; border-radius: 6px; cursor: grab; user-select: none; transition: transform 0.28s cubic-bezier(0.2, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.28s cubic-bezier(0.2, 1, 0.3, 1), opacity 0.25s ease; width: 100%; position: relative; }
+    .item-card:hover { background: #F0F4F1; border-color: var(--sage); transform: translateY(-1px); }
+    .item-card.selected { background: #E2EFE6; border-color: var(--dark); }
+    .item-card.is-item-modified { border-left: 3px solid #E65100; background: #FFF3E0; }
+    .cat-body-empty { min-height: 48px; border: 2px dashed #B0BEC5; border-radius: 6px; background: #FAFAFA; display: flex; align-items: center; justify-content: center; color: #78909C; font-size: 11px; font-weight: 600; margin: 4px 0; }
+
+    /* SortableJS Ghost & Drag Styling (Sin rotación, 0º siempre) */
+    .sortable-ghost { opacity: 1 !important; background: transparent !important; border: none !important; box-shadow: none !important; }
+    .sortable-chosen { background: #E8F0EA !important; border-color: var(--accent) !important; }
+    
+    /* Arrastre individual */
+    .sortable-drag { opacity: 1 !important; background: #FFFFFF !important; border-color: var(--dark) !important; box-shadow: 0 14px 32px rgba(61, 90, 71, 0.3) !important; transform: scale(1.01) !important; z-index: 9999 !important; }
+
+    /* Mazo Colapsado 3D (Se agrupan en mazo limpio al tener 2 o más insumos seleccionados, rotación 0º) */
+    .multi-drag-stack { position: relative !important; background: #E2EFE6 !important; border: 2px solid var(--dark) !important; box-shadow: 0 4px 0 -1px #D5E5D9, 0 8px 0 -2px #C7DBCB, 0 16px 36px rgba(61, 90, 71, 0.38) !important; z-index: 9999 !important; }
+
+    /* Indicador Flotante sobre el Mazo */
+    .stack-badge { position: absolute; right: 12px; top: -14px; background: var(--dark); color: #FFF; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--sage); box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 10000; opacity: 1; pointer-events: none; }
+
+    /* Tarjetas Preview en Ghost Zone (Estáticas, sin animaciones ni parpadeos) */
+    .ghost-preview-container { display: flex; flex-direction: column; gap: 4px; width: 100%; pointer-events: none; }
+    .ghost-preview-card { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(46, 93, 75, 0.15); border: 2px dashed var(--accent); border-radius: 6px; color: var(--dark); font-weight: 700; font-size: 11px; opacity: 0.95; width: 100%; box-shadow: inset 0 0 6px rgba(46, 93, 75, 0.08); }
+
+    /* Animación Pop-Up al Soltar Insumos */
+    .item-card.pop-drop { animation: popDrop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes popDrop {
+      0% { transform: scale(1.03); background: #C7E3CE; border-color: var(--dark); box-shadow: 0 6px 18px rgba(61, 90, 71, 0.22); }
+      50% { transform: scale(0.98); }
+      100% { transform: scale(1); background: #E2EFE6; }
+    }
+
+    .item-left { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+    .chk-select { cursor: pointer; width: 15px; height: 15px; accent-color: var(--dark); }
+    .handle { color: #AAA; font-size: 13px; cursor: grab; flex-shrink: 0; padding: 2px; }
+    .handle:hover { color: var(--dark); }
+    
+    /* Custom Rank Badge & Input Styling (Crystal Squircle Badge) */
+    .rank-badge-container { display: flex; align-items: center; background: var(--dark); border-radius: 12px; padding: 2px 6px; gap: 3px; flex-shrink: 0; transition: background 0.15s ease, transform 0.15s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    .rank-badge-container:hover { background: var(--accent); }
+    .rank-symbol { color: #A3C9B2; font-size: 9px; font-weight: 700; }
+    .rank-input { width: 28px; text-align: center; font-size: 10px; font-weight: 700; background: transparent; color: #FFF; border: none; outline: none; -moz-appearance: textfield; appearance: textfield; font-family: inherit; cursor: pointer; }
+    .rank-input::-webkit-outer-spin-button, .rank-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .rank-input:focus { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    /* Modal de Ayuda Guiada y Modal de Confirmación de Cierre */
+    .overlay-dialog { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); backdrop-filter: blur(3px); z-index: 500; display: none; align-items: center; justify-content: center; }
+    .dialog-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; max-width: 480px; width: 90%; box-shadow: 0 20px 45px rgba(0,0,0,0.25); animation: popIn 0.2s ease-out; }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+    .dialog-card h3 { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .dialog-card p { font-size: 12px; color: var(--text); line-height: 1.5; margin-bottom: 14px; }
+    .help-list { font-size: 12px; color: #333; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .help-item { display: flex; gap: 10px; align-items: flex-start; }
+    .help-icon { background: #E8F0EA; color: var(--dark); font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+    .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .dialog-actions-center { justify-content: center; width: 100%; margin-top: 6px; }
+    .btn-dialog { padding: 8px 24px; font-size: 12px; font-weight: 700; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s ease; }
+    .btn-dialog-primary { background: var(--dark); color: #FFF; }
+    .btn-dialog-primary:hover { background: var(--accent); transform: translateY(-1px); }
+    .btn-dialog-secondary { background: #E0E0E0; color: #333; }
+    .btn-help { background: #E8F0EA; color: var(--dark); border: 1px solid var(--sage); padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .btn-help:hover { background: var(--sage); color: #FFF; }
+
+    /* User Preference Zoom Select */
+    .zoom-select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; font-weight: 700; color: var(--dark); padding: 2px 6px; cursor: pointer; }
+
+    .prod-info { min-width: 0; flex: 1; overflow: hidden; }
+    .prod-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prod-cat { font-size: 9px; color: var(--text-muted); text-transform: uppercase; background: #EEE; padding: 1px 4px; border-radius: 3px; display: inline-block; }
+    
+    .item-btns { display: flex; gap: 2px; flex-shrink: 0; align-items: center; }
+    .btn-quick { background: #FFF; border: 1px solid #DDD; cursor: pointer; padding: 2px 5px; font-size: 9px; border-radius: 4px; color: var(--dark); font-weight: 600; transition: all 0.1s ease; }
+    .btn-quick:hover { background: var(--dark); color: #FFF; border-color: var(--dark); }
+
+    footer { flex-shrink: 0; display: flex; gap: 8px; }
+    .btn-save { flex: 1; padding: 8px 12px; background: var(--dark); color: #FFF; border: none; border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.15s ease; }
+    .btn-save:hover { background: var(--accent); }
+    .btn-reset { padding: 8px 12px; background: #E0E0E0; color: #333; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; }
+    .spinner { border: 2px solid #FFF; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; animation: spin 0.8s linear infinite; display: none; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h2><span style="font-size:16px;">✥</span> Picking Powerhouse (Quiosco) <button class="btn-help" onclick="abrirAyuda()">❓ Ayuda y Guía</button></h2>
+      <p>Organización ultra-rápida de insumos con salto directo, multi-arrastre y vistas inteligentes.</p>
+    </div>
+    <div class="view-toggle">
+      <span id="unsavedChangesBadge" style="display:none; align-items:center; background:#C62828; color:#FFF; font-size:10px; font-weight:700; padding:3px 10px; border-radius:12px; border:1px solid #FF8A80; box-shadow:0 2px 6px rgba(198,40,40,0.3); animation:pulse 1.5s infinite;">⚠️ <span id="unsavedChangesText">Cambios sin guardar</span></span>
+      <select class="zoom-select" id="zoomSelect" onchange="cambiarZoom(this.value)" title="Tamaño de texto y elementos para accesibilidad">
+        <option value="100">🔍 100% (Normal)</option>
+        <option value="115">🔍 115% (Grande)</option>
+        <option value="130">🔍 130% (Súper Grande)</option>
+      </select>
+      <button class="toggle-btn active" id="btnViewList" onclick="cambiarModoVista('list')">📄 Lista</button>
+      <button class="toggle-btn" id="btnViewCat" onclick="cambiarModoVista('cat')">📁 Categorías</button>
+      <button onclick="interceptarCierreModal()" title="Cerrar Quiosco" style="background:rgba(198,40,40,0.15); color:#C62828; border:1px solid #EF9A9A; width:26px; height:26px; border-radius:50%; font-weight:800; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;">✕</button>
+    </div>
+  </header>
+  
+  <div class="controls">
+    <select id="bodegaSelect" onchange="cargarLista()">
+      <option value="BA">🏢 Bodega Andares (PDA)</option>
+      <option value="BM">🏢 Bodega Mercado (PDM)</option>
+    </select>
+    <span id="globalCatBadge" style="display:none; align-items:center; background:var(--dark); color:#FFF; font-size:11px; font-weight:700; padding:6px 12px; border-radius:6px; white-space:nowrap;" title="La clasificación por categorías es global para todo el catálogo maestro">🌍 Categorías Globales</span>
+    <div style="position:relative; flex:1; display:flex; align-items:center;">
+      <span style="position:absolute; left:8px; color:#888; font-size:11px;">🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="filtrarLista()" style="padding-left:26px; width:100%;">
+    </div>
+    <button class="batch-btn" onclick="crearNuevaCategoriaModal()" style="background:var(--dark); color:#FFF; font-weight:700;">+ Nueva Categoría</button>
+  </div>
+
+  <div class="batch-bar">
+    <span><strong id="selectedCount">0</strong> seleccionados</span>
+    <div class="batch-actions">
+      <button class="batch-btn" onclick="moverSeleccionadosAlTop()">🔝 Al Top</button>
+      <button class="batch-btn" onclick="moverSeleccionadosAlFondo()">🔻 Al Fondo</button>
+      <button class="batch-btn" onclick="moverSeleccionados(-1)">▲ Subir</button>
+      <button class="batch-btn" onclick="moverSeleccionados(1)">▼ Bajar</button>
+      <button class="batch-btn" onclick="limpiarSeleccion()" style="background:#888;">Desmarcar</button>
+    </div>
+  </div>
+
+  <div class="list-container" id="listContainer">
+    <div id="itemsContainer">
+      <div style="text-align:center; padding: 20px; color:#888; font-size:12px;">Cargando catálogo de insumos...</div>
+    </div>
+  </div>
+
+  <footer>
+    <button class="btn-reset" onclick="resetAlfabetico()">↺ Alfabético</button>
+    <button class="btn-save" id="btnSave" onclick="guardarOrden()">
+      <span class="spinner" id="spinner"></span>
+      <span id="btnText">✦ Guardar y Aplicar Orden</span>
+    </button>
+  </footer>
+
+  <!-- Modal de Ayuda Guiada -->
+  <div class="overlay-dialog" id="helpDialog">
+    <div class="dialog-card">
+      <h3>❓ Guía Rápida de Uso del Quiosco</h3>
+      <p>Organizar catálogos grandes de 140+ insumos es ultra-rápido usando estas herramientas:</p>
+      <div class="help-list">
+        <div class="help-item">
+          <span class="help-icon">#23</span>
+          <div><strong>Salto Directo a Posición:</strong> Haz clic en el número verde de cualquier tarjeta, tipea la nueva posición (ej: 23) y presiona Enter para moverla al instante.</div>
+        </div>
+        <div class="help-item">
+          <span class="help-icon">🔝 / 🔻</span>
+          <div><strong>Top / Bottom Un-Clic:</strong> Presiona 🔝 Top o 🔻 Bot para enviar un insumo al inicio o al final del catálogo de inmediato.</div>
+        </div>
+        <div class="help-item">
+          <span class="help-icon">📦 Lote</span>
+          <div><strong>Multi-Arrastre en Bloque:</strong> Arrastra un recuadro con el mouse o marca varias casillas para mover todo el grupo junto de forma atómica.</div>
+        </div>
+        <div class="help-item">
+          <span class="help-icon">📁 Vista</span>
+          <div><strong>Vista por Categorías:</strong> Alterna a la vista "📁 Categorías" para colapsar familias enteras de insumos y trabajar por grupos.</div>
+        </div>
+      </div>
+      <div class="dialog-actions dialog-actions-center">
+        <button class="btn-dialog btn-dialog-primary" onclick="cerrarAyuda()">¡Entendido!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Cierre por X -->
+  <div class="overlay-dialog" id="closeConfirmDialog">
+    <div class="dialog-card">
+      <h3>⚠️ ¿Cerrar sin aplicar cambios?</h3>
+      <p>Tienes modificaciones en el orden de picking sin guardar. Si cierras la ventana ahora, los cambios no se aplicarán al Pedido Diario.</p>
+      <div class="dialog-actions">
+        <button class="btn-dialog btn-dialog-secondary" onclick="cerrarConfirmacionCierre()">Continuar editando</button>
+        <button class="btn-dialog btn-dialog-primary" style="background:#C62828;" onclick="confirmarCierreDefinitivo()">Salir sin guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Crystal de Crear / Editar Categoría -->
+  <div class="overlay-dialog" id="categoryDialog">
+    <div class="dialog-card">
+      <h3 id="categoryDialogTitle">✨ Categoría de Insumos</h3>
+      <p id="categoryDialogDesc">Ingrese el nombre de la categoría para agrupar los productos:</p>
+      <div style="margin-bottom: 16px;">
+        <input type="text" id="categoryInput" placeholder="Ej: FRUTAS Y VERDURAS" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:600; outline:none; text-transform:uppercase;">
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-dialog btn-dialog-secondary" onclick="cerrarCategoryModal()">Cancelar</button>
+        <button class="btn-dialog btn-dialog-primary" id="btnConfirmCategory">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Crystal de Confirmación Reset Alfabético -->
+  <div class="overlay-dialog" id="resetConfirmDialog">
+    <div class="dialog-card">
+      <h3>🔄 Restablecer Orden Alfabético</h3>
+      <p>¿Deseas reorganizar todos los insumos en orden alfabético por categoría? Podrás seguir editándolos antes de guardar.</p>
+      <div class="dialog-actions">
+        <button class="btn-dialog btn-dialog-secondary" onclick="cerrarResetModal()">Cancelar</button>
+        <button class="btn-dialog btn-dialog-primary" onclick="confirmarResetAlfabetico()">Restablecer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Crystal de Seguridad para Eliminar Categoría -->
+  <div class="overlay-dialog" id="deleteCategoryConfirmDialog">
+    <div class="dialog-card">
+      <h3 style="color:#C62828;">🗑️ ¿Eliminar Categoría y Desagrupar Insumos?</h3>
+      <p id="deleteCategoryConfirmDesc">Esta acción eliminará la categoría. Todos los insumos asociados pasarán automáticamente a la categoría <strong>"SIN CATEGORÍA"</strong> sin perderse.</p>
+      <div class="dialog-actions">
+        <button class="btn-dialog btn-dialog-secondary" onclick="cerrarDeleteCategoryModal()">Cancelar</button>
+        <button class="btn-dialog btn-dialog-primary" style="background:#C62828;" id="btnConfirmDeleteCategory">Eliminar Categoría</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isModified = false;
+
+    function abrirAyuda() { document.getElementById("helpDialog").style.display = "flex"; }
+    function cerrarAyuda() { document.getElementById("helpDialog").style.display = "none"; }
+
+    function interceptarCierreModal() {
+      if (isModified) {
+        document.getElementById("closeConfirmDialog").style.display = "flex";
+      } else {
+        google.script.host.close();
+      }
+    }
+    function cerrarConfirmacionCierre() { document.getElementById("closeConfirmDialog").style.display = "none"; }
+    function confirmarCierreDefinitivo() { google.script.host.close(); }
+
+    let rawItems = [];
+    let rawItemsMap = new Map();
+    let initialItemsMap = new Map();
+    let initialOrderNames = [];
+    let customCategories = new Set();
+    let touchedItems = new Set();
+    let currentKey = "BA";
+    let selectedNames = new Set();
+    let modoVista = "list";
+    let sortableInstances = [];
+
+    function cambiarZoom(val) {
+      document.body.style.zoom = `${val}%`;
+      try { localStorage.setItem("mise_picking_zoom", val); } catch(e) {}
+    }
+
+    function cargarPreferenciasZoom() {
+      try {
+        const savedZoom = localStorage.getItem("mise_picking_zoom") || "100";
+        document.getElementById("zoomSelect").value = savedZoom;
+        document.body.style.zoom = `${savedZoom}%`;
+      } catch(e) {}
+    }
+
+    function cambiarModoVista(modo) {
+      modoVista = modo;
+      document.getElementById("btnViewList").classList.toggle("active", modo === "list");
+      document.getElementById("btnViewCat").classList.toggle("active", modo === "cat");
+      
+      const bodegaSelect = document.getElementById("bodegaSelect");
+      const globalBadge = document.getElementById("globalCatBadge");
+      if (modo === "cat") {
+        bodegaSelect.style.display = "none";
+        if (globalBadge) globalBadge.style.display = "inline-flex";
+      } else {
+        bodegaSelect.style.display = "inline-block";
+        if (globalBadge) globalBadge.style.display = "none";
+      }
+      renderHTML();
+    }
+
+    function cargarLista() {
+      currentKey = document.getElementById("bodegaSelect").value;
+      selectedNames.clear();
+      customCategories.clear();
+      touchedItems.clear();
+      document.getElementById("itemsContainer").innerHTML = '<div style="text-align:center; padding: 20px; color:#888; font-size:12px;">Cargando catálogo de insumos...</div>';
+      google.script.run
+        .withSuccessHandler(onDataLoaded)
+        .withFailureHandler(onDataError)
+        .obtenerProductosPickingHTML(currentKey);
+    }
+
+    function onDataLoaded(items) {
+      rawItems = items;
+      rawItemsMap = new Map(items.map(it => [it.name, { ...it }]));
+      initialItemsMap = new Map(items.map(it => [it.name, { ...it }]));
+      initialOrderNames = items.map(it => it.name);
+      touchedItems.clear();
+      evaluarEstadoModificado();
+      renderHTML();
+    }
+
+    function evaluarEstadoModificado() {
+      let modified = false;
+      if (rawItems.length !== initialOrderNames.length) {
+        modified = true;
+      } else {
+        for (let i = 0; i < rawItems.length; i++) {
+          if (rawItems[i].name !== initialOrderNames[i]) {
+            modified = true;
+            break;
+          }
+          const initObj = initialItemsMap.get(rawItems[i].name);
+          if (initObj && (initObj.cat || "") !== (rawItems[i].cat || "")) {
+            modified = true;
+            break;
+          }
+        }
+      }
+      if (customCategories.size > 0) modified = true;
+      isModified = modified;
+      return isModified;
+    }
+
+    function onDataError(err) {
+      document.getElementById("itemsContainer").innerHTML = '<div style="text-align:center; padding: 20px; color:red; font-size:12px;">Error: ' + err.message + '</div>';
+    }
+
+    function toggleSelect(name, e) {
+      if (e) e.stopPropagation();
+      if (selectedNames.has(name)) {
+        selectedNames.delete(name);
+      } else {
+        selectedNames.add(name);
+      }
+      document.getElementById("selectedCount").innerText = selectedNames.size;
+      const cards = document.querySelectorAll(`[data-name="${CSS.escape(name)}"]`);
+      cards.forEach(c => c.classList.toggle("selected", selectedNames.has(name)));
+      const chk = document.querySelectorAll(`[data-name="${CSS.escape(name)}"] .chk-select`);
+      chk.forEach(c => c.checked = selectedNames.has(name));
+    }
+
+    function limpiarSeleccion() {
+      selectedNames.clear();
+      renderHTML();
+    }
+
+    function moverSeleccionadosAlTop() {
+      if (selectedNames.size === 0) return;
+      isModified = true;
+      selectedNames.forEach(n => touchedItems.add(n));
+      const seleccionados = rawItems.filter(item => selectedNames.has(item.name));
+      const noSeleccionados = rawItems.filter(item => !selectedNames.has(item.name));
+      rawItems = [...seleccionados, ...noSeleccionados];
+      renderHTML();
+    }
+
+    function moverSeleccionadosAlFondo() {
+      if (selectedNames.size === 0) return;
+      isModified = true;
+      selectedNames.forEach(n => touchedItems.add(n));
+      const seleccionados = rawItems.filter(item => selectedNames.has(item.name));
+      const noSeleccionados = rawItems.filter(item => !selectedNames.has(item.name));
+      rawItems = [...noSeleccionados, ...seleccionados];
+      renderHTML();
+    }
+
+    function moverSeleccionados(dir) {
+      if (selectedNames.size === 0) return;
+      isModified = true;
+      selectedNames.forEach(n => touchedItems.add(n));
+      const indices = [];
+      rawItems.forEach((item, idx) => {
+        if (selectedNames.has(item.name)) indices.push(idx);
+      });
+
+      if (dir === -1) {
+        for (let i = 0; i < indices.length; i++) {
+          const idx = indices[i];
+          if (idx > 0 && !selectedNames.has(rawItems[idx - 1].name)) {
+            const temp = rawItems[idx];
+            rawItems[idx] = rawItems[idx - 1];
+            rawItems[idx - 1] = temp;
+          }
+        }
+      } else if (dir === 1) {
+        for (let i = indices.length - 1; i >= 0; i--) {
+          const idx = indices[i];
+          if (idx < rawItems.length - 1 && !selectedNames.has(rawItems[idx + 1].name)) {
+            const temp = rawItems[idx];
+            rawItems[idx] = rawItems[idx + 1];
+            rawItems[idx + 1] = temp;
+          }
+        }
+      }
+      renderHTML();
+    }
+
+    function moverItemTop(idx, e) {
+      if (e) e.stopPropagation();
+      isModified = true;
+      const moved = rawItems.splice(idx, 1)[0];
+      touchedItems.add(moved.name);
+      rawItems.unshift(moved);
+      renderHTML();
+    }
+
+    function moverItemBottom(idx, e) {
+      if (e) e.stopPropagation();
+      isModified = true;
+      const moved = rawItems.splice(idx, 1)[0];
+      touchedItems.add(moved.name);
+      rawItems.push(moved);
+      renderHTML();
+    }
+
+    function cambiarPosicionDirecta(oldIdx, newRankStr, e) {
+      if (e) e.stopPropagation();
+      let targetRank = parseInt(newRankStr);
+      if (isNaN(targetRank)) return;
+      let newIdx = targetRank - 1;
+      if (newIdx < 0) newIdx = 0;
+      if (newIdx >= rawItems.length) newIdx = rawItems.length - 1;
+
+      if (oldIdx !== newIdx) {
+        isModified = true;
+        const moved = rawItems.splice(oldIdx, 1)[0];
+        touchedItems.add(moved.name);
+        rawItems.splice(newIdx, 0, moved);
+        renderHTML();
+      }
+    }
+
+    function renderHTML() {
+      evaluarEstadoModificado();
+      const listContainer = document.getElementById("listContainer");
+      const currentScrollTop = listContainer ? listContainer.scrollTop : 0;
+      const container = document.getElementById("itemsContainer");
+      const search = document.getElementById("searchInput").value.toLowerCase().trim();
+      document.getElementById("selectedCount").innerText = selectedNames.size;
+
+      const unsavedBadge = document.getElementById("unsavedChangesBadge");
+      if (unsavedBadge) {
+        unsavedBadge.style.display = isModified ? "inline-flex" : "none";
+      }
+
+      sortableInstances.forEach(inst => inst.destroy());
+      sortableInstances = [];
+
+      container.innerHTML = "";
+      if (rawItems.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#888;">No hay productos.</div>';
+        return;
+      }
+
+      const filteredItems = rawItems.map((item, originalIdx) => ({ ...item, originalIdx }))
+        .filter(item => !search || item.name.toLowerCase().includes(search) || item.cat.toLowerCase().includes(search));
+
+      if (modoVista === "list") {
+        renderListaPlana(container, filteredItems);
+      } else {
+        renderVistaCategorias(container, filteredItems);
+      }
+
+      if (listContainer) {
+        listContainer.scrollTop = currentScrollTop;
+      }
+    }
+
+    function renderListaPlana(container, items) {
+      items.forEach((item) => {
+        const card = crearItemCardHTML(item, item.originalIdx);
+        container.appendChild(card);
+      });
+
+      const sortable = new Sortable(container, {
+        animation: 250,
+        easing: "cubic-bezier(0.2, 1, 0.3, 1)",
+        handle: ".handle, .item-card",
+        filter: ".chk-select, .btn-move, .btn-quick, .rank-input, input, button, select",
+        preventOnFilter: false,
+        ghostClass: "sortable-ghost",
+        chosenClass: "sortable-chosen",
+        dragClass: "sortable-drag",
+        forceFallback: false,
+        onStart: function(evt) {
+          container.classList.add("is-dragging");
+          const draggedCard = evt.item;
+          if (selectedNames.size > 1 && selectedNames.has(draggedCard.dataset.name)) {
+            draggedCard.classList.add("multi-drag-stack");
+            let badge = draggedCard.querySelector(".stack-badge");
+            if (!badge) {
+              badge = document.createElement("div");
+              badge.className = "stack-badge";
+              draggedCard.appendChild(badge);
+            }
+            badge.innerText = `📦 Moviendo ${selectedNames.size} insumos juntos`;
+            
+            /* Ocultar tarjetas secundarias seleccionadas de su sitio original */
+            container.querySelectorAll(".item-card.selected").forEach(card => {
+              if (card !== draggedCard) {
+                card.style.display = "none";
+              }
+            });
+          }
+        },
+        onMove: function(evt) {
+          const draggedCard = evt.dragged;
+          const ghost = container.querySelector(".sortable-ghost");
+          const isSelectedBatch = selectedNames.has(draggedCard.dataset.name) && selectedNames.size > 1;
+
+          if (ghost && !ghost._rendered) {
+            ghost._rendered = true;
+            ghost.style.height = "auto";
+            if (isSelectedBatch) {
+              const selectedItemsArray = Array.from(selectedNames);
+              let ghostHTML = `<div class="ghost-preview-container">`;
+              selectedItemsArray.forEach((name, i) => {
+                const itemObj = rawItemsMap.get(name) || { name: name, cat: "INSUMO" };
+                ghostHTML += `
+                  <div class="ghost-preview-card" style="animation-delay: ${i * 45}ms;">
+                    <div class="item-left">
+                      <input type="checkbox" class="chk-select" checked disabled>
+                      <span class="handle">☰</span>
+                      <div class="rank-badge-container">
+                        <span class="rank-symbol">#</span>
+                        <span style="color:#FFF; font-size:10px; font-weight:700; padding:0 4px;">--</span>
+                      </div>
+                      <div class="prod-info">
+                        <div class="prod-name">${itemObj.name}</div>
+                        <span class="prod-cat">${itemObj.cat}</span>
+                      </div>
+                    </div>
+                    <div class="item-btns">
+                      <span style="font-size:9px; font-weight:700; color:var(--dark); background:rgba(255,255,255,0.6); padding:3px 8px; border-radius:6px; border:1px solid var(--sage);">✦ Caerá aquí</span>
+                    </div>
+                  </div>`;
+              });
+              ghostHTML += `</div>`;
+              ghost.innerHTML = ghostHTML;
+            } else {
+              const itemObj = rawItemsMap.get(draggedCard.dataset.name) || { name: draggedCard.dataset.name, cat: "INSUMO" };
+              ghost.innerHTML = `
+                <div class="ghost-preview-card">
+                  <div class="item-left">
+                    <input type="checkbox" class="chk-select" disabled>
+                    <span class="handle">☰</span>
+                    <div class="rank-badge-container">
+                      <span class="rank-symbol">#</span>
+                      <span style="color:#FFF; font-size:10px; font-weight:700; padding:0 4px;">--</span>
+                    </div>
+                    <div class="prod-info">
+                      <div class="prod-name">${itemObj.name}</div>
+                      <span class="prod-cat">${itemObj.cat}</span>
+                    </div>
+                  </div>
+                  <div class="item-btns">
+                    <span style="font-size:9px; font-weight:700; color:var(--dark); background:rgba(255,255,255,0.6); padding:3px 8px; border-radius:6px; border:1px solid var(--sage);">✦ Caerá aquí</span>
+                  </div>
+                </div>`;
+            }
+          }
+        },
+        onEnd: function(evt) {
+          container.classList.remove("is-dragging");
+          const draggedCard = evt.item;
+          draggedCard.classList.remove("multi-drag-stack");
+          if (draggedCard._ghostTimer) clearTimeout(draggedCard._ghostTimer);
+          const badge = draggedCard.querySelector(".stack-badge");
+          if (badge) badge.remove();
+
+          /* Limpiar cualquier clon o nodo fantasma fuera del contenedor */
+          document.querySelectorAll(".sortable-drag, .sortable-fallback, .sortable-ghost").forEach(el => {
+            if (!container.contains(el)) el.remove();
+          });
+
+          /* Restaurar visibilidad y disparar animación Pop-Up al soltar */
+          container.querySelectorAll(".item-card").forEach(card => {
+            card.style.display = "";
+            card.style.opacity = "";
+            card.style.transform = "";
+          });
+
+          if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
+            isModified = true;
+            moverEnConjuntoODrag(evt.oldIndex, evt.newIndex);
+
+            /* Efecto Pop-Up al soltar insumos */
+            container.querySelectorAll(".item-card.selected").forEach((card) => {
+              card.classList.add("pop-drop");
+              setTimeout(() => card.classList.remove("pop-drop"), 400);
+            });
+          }
+        }
+      });
+      sortableInstances.push(sortable);
+    }
+
+    function renderVistaCategorias(container, items) {
+      const grupos = {};
+      items.forEach(item => {
+        const cat = item.cat || "SIN CATEGORÍA";
+        if (!grupos[cat]) grupos[cat] = [];
+        grupos[cat].push(item);
+      });
+
+      customCategories.forEach(cat => {
+        if (!grupos[cat]) grupos[cat] = [];
+      });
+
+      Object.keys(grupos).forEach(catName => {
+        const groupEl = document.createElement("div");
+        groupEl.className = "cat-group";
+
+        const header = document.createElement("div");
+        header.className = "cat-header";
+        header.innerHTML = `
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span>📁 ${catName} (${grupos[catName].length})</span>
+            <button class="btn-quick" onclick="renombrarCategoriaModal('${catName.replace(/'/g, "\\'")}', event)" title="Renombrar esta categoría" style="background:rgba(255,255,255,0.7); font-size:10px;">✏️ Editar</button>
+            ${catName !== "SIN CATEGORÍA" ? `<button class="btn-quick" onclick="eliminarCategoriaModal('${catName.replace(/'/g, "\\'")}', event)" title="Eliminar categoría y pasar insumos a SIN CATEGORÍA" style="background:rgba(198,40,40,0.15); color:#C62828; border-color:#FFCDD2; font-size:10px;">🗑️ Eliminar</button>` : ""}
+          </div>
+          <span>▼</span>`;
+        header.onclick = (e) => {
+          if (e.target.closest("button")) return;
+          const body = groupEl.querySelector(".cat-body");
+          body.style.display = body.style.display === "none" ? "block" : "none";
+        };
+
+        const body = document.createElement("div");
+        body.className = "cat-body";
+
+        if (grupos[catName].length === 0) {
+          const emptyBox = document.createElement("div");
+          emptyBox.className = "cat-body-empty";
+          emptyBox.innerHTML = `<span>📥 Arrastra insumos aquí para agregarlos a ${catName}</span>`;
+          body.appendChild(emptyBox);
+        } else {
+          grupos[catName].forEach(item => {
+            const card = crearItemCardHTML(item, item.originalIdx);
+            body.appendChild(card);
+          });
+        }
+
+        groupEl.appendChild(header);
+        groupEl.appendChild(body);
+        container.appendChild(groupEl);
+
+        const sortable = new Sortable(body, {
+          group: "sharedCategories",
+          animation: 250,
+          easing: "cubic-bezier(0.2, 1, 0.3, 1)",
+          handle: ".handle, .item-card",
+          filter: ".chk-select, .btn-move, .btn-quick, .rank-input, input, button, select",
+          preventOnFilter: false,
+          ghostClass: "sortable-ghost",
+          chosenClass: "sortable-chosen",
+          dragClass: "sortable-drag",
+          forceFallback: false,
+          onStart: function(evt) {
+            container.classList.add("is-dragging");
+            const draggedCard = evt.item;
+            if (selectedNames.size > 1 && selectedNames.has(draggedCard.dataset.name)) {
+              draggedCard.classList.add("multi-drag-stack");
+              let badge = draggedCard.querySelector(".stack-badge");
+              if (!badge) {
+                badge = document.createElement("div");
+                badge.className = "stack-badge";
+                draggedCard.appendChild(badge);
+              }
+              badge.innerText = `📦 Moviendo ${selectedNames.size} insumos juntos`;
+
+              body.querySelectorAll(".item-card.selected").forEach(card => {
+                if (card !== draggedCard) {
+                  card.style.display = "none";
+                }
+              });
+            }
+          },
+          onMove: function(evt) {
+            const draggedCard = evt.dragged;
+            const ghost = body.querySelector(".sortable-ghost");
+            const isSelectedBatch = selectedNames.has(draggedCard.dataset.name) && selectedNames.size > 1;
+
+            if (ghost && !ghost._rendered) {
+              ghost._rendered = true;
+              ghost.style.height = "auto";
+              if (isSelectedBatch) {
+                const selectedItemsArray = Array.from(selectedNames);
+                let ghostHTML = `<div class="ghost-preview-container">`;
+                selectedItemsArray.forEach((name, i) => {
+                  const itemObj = rawItemsMap.get(name) || { name: name, cat: catName };
+                  ghostHTML += `
+                    <div class="ghost-preview-card" style="animation-delay: ${i * 45}ms;">
+                      <div class="item-left">
+                        <input type="checkbox" class="chk-select" checked disabled>
+                        <span class="handle">☰</span>
+                        <div class="rank-badge-container">
+                          <span class="rank-symbol">#</span>
+                          <span style="color:#FFF; font-size:10px; font-weight:700; padding:0 4px;">--</span>
+                        </div>
+                        <div class="prod-info">
+                          <div class="prod-name">${itemObj.name}</div>
+                          <span class="prod-cat">${itemObj.cat}</span>
+                        </div>
+                      </div>
+                      <div class="item-btns">
+                        <span style="font-size:9px; font-weight:700; color:var(--dark); background:rgba(255,255,255,0.6); padding:3px 8px; border-radius:6px; border:1px solid var(--sage);">✦ Caerá aquí</span>
+                      </div>
+                    </div>`;
+                });
+                ghostHTML += `</div>`;
+                ghost.innerHTML = ghostHTML;
+              } else {
+                const itemObj = rawItemsMap.get(draggedCard.dataset.name) || { name: draggedCard.dataset.name, cat: catName };
+                ghost.innerHTML = `
+                  <div class="ghost-preview-card">
+                    <div class="item-left">
+                      <input type="checkbox" class="chk-select" disabled>
+                      <span class="handle">☰</span>
+                      <div class="rank-badge-container">
+                        <span class="rank-symbol">#</span>
+                        <span style="color:#FFF; font-size:10px; font-weight:700; padding:0 4px;">--</span>
+                      </div>
+                      <div class="prod-info">
+                        <div class="prod-name">${itemObj.name}</div>
+                        <span class="prod-cat">${itemObj.cat}</span>
+                      </div>
+                    </div>
+                    <div class="item-btns">
+                      <span style="font-size:9px; font-weight:700; color:var(--dark); background:rgba(255,255,255,0.6); padding:3px 8px; border-radius:6px; border:1px solid var(--sage);">✦ Caerá aquí</span>
+                    </div>
+                  </div>`;
+              }
+            }
+          },
+          onAdd: function(evt) {
+            /* Insumo movido a una categoría distinta */
+            isModified = true;
+            const draggedName = evt.item.dataset.name;
+            const itemsToUpdate = (selectedNames.has(draggedName) && selectedNames.size > 1) 
+              ? Array.from(selectedNames) 
+              : [draggedName];
+
+            itemsToUpdate.forEach(name => {
+              touchedItems.add(name);
+              const itemObj = rawItemsMap.get(name);
+              if (itemObj) {
+                itemObj.cat = catName.toUpperCase();
+              }
+              const itemRaw = rawItems.find(it => it.name === name);
+              if (itemRaw) {
+                itemRaw.cat = catName.toUpperCase();
+              }
+            });
+            renderHTML();
+          },
+          onEnd: function(evt) {
+            container.classList.remove("is-dragging");
+            const draggedCard = evt.item;
+            draggedCard.classList.remove("multi-drag-stack");
+            if (draggedCard._ghostTimer) clearTimeout(draggedCard._ghostTimer);
+            const badge = draggedCard.querySelector(".stack-badge");
+            if (badge) badge.remove();
+
+            document.querySelectorAll(".sortable-drag, .sortable-fallback, .sortable-ghost").forEach(el => {
+              if (!body.contains(el)) el.remove();
+            });
+
+            body.querySelectorAll(".item-card").forEach(card => {
+              card.style.display = "";
+              card.style.opacity = "";
+              card.style.transform = "";
+            });
+
+            if (evt.from === evt.to && evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
+              isModified = true;
+              const catItems = grupos[catName];
+              const fromItem = catItems[evt.oldIndex];
+              const toItem = catItems[evt.newIndex];
+              moverEnConjuntoODrag(fromItem.originalIdx, toItem.originalIdx);
+
+              body.querySelectorAll(".item-card.selected").forEach((card) => {
+                card.classList.add("pop-drop");
+                setTimeout(() => card.classList.remove("pop-drop"), 400);
+              });
+            }
+          }
+        });
+        sortableInstances.push(sortable);
+      });
+    }
+
+    function crearItemCardHTML(item, idx) {
+      const isSelected = selectedNames.has(item.name);
+      
+      /* Solo marcar como editado si el usuario tocó directamente este item */
+      const initObj = initialItemsMap.get(item.name);
+      const catChanged = initObj && (initObj.cat || "") !== (item.cat || "");
+      const isItemModified = touchedItems.has(item.name) || catChanged;
+
+      const card = document.createElement("div");
+      card.className = "item-card" + (isSelected ? " selected" : "") + (isItemModified ? " is-item-modified" : "");
+      card.dataset.index = idx;
+      card.dataset.name = item.name;
+
+      const safeName = item.name.replace(/'/g, "\\'");
+      card.innerHTML = `
+        <div class="item-left">
+          <input type="checkbox" class="chk-select" ${isSelected ? "checked" : ""} onclick="toggleSelect('${safeName}', event)">
+          <span class="handle">☰</span>
+          <div class="rank-badge-container" title="Posición actual. Haz clic para tipear un número de salto directo y presiona Enter">
+            <span class="rank-symbol">#</span>
+            <input type="number" class="rank-input" value="${idx + 1}" min="1" max="${rawItems.length}" onchange="cambiarPosicionDirecta(${idx}, this.value, event)">
+          </div>
+          <div class="prod-info">
+            <div class="prod-name">${item.name} ${isItemModified ? `<span style="color:#E65100; font-size:9px; font-weight:800;" title="Este producto cambio de posición o categoría">● Editado</span>` : ""}</div>
+            <span class="prod-cat">${item.cat}</span>
+          </div>
+        </div>
+        <div class="item-btns">
+          <button class="btn-quick" onclick="moverItemTop(${idx}, event)" title="Mover al Inicio (Top 1)">🔝 Top</button>
+          <button class="btn-quick" onclick="moverItemBottom(${idx}, event)" title="Mover al Fondo">🔻 Bot</button>
+          <button class="btn-move" onclick="moverItem(${idx}, -1, event)" title="Subir uno">▲</button>
+          <button class="btn-move" onclick="moverItem(${idx}, 1, event)" title="Bajar uno">▼</button>
+        </div>
+      `;
+      return card;
+    }
+
+    function moverEnConjuntoODrag(fromIdx, toIdx) {
+      isModified = true;
+      const draggedItem = rawItems[fromIdx];
+      if (selectedNames.has(draggedItem.name)) {
+        selectedNames.forEach(n => touchedItems.add(n));
+      } else {
+        touchedItems.add(draggedItem.name);
+      }
+      if (selectedNames.has(draggedItem.name)) {
+        const selectedList = [];
+        const unselectedList = [];
+        rawItems.forEach(item => {
+          if (selectedNames.has(item.name)) {
+            selectedList.push(item);
+          } else {
+            unselectedList.push(item);
+          }
+        });
+
+        let countUnselectedBeforeTo = 0;
+        for (let i = 0; i < toIdx; i++) {
+          if (!selectedNames.has(rawItems[i].name)) countUnselectedBeforeTo++;
+        }
+        unselectedList.splice(countUnselectedBeforeTo, 0, ...selectedList);
+        rawItems = unselectedList;
+      } else {
+        const movedItem = rawItems.splice(fromIdx, 1)[0];
+        rawItems.splice(toIdx, 0, movedItem);
+      }
+      renderHTML();
+    }
+
+    function moverItem(idx, dir, e) {
+      if (e) e.stopPropagation();
+      isModified = true;
+      touchedItems.add(rawItems[idx].name);
+      const targetIdx = idx + dir;
+      if (targetIdx >= 0 && targetIdx < rawItems.length) {
+        const temp = rawItems[idx];
+        rawItems[idx] = rawItems[targetIdx];
+        rawItems[targetIdx] = temp;
+        renderHTML();
+      }
+    }
+
+    function resetAlfabetico() {
+      document.getElementById("resetConfirmDialog").style.display = "flex";
+    }
+
+    function cerrarResetModal() {
+      document.getElementById("resetConfirmDialog").style.display = "none";
+    }
+
+    function confirmarResetAlfabetico() {
+      cerrarResetModal();
+      isModified = true;
+      rawItems.forEach(it => touchedItems.add(it.name));
+      rawItems.sort((a, b) => a.cat !== b.cat ? a.cat.localeCompare(b.cat) : a.name.localeCompare(b.name));
+      renderHTML();
+      mostrarToast("🔄 Lista reorganizada en orden alfabético.", "success");
+    }
+
+    function filtrarLista() { renderHTML(); }
+
+    function cerrarCategoryModal() {
+      document.getElementById("categoryDialog").style.display = "none";
+    }
+
+    function crearNuevaCategoriaModal() {
+      document.getElementById("categoryDialogTitle").innerText = "✨ Crear Nueva Categoría";
+      document.getElementById("categoryDialogDesc").innerText = selectedNames.size > 0 
+        ? `Se asignará la nueva categoría a los ${selectedNames.size} productos seleccionados:` 
+        : "Ingrese el nombre de la nueva categoría para organizar los insumos:";
+      const input = document.getElementById("categoryInput");
+      input.value = "";
+      document.getElementById("categoryDialog").style.display = "flex";
+      setTimeout(() => input.focus(), 100);
+
+      document.getElementById("btnConfirmCategory").onclick = function() {
+        const val = input.value.trim().toUpperCase();
+        if (!val) return;
+        cerrarCategoryModal();
+        isModified = true;
+
+        if (selectedNames.size > 0) {
+          selectedNames.forEach(name => {
+            const itemObj = rawItemsMap.get(name);
+            if (itemObj) itemObj.cat = val;
+            const itemRaw = rawItems.find(it => it.name === name);
+            if (itemRaw) itemRaw.cat = val;
+          });
+        } else {
+          customCategories.add(val);
+        }
+        evaluarEstadoModificado();
+        mostrarToast(`✅ Categoría "${val}" creada. Arrastra insumos a esta sección.`, "success");
+        renderHTML();
+      };
+    }
+
+    function renombrarCategoriaModal(oldCat, e) {
+      if (e) e.stopPropagation();
+      document.getElementById("categoryDialogTitle").innerText = `✏️ Renombrar "${oldCat}"`;
+      document.getElementById("categoryDialogDesc").innerText = "Ingrese el nuevo nombre para todos los productos de esta categoría:";
+      const input = document.getElementById("categoryInput");
+      input.value = oldCat;
+      document.getElementById("categoryDialog").style.display = "flex";
+      setTimeout(() => input.focus(), 100);
+
+      document.getElementById("btnConfirmCategory").onclick = function() {
+        const val = input.value.trim().toUpperCase();
+        if (!val || val === oldCat.toUpperCase()) return;
+        cerrarCategoryModal();
+        isModified = true;
+
+        rawItems.forEach(item => {
+          if (item.cat.toUpperCase() === oldCat.toUpperCase()) {
+            item.cat = val;
+          }
+        });
+        rawItemsMap.forEach(item => {
+          if (item.cat.toUpperCase() === oldCat.toUpperCase()) {
+            item.cat = val;
+          }
+        });
+        mostrarToast(`✏️ Categoría actualizada a "${val}".`, "success");
+        renderHTML();
+      };
+    }
+
+    function cerrarDeleteCategoryModal() {
+      document.getElementById("deleteCategoryConfirmDialog").style.display = "none";
+    }
+
+    function eliminarCategoriaModal(catName, e) {
+      if (e) e.stopPropagation();
+      document.getElementById("deleteCategoryConfirmDesc").innerHTML = `Esta acción eliminará la categoría <strong>"${catName}"</strong>. Todos los insumos pertenecientes a ella pasarán a <strong>"SIN CATEGORÍA"</strong> sin perderse.`;
+      document.getElementById("deleteCategoryConfirmDialog").style.display = "flex";
+
+      document.getElementById("btnConfirmDeleteCategory").onclick = function() {
+        cerrarDeleteCategoryModal();
+        isModified = true;
+        rawItems.forEach(item => {
+          if (item.cat.toUpperCase() === catName.toUpperCase()) {
+            item.cat = "SIN CATEGORÍA";
+          }
+        });
+        rawItemsMap.forEach(item => {
+          if (item.cat.toUpperCase() === catName.toUpperCase()) {
+            item.cat = "SIN CATEGORÍA";
+          }
+        });
+        mostrarToast(`🗑️ Categoría "${catName}" eliminada. Insumos movidos a SIN CATEGORÍA.`, "success");
+        renderHTML();
+      };
+    }
+
+    function guardarOrden() {
+      const btnSave = document.getElementById("btnSave");
+      const spinner = document.getElementById("spinner");
+      const btnText = document.getElementById("btnText");
+      btnSave.disabled = true;
+      spinner.style.display = "inline-block";
+      btnText.innerText = "Guardando...";
+      const payload = rawItems.map((item, idx) => ({ name: item.name, rank: idx + 1, cat: item.cat }));
+      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).guardarOrdenPickingHTML(currentKey, payload);
+    }
+
+    function onSuccess(msg) {
+      document.getElementById("btnSave").disabled = false;
+      document.getElementById("spinner").style.display = "none";
+      document.getElementById("btnText").innerText = "✦ Guardar y Aplicar Orden";
+      
+      /* Reiniciar foto de estado inicial tras guardado exitoso */
+      initialItemsMap = new Map(rawItems.map(it => [it.name, { ...it }]));
+      initialOrderNames = rawItems.map(it => it.name);
+      customCategories.clear();
+      selectedNames.clear();
+      touchedItems.clear();
+      isModified = false;
+      evaluarEstadoModificado();
+      renderHTML();
+      mostrarToast(msg, "success");
+    }
+
+    function onFailure(err) {
+      document.getElementById("btnSave").disabled = false;
+      document.getElementById("spinner").style.display = "none";
+      document.getElementById("btnText").innerText = "✦ Guardar y Aplicar Orden";
+      mostrarToast("❌ Error: " + err.message, "error");
+    }
+
+    function mostrarToast(msg, tipo) {
+      let toast = document.getElementById("statusToast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "statusToast";
+        toast.style.cssText = "position:fixed; bottom:55px; left:50%; transform:translateX(-50%); padding:8px 16px; border-radius:20px; font-size:11px; font-weight:600; z-index:200; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:all 0.3s ease;";
+        document.body.appendChild(toast);
+      }
+      toast.style.background = tipo === "success" ? "#3D5A47" : "#C62828";
+      toast.style.color = "#FFFFFF";
+      toast.innerText = msg;
+      toast.style.display = "block";
+      toast.style.opacity = "1";
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => { toast.style.display = "none"; }, 300);
+      }, 3500);
+    }
+
+    window.onload = function() {
+      cargarPreferenciasZoom();
+      cargarLista();
+    };
+  </script>
+</body>
+</html>
