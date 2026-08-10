@@ -20,3 +20,13 @@ yarn-error.log*
 # Product Presentation Deck (Ignored by User Request)
 presentacion_deck/
 
+# Agent Rulesets & Internal IA Documents (Stored in ibrahim-agent-core)
+AGENTS.md
+DESIGN.md
+PRODUCT.md
+
+# Legacy Scripts & Local Test Files
+.oldScripts/
+productos_pedidos.csv
+.env
+.env.local
