@@ -35,7 +35,13 @@ mise_work/
   - Vistas alternables: `📄 Lista Plana` y `📁 Por Categorías`.
   - Botones un-clic `🔝 Top` y `🔻 Bot`.
   - Preferencia de Zoom/Densidad (`100%`, `115%`, `130%`) persistida en `localStorage` bajo clave `mise_picking_zoom`.
-  - Intercepción de cierre por `X` si hay cambios sin guardar (`isModified`).
+### 3. Filosofía Mobile-First y Limitaciones de la App Móvil Nativa
+- **Mobile-First Estricto (PDA / PDM)**: Las hojas de tienda están diseñadas para ser consumidas el 90%+ del tiempo desde teléfonos celulares.
+- **Incompatibilidad del Motor Móvil de Google Sheets**: La app nativa de Google Sheets en iOS y Android **NO soporta ni ejecuta**:
+  - `SpreadsheetApp.toast()` (notificaciones emergentes).
+  - Menús personalizados creados por `onOpen()` (`ui.createMenu()`).
+  - Diálogos HTML/Modales nativos (`Ui.alert()`, `showModalDialog()`).
+- **Arquitectura de Interacción en Móvil**: Toda acción en tienda debe ser **100% transparente o activada por casillas físicas (checkboxes) en celdas visibles de la hoja**, sin depender jamás de menús o toasts de escritorio.
 
 ---
 
@@ -50,6 +56,10 @@ mise_work/
    - Fórmulas inyectadas vía Apps Script (`.setFormula()`) siempre en **Inglés** y con parámetros separados por **comas (`,`)**.
 4. **Preservación Inamovible de Changelogs Históricos**:
    - Queda estrictamente prohibido ultra-simplificar, resumir o borrar versiones/changelogs pasados en cualquier archivo markdown de documentación (`historial_versiones.md`, `CHANGELOG.md`, etc.). Toda la historia técnica y operativa debe conservarse intacta e incremental independientemente del tamaño del archivo.
+5. **Doble Versionado Obligatorio (Técnico vs. Público/User-Friendly)**:
+   - Al registrar cualquier actualización o incremento de versión, es **OBLIGATORIO mantener e incrementar dos changelogs paralelos**:
+     - **Changelog Técnico Tradicional** (`CHANGELOG.md` / `about.js` / `historial_versiones.md`): Con jerga técnica completa, funciones, arquitectura, parámetros y variables.
+     - **Changelog Público / Operativo** (`CHANGELOG_PUBLIC.md` / Trello Cards): Redactado en formato **Beneficio Operativo (User-Friendly)** libre de jerga de código (sin `onEdit`, `ScriptProperties`, `IMPORTRANGE`, `try-catch`, etc.), enfocado en el valor directo para tiendas, gerencias y dirección.
 
 ---
 

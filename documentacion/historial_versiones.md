@@ -5,16 +5,15 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 
 ---
 
-## 🚀 Versión 1.2.0 (Actual) — Sincronización Transaccional & Robustez en Bodega
-*Fecha de liberación: 21 de Julio de 2026*
+## ⚡ v1.6.1 Altair (Rendimiento & QOL Silencioso Mobile-First) — 2026-08-07 [ACTUAL]
 
-### ⚙️ Bodega (BDG) — Control de Carga y Edición
-* **Solución de Timeout en onEdit (#27)**: Refactorización completa de la lógica de inyección de productos a **Batch 2D**. Se eliminó la escritura iterativa en bucle por días y sucursales en los Kardex, reduciendo el tiempo de ejecución en red de 25 segundos a menos de 1.5 segundos.
-* **State-Locking Preventivo**: Modificación del trigger `onEdit` para desmarcar inmediatamente a `FALSE` los checkboxes confirmadores en `"➕ AGREGAR_MÚLTIPLES"` (celda `J3`) y `"✏️ EDITAR_PRODUCTOS"` (celda `I3`) antes de comenzar el procesamiento pesado, evitando ejecuciones duplicadas encoladas en caso de interrupción.
-* **Manejo de Errores Robustecido**: Implementación de bloques `try-catch-finally` con alertas informativas en pantalla y toques visuales en rojo en caso de fallo, garantizando la liberación segura de los recursos (`lock.releaseLock()`) y la consistencia del catálogo para reintentos sin riesgos.
-* **Limpiador Automático de Duplicados**: Incorporación de la función `eliminarDuplicadosCatalogo` al menú de `⚙️ Mise`. Identifica de forma inteligente registros redundantes en `MAESTRO` comparando Categoría + Nombre + Presentación, los elimina de forma atómica en todas las bases (Kardex e Historiales) y re-estructura el catálogo secuencialmente.
-* **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
-* **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
+### 📱 Pedidos (PDA & PDM) — Rendimiento y Resiliencia Móvil
+* **Eliminación Total del Sistema de "Adiciones"**: Remoción de la evaluación en `onEdit` que consultaba ScriptProperties en cada tipeo, eliminando la columna/métrica de alerta `"🚨 ADICIÓN"` en Pedidos y Surtido Rápido para acelerar el procesamiento táctil en celulares.
+* **Auto-Reparador Silencioso Transparente (`_validarYAutoRepararSyncSilencioso`)**: Guardián invisible que detecta celdas corruptas o vacías en `_SYNC!A4` y restablece la fórmula `IMPORTRANGE` en segundo plano sin usar `toast` ni `alert` (100% compatible con la app nativa de Sheets en iOS/Android).
+* **Salvaguarda con Recovery en Surtido Rápido**: Cobertura con bloque `try ... catch ... finally` y `LockService` para garantizar la liberación de bloqueos y auto-reset del estado si la generación de surtido es interrumpida.
+* **Paridad Total de Código 1:1**: Homologación exacta de 1,548 líneas de código entre `scripts/miseAuthPDA.gs` y `scripts/miseAuthPDM.gs`.
+
+---
 
 ## 🌌 v1.6.0 Altair (Powerhouse: Quiosco de Picking, Stock de Quiosco & Remote Push Auto-Sync) — 2026-08-05
 
@@ -135,6 +134,18 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
   * **Emoji de Reset Móvil**: Estandarización de botones interactivos con el emoji de basurero (`🗑`) en la celda `B2` y su checkbox ejecutor silencioso en `C2`.
   * **Reparación No Destructiva**: Creación de la función `repararSistemaTienda` para restaurar formatos condicionales, visibilidad de inactivos y conexión sin borrar datos activos en tránsito.
   * **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo de las hojas de las tiendas.
+
+---
+
+## 🚀 Versión 1.2.0 — Sincronización Transaccional & Control de Carga en Bodega (2026-07-21)
+
+### ⚙️ Bodega (BDG) — Control de Carga y Edición
+* **Solución de Timeout en onEdit (#27)**: Refactorización completa de la lógica de inyección de productos a **Batch 2D**. Se eliminó la escritura iterativa en bucle por días y sucursales en los Kardex, reduciendo el tiempo de ejecución en red de 25 segundos a menos de 1.5 segundos.
+* **State-Locking Preventivo**: Modificación del trigger `onEdit` para desmarcar inmediatamente a `FALSE` los checkboxes confirmadores en `"➕ AGREGAR_MÚLTIPLES"` (celda `J3`) y `"✏️ EDITAR_PRODUCTOS"` (celda `I3`) antes de comenzar el procesamiento pesado, evitando ejecuciones duplicadas encoladas en caso de interrupción.
+* **Manejo de Errores Robustecido**: Implementación de bloques `try-catch-finally` con alertas informativas en pantalla y toques visuales en rojo en caso de fallo, garantizando la liberación segura de los recursos (`lock.releaseLock()`) y la consistencia del catálogo para reintentos sin riesgos.
+* **Limpiador Automático de Duplicados**: Incorporación de la función `eliminarDuplicadosCatalogo` al menú de `⚙️ Mise`. Identifica de forma inteligente registros redundantes en `MAESTRO` comparando Categoría + Nombre + Presentación, los elimina de forma atómica en todas las bases (Kardex e Historiales) y re-estructura el catálogo secuencialmente.
+* **Protecciones Anti-Dummies (MAESTRO)**: Bloqueo de celdas nativas de Sheets en `MAESTRO` para evitar la edición accidental de columnas críticas y fórmulas de stock. Únicamente se permite la edición directa del usuario en las columnas de selección y límites de stock (`MÍN/MÁX`).
+* **Contraseña en Setup**: Bloqueo de seguridad por contraseña (`LCP-ADMIN-2026`) en el restablecimiento destructivo del catálogo principal.
 
 ---
 

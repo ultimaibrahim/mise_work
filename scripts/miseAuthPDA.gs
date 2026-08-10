@@ -53,6 +53,8 @@ function onOpen() {
   try {
     const ui = SpreadsheetApp.getUi();
     const menu = ui.createMenu("⚙️ Mise")
+      .addItem("🗑️ Limpiar / Reiniciar pedido",           "resetearPedidoManualmente")
+      .addSeparator()
       .addItem("🔧 Reparar formatos y conexión",        "repararSistemaTienda")
       .addSeparator()
       .addItem(`🔗 Configurar conexión con ${BODEGA_NOMBRE}`, "configurarBodega")
@@ -388,21 +390,7 @@ function onEdit(e) {
     const checkVal = Number(val);
     if (isNaN(checkVal) || checkVal < 0) {
       e.range.clearContent();
-      sheet.getRange(row, 10).clearContent();
-      try { SpreadsheetApp.getActive().toast("El valor debe ser un número positivo.", "❌ Mise", 5); } catch(err) {}
       return;
-    }
-
-    if (checkVal === 0) {
-      sheet.getRange(row, 10).clearContent();
-    } else {
-      // checkVal > 0
-      const props = PropertiesService.getScriptProperties();
-      const isSorted = props.getProperty("IS_ORDER_SORTED") === "true";
-      const isSurtidoActive = props.getProperty("IS_SURTIDO_ACTIVE") === "true";
-      if (isSorted || isSurtidoActive) {
-        sheet.getRange(row, 10).setValue("🚨 ADICIÓN"); // Columna J
-      }
     }
   }
 
@@ -415,11 +403,29 @@ function onEdit(e) {
   } catch (err) {}
 }
 
+function _validarYAutoRepararSyncSilencioso() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sync = ss.getSheetByName(SHEET_SYNC);
+    if (!sync) return;
+    const val = String(sync.getRange(4, 1).getValue()).trim();
+    if (val === "" || val === "#REF!" || val === "#ERROR!" || val === "#N/A") {
+      const props = PropertiesService.getScriptProperties();
+      const url = props.getProperty(`BODEGA_URL_${BODEGA_KEY}`);
+      if (url) {
+        _setupSync(url);
+      }
+    }
+  } catch(e) {}
+}
+
 function sincronizarEstados() {
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_PEDIDO);
   const sync  = ss.getSheetByName(SHEET_SYNC);
   if (!sheet || !sync) return;
+
+  _validarYAutoRepararSyncSilencioso();
 
   // Forzar recálculo global re-escribiendo el IMPORTRANGE para romper caché
   const formula = sync.getRange(4, 1).getFormula();
@@ -527,6 +533,7 @@ function sincronizarEstados() {
 }
 
 function ordenarPedido() {
+  _validarYAutoRepararSyncSilencioso();
   const ss    = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_PEDIDO);
   if (!sheet) return;
@@ -559,7 +566,7 @@ function ordenarPedido() {
     });
   }
 
-  // Ordenar con Detección Automática Universal (Orden Custom de Sucursal > Categoría Alfabética)
+  // Ordenar estrictamente según la Secuencia de Picking definida en Bodega (Col L de _SYNC)
   items.sort((a, b) => {
     const nameA = String(a.vals[2] || "").trim();
     const nameB = String(b.vals[2] || "").trim();
@@ -571,23 +578,14 @@ function ordenarPedido() {
       return isInactiveA - isInactiveB;
     }
 
-    // 2. FEATURE DETECTION: ¿La sucursal tiene un orden custom de picking configurado (rank > 0)?
-    const rankA = pickingMap[nameA] || 0;
-    const rankB = pickingMap[nameB] || 0;
-    if (rankA > 0 && rankB > 0 && rankA !== rankB) {
+    // 2. Ordenamiento Estricto por Posición de Picking de Quiosco (rankA vs rankB)
+    const rankA = pickingMap[nameA] !== undefined ? pickingMap[nameA] : 9999;
+    const rankB = pickingMap[nameB] !== undefined ? pickingMap[nameB] : 9999;
+    if (rankA !== rankB) {
       return rankA - rankB;
     }
 
-    // 3. Si no hay orden custom o son iguales, colocar productos solicitados (F > 0) arriba
-    const valA = parseFloat(a.vals[5]) || 0;
-    const valB = parseFloat(b.vals[5]) || 0;
-    const hasA = valA > 0 ? 1 : 0;
-    const hasB = valB > 0 ? 1 : 0;
-    if (hasA !== hasB) {
-      return hasB - hasA;
-    }
-
-    // 4. FALLBACK UNIVERSAL: Si tampoco hay diferencia en F, ordena por Categoría alfabética
+    // 3. Fallback secundario: Categoría alfabética y Número original
     const catA = String(a.vals[1] || "").trim();
     const catB = String(b.vals[1] || "").trim();
     if (catA !== catB) {
@@ -739,6 +737,17 @@ function instalarTriggers() {
 function desinstalarTriggers() {
   ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === "sincronizarEstados") ScriptApp.deleteTrigger(t); });
   SpreadsheetApp.getActive().toast("Trigger desinstalado.", "⚙️ Mise", 3);
+}
+
+function resetearPedidoManualmente() {
+  const ui = SpreadsheetApp.getUi();
+  const resp = ui.alert("🗑️ Reiniciar Pedido Diario", "¿Estás seguro de que deseas borrar las cantidades capturadas y reiniciar el pedido del día?", ui.ButtonSet.YES_NO);
+  if (resp === ui.Button.YES) {
+    _resetearPedidoSilencioso();
+    try {
+      SpreadsheetApp.getActive().toast("Pedido borrado y limpiado correctamente ✓", "⚙️ Mise", 4);
+    } catch(e) {}
+  }
 }
 
 function _resetearPedidoSilencioso() {
@@ -1324,7 +1333,6 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     const bgs = [];
     const checkCompleto = [];
     const checkInexistente = [];
-    const alertasVal = [];
     
     for (let i = 0; i < rows; i++) {
       const item = filtered[i];
@@ -1348,7 +1356,6 @@ function _generarSurtidoRapidoInternal(activateSheet) {
       
       checkCompleto.push([item.completo]);
       checkInexistente.push([item.inexistente]);
-      alertasVal.push([item.highlightBg === "#FFD54F" ? "🚨 ADICIÓN" : ""]);
     }
 
     // Escribir datos básicos
@@ -1365,10 +1372,6 @@ function _generarSurtidoRapidoInternal(activateSheet) {
     // Escribir checkboxes
     sSheet.getRange(4, 6, rows, 1).insertCheckboxes().setValues(checkCompleto).setHorizontalAlignment("center");
     sSheet.getRange(4, 7, rows, 1).insertCheckboxes().setValues(checkInexistente).setHorizontalAlignment("center");
-
-    // Escribir columna oculta de alerta
-    sSheet.getRange(4, 8, rows, 1).setValues(alertasVal);
-    sSheet.hideColumns(8);
 
     // Validar entrada numérica en la columna E (Cant. Recibida)
     const valRule = SpreadsheetApp.newDataValidation()
@@ -1408,13 +1411,7 @@ function _generarSurtidoRapidoInternal(activateSheet) {
       .setRanges([rangeS])
       .build();
 
-    const ruleSAdicion = SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=$H4="🚨 ADICIÓN"')
-      .setBackground("#FFD54F") // orange
-      .setRanges([rangeS])
-      .build();
-
-    sSheet.setConditionalFormatRules([ruleSCompleto, ruleSInexistente, ruleSIncompleto, ruleSAdicion]);
+    sSheet.setConditionalFormatRules([ruleSCompleto, ruleSInexistente, ruleSIncompleto]);
   }
 
   // --- TABLA DE RESUMEN DE PRODUCTOS (COLUMNAS I-J) ---
@@ -1425,29 +1422,26 @@ function _generarSurtidoRapidoInternal(activateSheet) {
   sSheet.setRowHeight(3, 28);
 
   // Inyectar etiquetas como texto puro (Col I)
-  sSheet.getRange("I4:I7").setValues([
+  sSheet.getRange("I4:I6").setValues([
     ["✅ Completos"],
     ["⚠️ Incompletos"],
-    ["❌ Inexistentes"],
-    ["🚨 Adiciones"]
+    ["❌ Inexistentes"]
   ]);
 
   // Inyectar fórmulas dinámicas (Col J)
-  sSheet.getRange("J4:J7").setFormulas([
+  sSheet.getRange("J4:J6").setFormulas([
     ["=COUNTIF(F4:F" + (3 + rows) + ", TRUE)"],
     ["=COUNTIFS(D4:D" + (3 + rows) + ", \">0\", E4:E" + (3 + rows) + ", \">0\", F4:F" + (3 + rows) + ", FALSE, G4:G" + (3 + rows) + ", FALSE)"],
-    ["=COUNTIF(G4:G" + (3 + rows) + ", TRUE)"],
-    ["=COUNTIF(H4:H" + (3 + rows) + ", \"🚨 ADICIÓN\")"]
+    ["=COUNTIF(G4:G" + (3 + rows) + ", TRUE)"]
   ]);
 
   sSheet.getRange("I4:J4").setBackground("#E8F5E9");
   sSheet.getRange("I5:J5").setBackground("#FFF3E0");
   sSheet.getRange("I6:J6").setBackground("#FFEBEE");
-  sSheet.getRange("I7:J7").setBackground("#FFFDE7");
   
-  sSheet.getRange("I4:I7").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("left").setVerticalAlignment("middle");
-  sSheet.getRange("J4:J7").setFontWeight("bold").setFontSize(10).setHorizontalAlignment("center").setVerticalAlignment("middle");
-  sSheet.getRange("I3:J7").setBorder(true, true, true, true, true, true, "#CCCCCC", SpreadsheetApp.BorderStyle.SOLID);
+  sSheet.getRange("I4:I6").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("left").setVerticalAlignment("middle");
+  sSheet.getRange("J4:J6").setFontWeight("bold").setFontSize(10).setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sSheet.getRange("I3:J6").setBorder(true, true, true, true, true, true, "#CCCCCC", SpreadsheetApp.BorderStyle.SOLID);
   sSheet.setColumnWidth(9, 120);  // Column I width
   sSheet.setColumnWidth(10, 60);  // Column J width
 
@@ -1460,8 +1454,16 @@ function _generarSurtidoRapidoInternal(activateSheet) {
 }
 
 function generarSurtidoRapido() {
-  PropertiesService.getScriptProperties().setProperty("IS_SURTIDO_ACTIVE", "true");
-  _generarSurtidoRapidoInternal(true);
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return;
+  try {
+    PropertiesService.getScriptProperties().setProperty("IS_SURTIDO_ACTIVE", "true");
+    _generarSurtidoRapidoInternal(true);
+  } catch(err) {
+    registrarLog("generarSurtidoRapido", "ERROR", err.message);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function generarSurtidoRapidoSilencioso() {

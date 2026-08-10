@@ -3302,8 +3302,8 @@ function guardarOrdenPickingHTML(key, payload) {
     // Recrear vistas móviles para propagar cambios de inmediato
     _buildVista(key);
     
-    // Auto-Sincronización Remota Push a Pedidos Andares y Mercado
-    sincronizarRemotamenteTiendasPush();
+    // Auto-Sincronización Remota Push a Pedidos Andares y Mercado con el mapa en memoria
+    sincronizarRemotamenteTiendasPush(key, rankMap);
 
     const bodegaNombre = BODEGAS[key] ? BODEGAS[key].nombre : key;
     _log("guardarOrdenPickingHTML", `${key}: Orden y categorías guardadas para ${payload.length} productos.`);
@@ -3318,27 +3318,149 @@ function guardarOrdenPickingHTML(key, payload) {
  * Abre silenciosamente los libros de Pedidos Andares y Pedidos Mercado
  * para reaplicar formatos, refrescar fórmulas y ordenar los pedidos en caliente.
  */
-function sincronizarRemotamenteTiendasPush() {
+function sincronizarRemotamenteTiendasPush(sourceKey = null, sourceRankMap = null) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const props = PropertiesService.getScriptProperties();
-  const urls = [
-    { key: "BA", name: "Andares", url: props.getProperty("BODEGA_URL_BA") },
-    { key: "BM", name: "Mercado", url: props.getProperty("BODEGA_URL_BM") }
+  const targets = [
+    { key: "BA", name: "Andares", url: props.getProperty("BODEGA_URL_BA"), vistaName: BODEGAS.BA.vista },
+    { key: "BM", name: "Mercado", url: props.getProperty("BODEGA_URL_BM"), vistaName: BODEGAS.BM.vista }
   ];
 
-  urls.forEach(t => {
+  targets.forEach(t => {
+    // Si se especificó una clave origen, solo sincronizar la tienda correspondiente
+    if (sourceKey && t.key !== sourceKey) return;
+
     if (t.url) {
       try {
         const targetSs = SpreadsheetApp.openByUrl(t.url);
-        if (targetSs) {
-          // Ejecutar refresco interno de pedido en el libro remoto si tiene el script ligado
-          // Al estar vinculado por IMPORTRANGE, un flush atómico re-sincroniza las referencias
-          SpreadsheetApp.flush();
+        const vistaSheet = ss.getSheetByName(t.vistaName);
+        if (targetSs && vistaSheet) {
+          const vLr = vistaSheet.getLastRow();
+          const vCount = Math.max(vLr - 3, 0);
+          if (vCount < 1) return;
+
+          // 1. Leer los datos frescos calculados en VISTA_MOVIL de Bodega (12 cols: A4:L)
+          const datosFrescos = vistaSheet.getRange(4, 1, vCount, 12).getValues();
+
+          // 2. PASE DIRECTO: Escribir los valores atómicos en _SYNC de la tienda remota
+          const syncSheet = targetSs.getSheetByName("_SYNC");
+          if (syncSheet) {
+            syncSheet.getRange(4, 1, vCount, 12).setValues(datosFrescos);
+            SpreadsheetApp.flush();
+          }
+
+          // 3. REORDENAMIENTO FÍSICO EN VIVO: Reordenar la pestaña 📋 PEDIDO DIARIO remota
+          const pedidoSheet = targetSs.getSheetByName("📋 PEDIDO DIARIO");
+          if (pedidoSheet && syncSheet) {
+            _reordenarPedidoRemotoDirecto(targetSs, syncSheet, pedidoSheet, datosFrescos);
+          }
         }
       } catch(e) {
         _log("sincronizarRemotamenteTiendasPush ERROR", `${t.name}: ${e.toString()}`);
       }
     }
   });
+}
+
+/**
+ * Reordena atómicamente y físicamente la tabla del Pedido Diario en un libro de tienda remoto
+ */
+function _reordenarPedidoRemotoDirecto(targetSs, syncSheet, pedidoSheet, syncValues = null) {
+  try {
+    const DATA_START_ROW = 4;
+    const NUM_COLS = 11;
+
+    if (!syncValues) {
+      const syncCount = Math.max(syncSheet.getLastRow() - 3, 0);
+      if (syncCount < 1) return;
+      syncValues = syncSheet.getRange(4, 1, syncCount, 12).getValues();
+    }
+
+    const activeMap = {};
+    const pickingMap = {};
+    for (let i = 0; i < syncValues.length; i++) {
+      const prodName = String(syncValues[i][2]).trim();
+      const activo   = String(syncValues[i][8]).trim();
+      const picking  = parseInt(syncValues[i][11]) || 0;
+      if (prodName) {
+        activeMap[prodName]  = activo;
+        pickingMap[prodName] = picking;
+      }
+    }
+
+    const currentCount = Math.max(pedidoSheet.getLastRow() - 3, 0);
+    if (currentCount < 1) return;
+    const range = pedidoSheet.getRange(DATA_START_ROW, 1, currentCount, NUM_COLS);
+    const values = range.getValues();
+
+    const items = [];
+    for (let i = 0; i < values.length; i++) {
+      items.push({ vals: values[i] });
+    }
+
+    // Ordenar estrictamente según la Secuencia de Picking de Quiosco (Col L de _SYNC)
+    items.sort((a, b) => {
+      const nameA = String(a.vals[2] || "").trim();
+      const nameB = String(b.vals[2] || "").trim();
+
+      const isInactiveA = (activeMap[nameA] === "NO") ? 1 : 0;
+      const isInactiveB = (activeMap[nameB] === "NO") ? 1 : 0;
+      if (isInactiveA !== isInactiveB) return isInactiveA - isInactiveB;
+
+      const rankA = pickingMap[nameA] !== undefined ? pickingMap[nameA] : 9999;
+      const rankB = pickingMap[nameB] !== undefined ? pickingMap[nameB] : 9999;
+      if (rankA !== rankB) return rankA - rankB;
+
+      const catA = String(a.vals[1] || "").trim();
+      const catB = String(b.vals[1] || "").trim();
+      if (catA !== catB) return catA.localeCompare(catB);
+
+      const numA = parseInt(a.vals[0]) || 0;
+      const numB = parseInt(b.vals[0]) || 0;
+      return numA - numB;
+    });
+
+    const sRef = "'_SYNC'";
+    const outputData = [];
+    const cleanFonts = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const pName = String(items[i].vals[2]).trim();
+      let sr = 4;
+      for (let k = 0; k < syncValues.length; k++) {
+        if (String(syncValues[k][2]).trim() === pName) {
+          sr = 4 + k;
+          break;
+        }
+      }
+
+      const r = DATA_START_ROW + i;
+      const isInactive = (activeMap[pName] === "NO");
+
+      cleanFonts.push(Array(NUM_COLS).fill(isInactive ? "italic" : "normal"));
+
+      outputData.push([
+        i + 1,
+        '=' + sRef + '!B' + sr,
+        '=' + sRef + '!C' + sr,
+        '=' + sRef + '!D' + sr,
+        '=IFERROR(' + sRef + '!E' + sr + '*1, 0) & IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "", IF(' + sRef + '!E' + sr + '<' + sRef + '!J' + sr + ', " (-" & (' + sRef + '!J' + sr + '-' + sRef + '!E' + sr + ') & ")", IF(' + sRef + '!E' + sr + '>' + sRef + '!K' + sr + ', " (+" & (' + sRef + '!E' + sr + '-' + sRef + '!K' + sr + ') & ")", " (-)")))',
+        items[i].vals[5],
+        '=IF(F' + r + '="", "", IFERROR(VLOOKUP(C' + r + ', \'🚚 SURTIDO RÁPIDO\'!C:E, 3, FALSE), 0) - F' + r + ')',
+        items[i].vals[7] === "" ? "" : items[i].vals[7],
+        items[i].vals[8] || "",
+        items[i].vals[9] || "",
+        '=IF(AND(' + sRef + '!J' + sr + '=0, ' + sRef + '!K' + sr + '=0), "—", ' + sRef + '!J' + sr + ' & "  |  " & ' + sRef + '!K' + sr + ')'
+      ]);
+    }
+
+    range.clearContent();
+    pedidoSheet.getRange(DATA_START_ROW, 1, items.length, NUM_COLS).setFormulas(outputData);
+    pedidoSheet.getRange(DATA_START_ROW, 1, items.length, NUM_COLS).setFontStyles(cleanFonts);
+    SpreadsheetApp.flush();
+  } catch(e) {
+    _log("_reordenarPedidoRemotoDirecto ERROR", e.toString());
+  }
 }
 
 /**
