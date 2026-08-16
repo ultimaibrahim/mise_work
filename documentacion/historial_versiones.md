@@ -5,7 +5,26 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 
 ---
 
-## ⚡ v1.6.4 Altair (Descuento Ultrarrápido de Hoy & Sincronización Push Remota de Picking) — 2026-08-15 [ACTUAL]
+## ⚡ v1.6.5 Altair (Mise Powerhouse: Suite Unificada de Catálogo & Picking) — 2026-08-16 [ACTUAL]
+
+### 🏬 Bodega (BDG) — Unificación Total de Catálogo & Picking
+* **Suite Unificada Powerhouse (`PickingDialog.html`)**:
+  * Interfaz modal desacoplada multi-pestaña con diseño *Crystal Squircle*:
+    1. `🖐️ Orden Picking`: Secuencia de picking con drag & drop multi-bloque, salto directo (#), zoom de accesibilidad y vistas plana/categorías.
+    2. `➕ Alta en Lote`: Tabla dinámica editable en caliente para dar de alta múltiples insumos sin ensuciar ni crear pestañas temporales en Google Sheets.
+    3. `📝 Edición Rápida`: Grid y buscador predictivo para corregir nombres, presentaciones, unidades y stock mín/máx por bodega en vivo.
+    4. `🧹 Duplicados`: Escáner automático en memoria de insumos repetidos con comparativa visual.
+* **Backend Transaccional Atómico (`miseAuthBDG.gs`)**:
+  * Endpoints `obtenerDatosPowerhouse(key)` y `guardarPowerhouseBatch(key, payload)` con `LockService` extendido.
+  * Inyección masiva y atómica en `MAESTRO`, `KARDEX_BA`, `KARDEX_BM`, `HISTORIAL_BA` e `HISTORIAL_BM` en un solo viaje de red.
+  * Disparo automático de sincronización push remota hacia las hojas de tienda (`_SYNC_BA` y `_SYNC_BM`).
+* **Reorganización de Menús**:
+  * Menú `🛠️ Gestión de Productos` centralizado con acceso directo a `⚡ Mise Powerhouse`.
+  * Creación de la categoría `🧪 Herramientas Experimentales` en BDG, PDA y PDM.
+
+---
+
+## ⚡ v1.6.4 Altair (Descuento Ultrarrápido de Hoy & Sincronización Push Remota de Picking) — 2026-08-15
 
 ### 🏬 Bodega (BDG) — Optimización de Descuento y Sincronización Push
 * **Descuento de Inventario Ultrarrápido (`descontarSurtidoAutomatico`)**:

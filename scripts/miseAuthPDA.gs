@@ -64,7 +64,7 @@ function onOpen() {
       .addSeparator()
       .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
       .addSeparator()
-      .addSubMenu(ui.createMenu("🧪 Herramientas de Prueba")
+      .addSubMenu(ui.createMenu("🧪 Herramientas Experimentales")
         .addItem("🎲 Generar datos de prueba",             "generarDatosPrueba")
         .addItem("🗒️ Forzar registro en LOG_SURTIDO",     "probadorForzarLogSurtido")
         .addItem("🗑️ Simular Cierre de Día (Reset + Log)", "resetearPedidoManualmente"))

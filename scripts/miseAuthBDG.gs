@@ -115,14 +115,10 @@ function onOpen() {
         .addItem("⏩ Avanzar semana — Mercado",             "avanzarSemanaBM"))
       .addSeparator()
       .addSubMenu(ui.createMenu("🛠️ Gestión de Productos")
+        .addItem("⚡ Mise Powerhouse (Catálogo & Picking)", "abrirConstructorPickingHTML")
         .addItem("⚡ Registro rápido de movimientos (PC)", "abrirRegistroRapidoHTML")
-        .addItem("🚚 Surtir y descontar inventario (Auto)", "descontarSurtidoAutomaticoManualmente")
-        .addItem("🔗 Configurar conexión con Logs (IMPORTRANGE)", "configurarConexionLogTiendas")
         .addSeparator()
-        .addItem("🖐️ Ordenar picking (Drag & Drop)",       "abrirConstructorPickingHTML")
-        .addSeparator()
-        .addItem("➕ Agregar productos en lote",            "crearHojaCargaMasiva")
-        .addItem("📝 Editar productos seleccionados",     "crearHojaEdicionMasiva")
+        .addItem("🖐️ Constructor de Picking directo",     "abrirConstructorPickingHTML")
         .addItem("🗑 Eliminar productos seleccionados",    "eliminarSeleccionadosMaestro")
         .addItem("🧹 Eliminar productos duplicados",      "eliminarDuplicadosCatalogo"))
       .addSeparator()
@@ -131,6 +127,10 @@ function onOpen() {
         .addItem("📊 Recrear VISTA_MOVIL_BM",             "crearVistaMóvilBM")
         .addSeparator()
         .addItem("🔒 Proteger catálogo anti-dummies",      "protegerMaestroSeguro"))
+      .addSeparator()
+      .addSubMenu(ui.createMenu("🧪 Herramientas Experimentales")
+        .addItem("🚚 Surtir y descontar inventario (Auto)", "descontarSurtidoAutomaticoManualmente")
+        .addItem("🔗 Configurar conexión con Logs (IMPORTRANGE)", "configurarConexionLogTiendas"))
       .addSeparator()
       .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
       .addSeparator()
@@ -3236,49 +3236,102 @@ function procesarEdicionMasiva() {
 }
 
 // ── CONSTRUCTOR DE ORDEN DE PICKING (DRAG & DROP HTML) ────────────────────────
+// ── POWERHOUSE DE CATÁLOGO & PICKING (SUITE UNIFICADA HTML) ───────────────────
 function abrirConstructorPickingHTML() {
   const html = HtmlService.createHtmlOutputFromFile('PickingDialog')
-    .setWidth(1050)
-    .setHeight(700);
+    .setWidth(1080)
+    .setHeight(720);
 
-  SpreadsheetApp.getUi().showModalDialog(html, "🖐️ Constructor de Orden de Picking");
+  SpreadsheetApp.getUi().showModalDialog(html, "⚡ Mise Powerhouse · Catálogo & Picking");
 }
 
-function obtenerProductosPickingHTML(key) {
+/**
+ * Obtiene el catálogo completo para el Powerhouse:
+ * Insumos con ID, Categoría, Producto, Presentación, Unidad, Mín/Máx por bodega, Activo y Ranking de Picking
+ */
+function obtenerDatosPowerhouse(key = "BA") {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
-  if (!maestro) return [];
+  if (!maestro) return { items: [], categorias: CATEGORIAS_LISTA, unidades: ["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"] };
 
   const lr = maestro.getLastRow();
-  if (lr < MAESTRO_START) return [];
+  if (lr < MAESTRO_START) return { items: [], categorias: CATEGORIAS_LISTA, unidades: ["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"] };
 
   const map = _getMaestroHeaderMap(maestro);
   const mData = maestro.getRange(MAESTRO_START, 1, lr - MAESTRO_START + 1, maestro.getLastColumn()).getValues();
 
-  const cProd = map["PRODUCTO"] ? map["PRODUCTO"].index : 2;
-  const cCat  = map["CATEGORÍA"] ? map["CATEGORÍA"].index : 1;
+  const cNo    = map["NO"]           ? map["NO"].index           : 0;
+  const cCat   = map["CATEGORÍA"]    ? map["CATEGORÍA"].index    : 1;
+  const cProd  = map["PRODUCTO"]     ? map["PRODUCTO"].index     : 2;
+  const cPres  = map["PRESENTACION"] ? map["PRESENTACION"].index : 3;
+  const cUni   = map["UNIDAD"]       ? map["UNIDAD"].index       : 4;
+  const cAct   = map["ACTIVO"]       ? map["ACTIVO"].index       : 5;
+  const cMinBA = map["MÍN_BA"]      ? map["MÍN_BA"].index      : 6;
+  const cMaxBA = map["MÁX_BA"]      ? map["MÁX_BA"].index      : 7;
+  const cMinBM = map["MÍN_BM"]      ? map["MÍN_BM"].index      : 9;
+  const cMaxBM = map["MÁX_BM"]      ? map["MÁX_BM"].index      : 10;
+
   const cPicKey = `PICKING_${key}`;
   const cPic = map[cPicKey] ? map[cPicKey].index : (map["PICKING"] ? map["PICKING"].index : -1);
 
   const items = [];
   mData.forEach((r, idx) => {
-    const name = String(r[cProd]).trim();
-    const cat  = String(r[cCat]).trim();
+    const prodName = String(r[cProd] || "").trim();
+    if (!prodName) return;
+
+    const no = parseInt(r[cNo]) || (idx + 1);
+    const cat = String(r[cCat] || "SIN CATEGORÍA").trim();
+    const pres = String(r[cPres] || "").trim();
+    const unit = String(r[cUni] || "pza").trim().toLowerCase();
+    const activo = String(r[cAct] || "SÍ").trim().toUpperCase() !== "NO";
+    const minBa = parseFloat(r[cMinBA]) || 0;
+    const maxBa = parseFloat(r[cMaxBA]) || 0;
+    const minBm = parseFloat(r[cMinBM]) || 0;
+    const maxBm = parseFloat(r[cMaxBM]) || 0;
     const rank = cPic !== -1 ? (parseInt(r[cPic]) || (idx + 1)) : (idx + 1);
-    if (name) {
-      items.push({ name: name, cat: cat, rank: rank });
-    }
+
+    items.push({
+      id: idx + 1,
+      no: no,
+      name: prodName,
+      cat: cat,
+      pres: pres,
+      unit: unit,
+      activo: activo,
+      minBa: minBa,
+      maxBa: maxBa,
+      minBm: minBm,
+      maxBm: maxBm,
+      rank: rank
+    });
   });
 
-  // Ordenar por el rank actual
+  return {
+    items: items,
+    categorias: Array.from(new Set([...CATEGORIAS_LISTA, ...items.map(it => it.cat)])).filter(Boolean),
+    unidades: ["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"]
+  };
+}
+
+// Wrapper de compatibilidad hacia atrás
+function obtenerProductosPickingHTML(key) {
+  const data = obtenerDatosPowerhouse(key);
+  const items = data.items.map(it => ({ name: it.name, cat: it.cat, rank: it.rank }));
   items.sort((a, b) => a.rank - b.rank);
   return items;
 }
 
-function guardarOrdenPickingHTML(key, payload) {
+/**
+ * Guarda todas las operaciones del Powerhouse en una sola transacción atómica (Batch I/O):
+ * 1. Altas nuevas de productos
+ * 2. Ediciones a productos existentes
+ * 3. Eliminación / purga de duplicados
+ * 4. Nuevo ordenamiento de picking
+ */
+function guardarPowerhouseBatch(key, payload) {
   const lock = LockService.getScriptLock();
-  if (!lock.tryLock(15000)) {
-    throw new Error("El sistema está ocupado. Intenta de nuevo en unos segundos.");
+  if (!lock.tryLock(45000)) {
+    throw new Error("El archivo de Bodega está ocupado. Intenta de nuevo en unos segundos.");
   }
 
   try {
@@ -3286,41 +3339,173 @@ function guardarOrdenPickingHTML(key, payload) {
     const maestro = ss.getSheetByName(SHEET_MAESTRO);
     if (!maestro) throw new Error("No se encontró la hoja MAESTRO.");
 
-    const lr = maestro.getLastRow();
-    if (lr < MAESTRO_START) throw new Error("El catálogo está vacío.");
-
+    const lrM = maestro.getLastRow();
     const map = _getMaestroHeaderMap(maestro);
+
     let cPicKey = `PICKING_${key}`;
     let cPicObj = map[cPicKey] || map["PICKING"];
-
-    // Si la columna no existe en MAESTRO, la creamos automáticamente en la Fila 3
     if (!cPicObj) {
       const lastCol = maestro.getLastColumn();
       const newCol = lastCol + 1;
       maestro.getRange(3, newCol).setValue(cPicKey);
       cPicObj = { col: newCol, index: newCol - 1 };
     }
-
     _asegurarFormatoHeadersMaestro(maestro);
 
-    const count = lr - MAESTRO_START + 1;
-    const prodRange = maestro.getRange(MAESTRO_START, map["PRODUCTO"] ? map["PRODUCTO"].col : 3, count, 1);
-    const catRange  = maestro.getRange(MAESTRO_START, map["CATEGORÍA"] ? map["CATEGORÍA"].col : 2, count, 1);
-    const prods = prodRange.getValues();
+    // ── 1. PROCESAR ALTAS DE PRODUCTOS NUEVOS ───────────────────────────────
+    const prodsNuevos = payload.nuevos || [];
+    if (prodsNuevos.length > 0) {
+      let lastNo = lrM >= MAESTRO_START ? maestro.getRange(MAESTRO_START, 1, lrM - MAESTRO_START + 1, 1).getValues()
+        .reduce((max, r) => Math.max(max, parseInt(r[0]) || 0), 0) : 0;
+
+      const maestroNewRows = [];
+      const bgsNew = [];
+      const kardexNewItems = [];
+
+      for (let i = 0; i < prodsNuevos.length; i++) {
+        const np = prodsNuevos[i];
+        const newNo = ++lastNo;
+        const cat = String(np.cat || "ABARROTES").trim().toUpperCase();
+        const prod = String(np.name || np.prod || "").trim();
+        const pres = String(np.pres || "").trim();
+        const unit = String(np.unit || "pza").trim().toLowerCase();
+        const minBa = parseFloat(np.minBa) || 0;
+        const maxBa = parseFloat(np.maxBa) || 0;
+        const minBm = parseFloat(np.minBm) || 0;
+        const maxBm = parseFloat(np.maxBm) || 0;
+
+        if (!prod) continue;
+
+        maestroNewRows.push([newNo, cat, prod, pres, unit, "SÍ", minBa, maxBa, "", minBm, maxBm, "", false]);
+        const rowColor = (newNo % 2 === 1) ? C.rowA : C.rowB;
+        bgsNew.push(Array(maestro.getLastColumn()).fill(rowColor));
+        kardexNewItems.push({ newNo, cat, prod, pres, unit, rowColor });
+      }
+
+      if (maestroNewRows.length > 0) {
+        const startRowM = maestro.getLastRow() + 1;
+        maestro.getRange(startRowM, 1, maestroNewRows.length, maestro.getLastColumn()).setValues(maestroNewRows);
+        maestro.getRange(startRowM, 1, maestroNewRows.length, maestro.getLastColumn()).setBackgrounds(bgsNew);
+
+        // Validaciones en MAESTRO
+        const validationRule = SpreadsheetApp.newDataValidation().requireValueInList(["SÍ", "NO"], true).setAllowInvalid(false).build();
+        maestro.getRange(startRowM, map["ACTIVO"] ? map["ACTIVO"].col : 6, maestroNewRows.length, 1).setDataValidation(validationRule);
+        const catValidation = SpreadsheetApp.newDataValidation().requireValueInList(CATEGORIAS_LISTA, true).setAllowInvalid(true).build();
+        maestro.getRange(startRowM, map["CATEGORÍA"] ? map["CATEGORÍA"].col : 2, maestroNewRows.length, 1).setDataValidation(catValidation);
+        maestro.getRange(startRowM, map["SELECCIONAR"] ? map["SELECCIONAR"].col : 13, maestroNewRows.length, 1).insertCheckboxes().setValue(false);
+
+        // Extender KARDEX_BA y KARDEX_BM
+        Object.values(BODEGAS).forEach(b => {
+          const kSheet = ss.getSheetByName(b.kardex);
+          if (kSheet) {
+            const startRowK = kSheet.getLastRow() + 1;
+            const fullKardexRows = [];
+            const bgsK = [];
+
+            for (let i = 0; i < kardexNewItems.length; i++) {
+              const item = kardexNewItems[i];
+              const row = new Array(KARDEX_TOTAL_COLS).fill("");
+              row[0] = item.newNo;
+              row[1] = item.cat;
+              row[2] = item.prod;
+              row[3] = item.pres;
+              row[4] = item.unit;
+              row[8] = 0; // Saldo Inicial
+
+              const rn = startRowK + i;
+              for (let d = 0; d < KARDEX_DAYS; d++) {
+                const prevCol = 9  + d * 3;
+                const entCol  = 10 + d * 3;
+                const salCol  = 11 + d * 3;
+                const sldColIdx = 11 + d * 3;
+                row[sldColIdx] = '=' + _col(prevCol) + rn + '+IFERROR(' + _col(entCol) + rn + ',0)-IFERROR(' + _col(salCol) + rn + ',0)';
+              }
+              fullKardexRows.push(row);
+
+              const bgRow = Array(KARDEX_TOTAL_COLS).fill(item.rowColor);
+              bgRow[8] = C.iceBlue;
+              for (let d = 0; d < KARDEX_DAYS; d++) {
+                bgRow[9 + d * 3]  = C.entBg;
+                bgRow[10 + d * 3] = C.salBg;
+                bgRow[11 + d * 3] = C.iceBlue;
+              }
+              bgsK.push(bgRow);
+            }
+
+            kSheet.getRange(startRowK, 1, kardexNewItems.length, KARDEX_TOTAL_COLS).setValues(fullKardexRows);
+            kSheet.getRange(startRowK, 6, kardexNewItems.length, 1).setNumberFormat("DD/MMM/YY");
+            kSheet.getRange(startRowK, 1, kardexNewItems.length, KARDEX_TOTAL_COLS).setBackgrounds(bgsK);
+          }
+        });
+
+        // Extender HISTORIAL
+        Object.values(BODEGAS).forEach(b => {
+          const hSheet = ss.getSheetByName(`HISTORIAL_${b.key}`);
+          if (hSheet) {
+            const startRowH = hSheet.getLastRow() + 1;
+            const hRows = kardexNewItems.map(item => [item.newNo, item.prod, item.unit]);
+            const bgsH = kardexNewItems.map(item => [item.rowColor, item.rowColor, item.rowColor]);
+            hSheet.getRange(startRowH, 1, kardexNewItems.length, 3).setValues(hRows);
+            hSheet.getRange(startRowH, 1, kardexNewItems.length, 3).setBackgrounds(bgsH);
+          }
+        });
+      }
+    }
+
+    // ── 2. PROCESAR EDICIONES Y ACTUALIZACIÓN DE CAMPOS ──────────────────────
+    const ediciones = payload.ediciones || [];
+    if (ediciones.length > 0) {
+      const lrCurr = maestro.getLastRow();
+      const countCurr = lrCurr - MAESTRO_START + 1;
+      const mRange = maestro.getRange(MAESTRO_START, 1, countCurr, maestro.getLastColumn());
+      const mData = mRange.getValues();
+
+      const editMap = {};
+      ediciones.forEach(e => {
+        const pKey = String(e.originalName || e.name || "").trim().toUpperCase();
+        if (pKey) editMap[pKey] = e;
+      });
+
+      for (let i = 0; i < mData.length; i++) {
+        const prodName = String(mData[i][map["PRODUCTO"] ? map["PRODUCTO"].index : 2]).trim().toUpperCase();
+        const ed = editMap[prodName];
+        if (ed) {
+          if (ed.cat !== undefined && map["CATEGORÍA"])    mData[i][map["CATEGORÍA"].index] = String(ed.cat).trim().toUpperCase();
+          if (ed.name !== undefined && map["PRODUCTO"])    mData[i][map["PRODUCTO"].index] = String(ed.name).trim();
+          if (ed.pres !== undefined && map["PRESENTACION"]) mData[i][map["PRESENTACION"].index] = String(ed.pres).trim();
+          if (ed.unit !== undefined && map["UNIDAD"])       mData[i][map["UNIDAD"].index] = String(ed.unit).trim().toLowerCase();
+          if (ed.minBa !== undefined && map["MÍN_BA"])     mData[i][map["MÍN_BA"].index] = parseFloat(ed.minBa) || 0;
+          if (ed.maxBa !== undefined && map["MÁX_BA"])     mData[i][map["MÁX_BA"].index] = parseFloat(ed.maxBa) || 0;
+          if (ed.minBm !== undefined && map["MÍN_BM"])     mData[i][map["MÍN_BM"].index] = parseFloat(ed.minBm) || 0;
+          if (ed.maxBm !== undefined && map["MÁX_BM"])     mData[i][map["MÁX_BM"].index] = parseFloat(ed.maxBm) || 0;
+          if (ed.activo !== undefined && map["ACTIVO"])    mData[i][map["ACTIVO"].index] = ed.activo ? "SÍ" : "NO";
+        }
+      }
+      mRange.setValues(mData);
+    }
+
+    // ── 3. GUARDAR ORDEN DE PICKING Y CATEGORÍAS ────────────────────────────
+    const lrFinal = maestro.getLastRow();
+    const countFinal = lrFinal - MAESTRO_START + 1;
+    const prodsFinal = maestro.getRange(MAESTRO_START, map["PRODUCTO"] ? map["PRODUCTO"].col : 3, countFinal, 1).getValues();
 
     const rankMap = {};
     const catMap = {};
-    payload.forEach(item => {
-      const pName = String(item.name).trim();
-      rankMap[pName] = item.rank;
-      if (item.cat) catMap[pName] = String(item.cat).trim().toUpperCase();
-    });
+    const pickingList = payload.picking || payload; // Soporta tanto array directo como objeto estructurado
+
+    if (Array.isArray(pickingList)) {
+      pickingList.forEach((item, idx) => {
+        const pName = String(item.name).trim();
+        rankMap[pName] = item.rank || (idx + 1);
+        if (item.cat) catMap[pName] = String(item.cat).trim().toUpperCase();
+      });
+    }
 
     const newColValues = [];
     const newCatValues = [];
 
-    for (let i = 0; i < prods.length; i++) {
-      const pName = String(prods[i][0]).trim();
+    for (let i = 0; i < prodsFinal.length; i++) {
+      const pName = String(prodsFinal[i][0]).trim();
       const rank = rankMap[pName] || (i + 1);
       newColValues.push([rank]);
 
@@ -3331,26 +3516,28 @@ function guardarOrdenPickingHTML(key, payload) {
       }
     }
 
-    maestro.getRange(MAESTRO_START, cPicObj.col, count, 1).setValues(newColValues).setNumberFormat("0");
+    maestro.getRange(MAESTRO_START, cPicObj.col, countFinal, 1).setValues(newColValues).setNumberFormat("0");
     if (map["CATEGORÍA"]) {
-      try {
-        catRange.clearDataValidations();
-      } catch(e) {}
-      catRange.setValues(newCatValues);
+      try { maestro.getRange(MAESTRO_START, map["CATEGORÍA"].col, countFinal, 1).clearDataValidations(); } catch(e) {}
+      maestro.getRange(MAESTRO_START, map["CATEGORÍA"].col, countFinal, 1).setValues(newCatValues);
     }
 
-    // Recrear vistas móviles para propagar cambios de inmediato
-    _buildVista(key);
-    
-    // Auto-Sincronización Remota Push a Pedidos Andares y Mercado con el mapa en memoria
+    // Recrear vistas móviles en Bodega y disparar sincronización push hacia las tiendas
+    _buildVista("BA");
+    _buildVista("BM");
     sincronizarRemotamenteTiendasPush(key, rankMap);
 
     const bodegaNombre = BODEGAS[key] ? BODEGAS[key].nombre : key;
-    _log("guardarOrdenPickingHTML", `${key}: Orden y categorías guardadas para ${payload.length} productos.`);
-    return `✅ Se actualizó el orden de picking y categorías de Bodega ${bodegaNombre} y se auto-sincronizó con las tiendas.`;
+    _log("guardarPowerhouseBatch", `${key}: Catálogo y picking actualizados exitosamente.`);
+    return `✅ Se guardaron los cambios del catálogo y la secuencia de picking de ${bodegaNombre} se sincronizó con las tiendas.`;
   } finally {
     lock.releaseLock();
   }
+}
+
+// Wrapper de compatibilidad para guardarOrdenPickingHTML
+function guardarOrdenPickingHTML(key, payload) {
+  return guardarPowerhouseBatch(key, { picking: payload });
 }
 
 /**

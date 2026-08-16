@@ -5,7 +5,17 @@ Este documento contiene el historial de actualizaciones de Suite MISE redactado 
 
 ---
 
-## Versión 1.6.4 Altair - Descuento Ultrarrápido de Hoy y Auto-Acomodo de Picking Remoto (Agosto 2026) [ACTUAL]
+## Versión 1.6.5 Altair - Suite Unificada Powerhouse de Catálogo y Picking (Agosto 2026) [ACTUAL]
+* ⚡ **Centro de Mando Powerhouse**: Nueva ventana integral para administrar todos los insumos de bodega en un solo lugar.
+  * 🖐️ **Secuencia de Picking**: Reordena rutas de surtido por arrastre o número directo.
+  * ➕ **Alta en Lote Sin Hojas Temporales**: Agrega insumos nuevos al catálogo directamente desde una tabla dinámica sin crear pestañas extras que ensucien el archivo.
+  * 📝 **Edición Rápida en Caliente**: Modifica nombres, unidades y límites de stock (mínimos y máximos por tienda) de forma inmediata.
+  * 🧹 **Detector de Duplicados**: Identifica productos repetidos al instante para mantener un catálogo limpio y confiable.
+* 🧪 **Herramientas Experimentales**: Reorganización de menús para separar las funciones operativas de las herramientas de prueba.
+
+---
+
+## Versión 1.6.4 Altair - Descuento Ultrarrápido de Hoy y Auto-Acomodo de Picking Remoto (Agosto 2026)
 * 🚚 **Descuento de Inventario Instantáneo**: El proceso de surtido y descuento de mercancía ahora procesa exclusivamente el día en curso en menos de 1 segundo, asegurando que entregas múltiples del mismo producto se sumen de forma íntegra y evitando alterar días pasados.
 * 🖐️ **Reacomodo de Picking 100% Automático en Tiendas**: Al modificar y guardar el orden de picking desde la ventana de bodega, la lista de pedidos en las tiendas (Andares y Mercado) se reordena físicamente al instante, manteniendo sus colores y formatos intactos sin necesidad de que el personal de tienda ejecute ninguna acción manual.
 
