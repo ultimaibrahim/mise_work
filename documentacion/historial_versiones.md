@@ -5,7 +5,90 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 
 ---
 
-## ⚡ v1.6.1 Altair (Rendimiento & QOL Silencioso Mobile-First) — 2026-08-07 [ACTUAL]
+## ⚡ v1.6.4 Altair (Descuento Ultrarrápido de Hoy & Sincronización Push Remota de Picking) — 2026-08-15 [ACTUAL]
+
+### 🏬 Bodega (BDG) — Optimización de Descuento y Sincronización Push
+* **Descuento de Inventario Ultrarrápido (`descontarSurtidoAutomatico`)**:
+  * **Fijación Estricta a la Fecha de Hoy (`new Date()`)**: Se eliminó la dependencia de la última fila (`ultFila`), evitando que tiendas sin entregas registradas hoy toquen o reescriban columnas de días cerrados pasados (ej. Martes o Sábado).
+  * **Consolidación Multi-Entrega en Memoria**: Si un insumo cuenta con 2 o más entregas durante el mismo día (ej. `1 + 11 = 12`), se suman en memoria y se inyecta el total atómico en la columna `SAL` correspondiente del KARDEX.
+  * **Rendimiento Instantáneo**: Ejecución optimizada de ~15 segundos a <1 segundo.
+* **Auto-Sincronización Remota Push de Picking (`sincronizarRemotamenteTiendasPush` & `_reordenarPedidoRemotoDirecto`)**:
+  * **Resolución Híbrida ID / URL**: Soporte simultáneo para `PDA_SPREADSHEET_ID` / `PDM_SPREADSHEET_ID` y `BODEGA_URL_BA` / `BODEGA_URL_BM`.
+  * **Búsqueda Dinámica de Hojas Remotas**: Localización automática de `_SYNC_BA`, `_SYNC_BM` o `_SYNC` en las hojas de tienda.
+  * **Reordenamiento Físico en Caliente**: Al hacer clic en *"Guardar y Aplicar Orden"* desde el Quiosco HTML de BDG, inyecta los datos de ranking calculados y reordena físicamente la tabla `📋 PEDIDO DIARIO` de la tienda con fondos (`COLORS.yellow`, `COLORS.blue`), tipografías y fórmulas sincronizadas sin intervención manual.
+
+---
+
+## ⚡ v1.6.2 Altair (Auto-Avance Semanal Silencioso, Modal PC & Indicador BDG) — 2026-08-11
+
+### 🏬 Bodega (BDG) — Experiencia PC & Cierre Semanal Dinámico
+* **Auto-Avance Semanal Silencioso (`_autoVerificarYAvanzarSemanaSilencioso`)**: Automatización que calcula dinámicamente el lunes de la semana actual al abrir la hoja (`onOpen()`). En caso de detectar una semana vencida, ejecuta el cierre semanal (transferencia de saldos a `SALDO ANT`, archivado horizontal e inicio de nueva semana) sin mostrar diálogos bloqueantes ni requerir números ISO.
+* **Modal de Registro Rápido en PC (`RegistroRapidoDialog.html`)**: Interfaz desacoplada con estética Crystal & Squircle para capturar Entradas (+) y Salidas (-) del día sin hacer scroll por 130+ filas. Incluye buscador autocomplete dinámico por coincidencia parcial (ej. "nut..."), selector de bodega (BA / BM), autoselección de día actual y atajos de teclado (`Tab` / `Enter` / `ArrowDown`).
+* **Endpoints Backend para Registro Rápido**: Funciones `obtenerCatalogoKardexParaRegistro()` y `registrarMovimientoRapidoKardex()` que inyectan los valores en tiempo real en las celdas exactas del KARDEX recalculando saldos al instante.
+* **Sincronización en 1-Clic (`configurarSemanaAmbas`)**: Nueva opción en menú para sincronizar el lunes activo en ambas bodegas a la vez.
+
+---
+
+## ⚡ v1.5.0 Altair (Quiosco de Picking & Categorías Dinámicas) — 2026-08-05
+
+### 🏬 Bodega (BDG) — Restauración de Estado Estable
+* **Restauración Completa de Backend**: Se restableció `miseAuthBDG.gs` al código base de la versión **v1.5.0 Altair** enviado por Ibrahim. Se conservaron intactos todos los diálogos y modales previos (`PickingDialog.html`).
+* **Sintaxis**: Compilado a 0 errores con `check_syntax_all.js`.
+
+---
+
+## ⚡ v1.6.3c Altair Hotfix (Remoción de Escritura en Caducidad/Lote en Re-ordenamiento) — 2026-08-11
+
+### 🏬 Bodega (BDG) — Solución de Excepción en Diagnóstico
+* **Corrección en `_ordenarYRenumerarTodo()`**: Se eliminó la instrucción de re-escritura en las columnas 6 y 7 (CADUCIDAD y LOTE) durante el proceso de ordenamiento. Esto soluciona de raíz la excepción *"Exception: Selecciona la categoría del producto"*, la cual era provocada al intentar escribir arreglos de caducidad en las columnas des-ocultadas de KARDEX con reglas de validaciones cruzadas.
+
+---
+
+## ⚡ v1.6.3b Altair Hotfix (Ajuste Global de Validaciones de Categoría) — 2026-08-11
+
+### 🏬 Bodega (BDG) — Cobertura Total de Excepciones
+* **Permisividad Global en Validaciones de Categoría (`setAllowInvalid(true)`)**: Se homologaron todos los puntos del script (`_aplicarReglasMaestro`, `restaurarValidacionesMaestro`, `crearHojaCargaMasiva`, `crearHojaEdicionMasiva` y `crearProductoIndividual`) para permitir cualquier valor de categoría. Esto elimina definitivamente la excepción *"Selecciona la categoría del producto"* ante productos con categorías dinámicas personalizadas o variantes.
+
+---
+
+## ⚡ v1.6.3a Altair Hotfix (Solución de Excepción en Categorías de Diagnóstico) — 2026-08-11
+
+### 🏬 Bodega (BDG) — Corrección en Motor de Diagnóstico
+* **Corrección de Excepción de Validación (`setAllowInvalid(true)`)**: Se actualizó `restaurarValidacionesMaestro()` para permitir categorías dinámicas creadas desde el Quiosco o capturadas manualmente. Esto elimina el error *"Exception: Selecciona la categoría del producto"* durante el proceso de diagnóstico y autorreparación.
+
+---
+
+## ⚡ v1.6.3 Altair (Eliminación Física de Columnas Caducidad y Lote en KARDEX) — 2026-08-11
+
+### 🏬 Bodega (BDG) — Depuración de Grid
+* **Eliminación Física de Columnas F y G (`deleteColumns(6, 2)`)**: Módulo de depuración que elimina de raíz las columnas obsoletas de CADUCIDAD y LOTE en `KARDEX_BA` y `KARDEX_BM`, haciendo que el semáforo de stock `🚦` quede posicionado inmediatamente junto a `UNIDAD` en la Columna F de forma limpia y compacta.
+* **Auto-Depuración en Mantenimiento**: Integración de la rutina de eliminación atómica dentro de `repararYSincronizarSistema()`.
+
+---
+
+## ⚡ v1.6.2b Altair Hotfix (Des-ocultado Automático de Columnas F y G en KARDEX) — 2026-08-11
+
+### 🏬 Bodega (BDG) — Corrección Estructural
+* **Des-ocultado Forzado en `onOpen()` y Reparación**: Inserción de `sheet.showColumns(6, 2)` explícito dentro de `_autoVerificarYAvanzarSemanaSilencioso()` y `repararYSincronizarSistema()`. Esto garantiza que las columnas F (CADUCIDAD) y G (LOTE) se des-oculten inmediatamente al abrir la hoja de cálculo, corrigiendo la cuadrícula en `KARDEX_BA` y `KARDEX_BM` sin requerir la recreación total del libro.
+
+---
+
+## ⚡ v1.6.2a Altair Hotfix (Descombinado de Badge Semanal & Optimización de Menú) — 2026-08-11
+
+### 🏬 Bodega (BDG) — Corrección Visual & Diagnóstico
+* **Corrección de Badge Semanal en Fila 2**: Ajuste del banner superior del KARDEX a `D2:K2` y aplicación de `breakApart()` explícito en el rango `L2:P2` dentro de `_actualizarBadgeEstadoSemana` para garantizar la visualización inmediata del badge `🟢 SEMANA XX ACTUALIZADA` sin depender del reinicio total del grid.
+* **Auto-Verificación en `onOpen()`**: Vinculación directa de `_autoVerificarYAvanzarSemanaSilencioso()` al evento de apertura de hoja, garantizando que los hotfixes visuales y de fecha se apliquen sin necesidad de correr diagnósticos manuales pesados.
+
+---
+
+## ⚡ v1.6.2 Altair (Auto-Avance Semanal Silencioso e Indicador de Estado BDG) — 2026-08-11
+
+* **Modal de Registro Rápido en PC (`RegistroRapidoDialog.html`)**: Interfaz desacoplada con estética Crystal & Squircle para capturar Entradas (+) y Salidas (-) del día sin hacer scroll por 130+ filas. Incluye buscador autocomplete dinámico por coincidencia parcial (ej. *"nut..."*), selector de bodega (`BA` / `BM`), autoselección de día actual y atajos de teclado (`Tab` / `Enter` / `ArrowDown`).
+* **Endpoints Backend para Registro Rápido**: Funciones `obtenerCatalogoKardexParaRegistro()` y `registrarMovimientoRapidoKardex()` que inyectan los valores en tiempo real en las celdas exactas del KARDEX recalculando saldos al instante.
+
+---
+
+## ⚡ v1.6.1 Altair (Rendimiento & QOL Silencioso Mobile-First) — 2026-08-07
 
 ### 📱 Pedidos (PDA & PDM) — Rendimiento y Resiliencia Móvil
 * **Eliminación Total del Sistema de "Adiciones"**: Remoción de la evaluación en `onEdit` que consultaba ScriptProperties en cada tipeo, eliminando la columna/métrica de alerta `"🚨 ADICIÓN"` en Pedidos y Surtido Rápido para acelerar el procesamiento táctil en celulares.

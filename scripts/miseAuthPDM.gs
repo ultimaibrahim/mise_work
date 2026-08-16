@@ -65,7 +65,9 @@ function onOpen() {
       .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
       .addSeparator()
       .addSubMenu(ui.createMenu("🧪 Herramientas de Prueba")
-        .addItem("🎲 Generar datos de prueba",             "generarDatosPrueba"))
+        .addItem("🎲 Generar datos de prueba",             "generarDatosPrueba")
+        .addItem("🗒️ Forzar registro en LOG_SURTIDO",     "probadorForzarLogSurtido")
+        .addItem("🗑️ Simular Cierre de Día (Reset + Log)", "resetearPedidoManualmente"))
       .addSeparator()
       .addItem("ℹ️ Acerca de Mise",                        "acercaDe");
     menu.addToUi();
@@ -754,6 +756,10 @@ function _resetearPedidoSilencioso() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_PEDIDO);
   if (!sheet) return;
+
+  // Issue 6: Registrar evidencias en LOG_SURTIDO antes de vaciar las cantidades
+  try { _registrarLogSurtidoDiario(ss, sheet); } catch(e) {}
+
   const count = _getProductCount();
   sheet.getRange(DATA_START_ROW, COL_CANT_PEDIR, count, 1).clearContent();
   sheet.getRange(DATA_START_ROW, COL_RECIBIDA, count, 2).clearContent(); // Limpiar Col H (Cant. Recibida) y Col I (Estado)
@@ -793,6 +799,56 @@ function _resetearPedidoSilencioso() {
   // Resetear los flags de ordenamiento y surtido activo
   PropertiesService.getScriptProperties().setProperty("IS_ORDER_SORTED", "false");
   PropertiesService.getScriptProperties().setProperty("IS_SURTIDO_ACTIVE", "false");
+}
+
+/**
+ * Issue 6: Guarda una fila por producto con entrega (COMPLETO o PARCIAL) en 🗒 LOG_SURTIDO
+ */
+function _registrarLogSurtidoDiario(ss, sheet) {
+  let logSheet = ss.getSheetByName("🗒 LOG_SURTIDO");
+  if (!logSheet) {
+    logSheet = ss.insertSheet("🗒 LOG_SURTIDO");
+    logSheet.getRange(1, 1, 1, 8).setValues([["Fecha", "Bodega", "Producto", "Categoría", "Cant.Pedida", "Cant.Recibida", "Estado", "EsAdición"]])
+      .setBackground(COLORS.logHeader).setFontColor("#FFFFFF").setFontWeight("bold");
+    logSheet.setFrozenRows(1);
+  }
+
+  const lr = sheet.getLastRow();
+  if (lr < DATA_START_ROW) return;
+  const count = lr - DATA_START_ROW + 1;
+  const data = sheet.getRange(DATA_START_ROW, 1, count, 10).getValues();
+
+  const fechaStr = _fmtDate(new Date());
+  const logRows = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const prodName = String(row[2] || "").trim();
+    const catName  = String(row[1] || "").trim();
+    const cantPed  = parseFloat(row[5]) || 0;
+    const cantRec  = parseFloat(row[7]) || 0;
+    const estado   = String(row[8] || "").trim();
+    const alerta   = String(row[9] || "").trim();
+    const esAdicion = alerta.includes("ADICIÓN") ? "SÍ" : "NO";
+
+    if (prodName && (estado.includes("COMPLETO") || estado.includes("PARCIAL") || cantRec > 0)) {
+      logRows.push([
+        fechaStr,
+        BODEGA_NOMBRE,
+        prodName,
+        catName,
+        cantPed,
+        cantRec,
+        estado,
+        esAdicion
+      ]);
+    }
+  }
+
+  if (logRows.length > 0) {
+    const startRow = Math.max(logSheet.getLastRow() + 1, 2);
+    logSheet.getRange(startRow, 1, logRows.length, 8).setValues(logRows);
+  }
 }
 
 function _checkAutoResetNuevoDia() {
@@ -1514,6 +1570,14 @@ function generarDatosPrueba() {
   } finally {
     lock.releaseLock();
   }
+}
+
+function probadorForzarLogSurtido() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_PEDIDO);
+  if (!sheet) return;
+  _registrarLogSurtidoDiario(ss, sheet);
+  SpreadsheetApp.getActive().toast("Evidencias guardadas en 🗒 LOG_SURTIDO ✓", "🧪 Prueba", 4);
 }
 
 // ── SISTEMA DE REGISTRO TRANSACCIONAL Y AUDITORÍA DE LOGS ─────────────────────
