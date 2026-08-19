@@ -20,21 +20,30 @@
     body { padding: 10px; display: flex; flex-direction: column; gap: 8px; position: relative; }
     
     /* Top Bar & Suite Tabs */
-    header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-    .brand-title { display: flex; align-items: center; gap: 8px; }
+    header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; gap: 12px; }
+    .brand-title { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     h2 { font-size: 14px; font-weight: 700; color: var(--dark); display: flex; align-items: center; gap: 6px; }
+    .unsaved-badge { display: none; background: #C62828; color: #FFF; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(198,40,40,0.3); align-items: center; gap: 6px; user-select: none; }
     
     .nav-tabs { display: flex; gap: 4px; background: #E5DDD0; padding: 3px; border-radius: 8px; }
-    .nav-tab { padding: 5px 12px; font-size: 11px; font-weight: 700; border: none; background: none; color: #555; cursor: pointer; border-radius: 6px; transition: all 0.15s ease; display: flex; align-items: center; gap: 5px; }
+    .nav-tab { padding: 6px 12px; font-size: 11px; font-weight: 700; border: none; background: none; color: #555; cursor: pointer; border-radius: 6px; transition: all 0.15s ease; display: inline-flex; align-items: center; gap: 6px; user-select: none; }
+    .nav-tab .tab-icon { font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+    .nav-tab .tab-text { line-height: 1; }
     .nav-tab:hover { color: var(--dark); background: rgba(255,255,255,0.4); }
     .nav-tab.active { background: var(--surface); color: var(--dark); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
     
-    .header-actions { display: flex; align-items: center; gap: 6px; }
-    .zoom-select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 10px; font-weight: 700; color: var(--dark); padding: 3px 6px; cursor: pointer; }
-    .btn-help { background: #E8F0EA; color: var(--dark); border: 1px solid var(--sage); padding: 3px 8px; font-size: 10px; font-weight: 700; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .zoom-select { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--dark); padding: 4px 8px; cursor: pointer; min-width: 125px; outline: none; }
+    .zoom-select:hover { border-color: var(--dark); }
+    .btn-help { background: #E8F0EA; color: var(--dark); border: 1px solid var(--sage); padding: 4px 9px; font-size: 11px; font-weight: 700; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
     .btn-help:hover { background: var(--sage); color: #FFF; }
     .btn-close-modal { background: rgba(198,40,40,0.12); color: #C62828; border: 1px solid #EF9A9A; width: 26px; height: 26px; border-radius: 50%; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .btn-close-modal:hover { background: #C62828; color: #FFF; }
+
+    /* Ocultar flechas molestas de inputs numéricos en tablas */
+    .power-table input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+    .power-table input[type="number"]::-webkit-outer-spin-button,
+    .power-table input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
     /* Contenedor Principal de Vistas */
     .tab-content { flex: 1; min-height: 0; display: none; flex-direction: column; gap: 6px; }
@@ -49,44 +58,73 @@
     /* Barra de Acciones / Batch */
     .batch-bar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; background: #E8F0EA; border: 1px solid var(--sage); border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--dark); }
     .batch-actions { display: flex; gap: 4px; align-items: center; }
-    .batch-btn { padding: 4px 10px; font-size: 10px; background: var(--dark); color: #FFF; border: none; border-radius: 5px; cursor: pointer; font-weight: 700; transition: transform 0.1s ease; }
-    .batch-btn:active { transform: scale(0.96); }
+    .batch-btn { padding: 3px 8px; font-size: 10px; background: var(--dark); color: #FFF; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: transform 0.1s ease; }
+    .batch-btn:active { transform: scale(0.95); }
     .batch-btn:hover { background: var(--accent); }
     .batch-btn-secondary { background: #FFF; color: var(--dark); border: 1px solid var(--border); }
     .batch-btn-secondary:hover { background: #EEE; }
 
-    /* Lista y Tarjetas (Picking) */
-    .list-container { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px; position: relative; user-select: none; }
+    /* Lista y Tarjetas (Picking con badges oscuros y resaltado de modificaciones) */
+    .list-container { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; position: relative; user-select: none; transition: background 0.2s ease; }
     .list-container.is-dragging { background: #DCD3C7 !important; }
     .list-container.is-dragging .item-card:not(.selected):not(.sortable-ghost) { opacity: 0.5; filter: blur(0.3px); }
 
-    .item-card { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin-bottom: 4px; background: #FAFAFA; border: 1px solid #EFEFEF; border-radius: 6px; cursor: grab; user-select: none; transition: transform 0.2s, background 0.2s, border-color 0.2s; width: 100%; }
-    .item-card:hover { background: #F0F4F1; border-color: var(--sage); }
+    .item-card { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; margin-bottom: 4px; background: #FAFAFA; border: 1px solid #EFEFEF; border-radius: 6px; cursor: grab; user-select: none; transition: transform 0.28s cubic-bezier(0.2, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.28s cubic-bezier(0.2, 1, 0.3, 1), opacity 0.25s ease; width: 100%; position: relative; }
+    .item-card:hover { background: #F0F4F1; border-color: var(--sage); transform: translateY(-1px); }
     .item-card.selected { background: #E2EFE6; border-color: var(--dark); }
-    
-    .sortable-ghost { opacity: 1 !important; background: transparent !important; border: none !important; }
-    .sortable-chosen { background: #E8F0EA !important; }
-    .sortable-drag { opacity: 1 !important; background: #FFF !important; border-color: var(--dark) !important; box-shadow: 0 14px 32px rgba(61,90,71,0.3) !important; }
-    .multi-drag-stack { background: #E2EFE6 !important; border: 2px solid var(--dark) !important; box-shadow: 0 4px 0 -1px #D5E5D9, 0 8px 0 -2px #C7DBCB, 0 16px 36px rgba(61,90,71,0.38) !important; }
-    .stack-badge { position: absolute; right: 12px; top: -14px; background: var(--dark); color: #FFF; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--sage); }
+    .item-card.is-item-modified { border-left: 3px solid #E65100; background: #FFF3E0; }
+    .cat-body-empty { min-height: 48px; border: 2px dashed #B0BEC5; border-radius: 6px; background: #FAFAFA; display: flex; align-items: center; justify-content: center; color: #78909C; font-size: 11px; font-weight: 600; margin: 4px 0; }
+
+    /* SortableJS Ghost & Drag Styling (Sin rotación, 0º siempre) */
+    .sortable-ghost { opacity: 1 !important; background: transparent !important; border: none !important; box-shadow: none !important; }
+    .sortable-chosen { background: #E8F0EA !important; border-color: var(--accent) !important; }
+    .sortable-drag { opacity: 1 !important; background: #FFFFFF !important; border-color: var(--dark) !important; box-shadow: 0 14px 32px rgba(61, 90, 71, 0.3) !important; transform: scale(1.01) !important; z-index: 9999 !important; }
+    .multi-drag-stack { position: relative !important; background: #E2EFE6 !important; border: 2px solid var(--dark) !important; box-shadow: 0 4px 0 -1px #D5E5D9, 0 8px 0 -2px #C7DBCB, 0 16px 36px rgba(61, 90, 71, 0.38) !important; z-index: 9999 !important; }
+    .stack-badge { position: absolute; right: 12px; top: -14px; background: var(--dark); color: #FFF; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--sage); box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 10000; opacity: 1; pointer-events: none; }
+
+    /* Tarjetas Preview en Ghost Zone (Estáticas, sin parpadeos) */
+    .ghost-preview-container { display: flex; flex-direction: column; gap: 4px; width: 100%; pointer-events: none; }
+    .ghost-preview-card { display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; background: rgba(46, 93, 75, 0.15); border: 2px dashed var(--accent); border-radius: 6px; color: var(--dark); font-weight: 700; font-size: 11px; opacity: 0.95; width: 100%; box-shadow: inset 0 0 6px rgba(46, 93, 75, 0.08); }
+
+    /* Animación Pop-Up al Soltar Insumos */
+    .item-card.pop-drop { animation: popDrop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @keyframes popDrop {
+      0% { transform: scale(1.03); background: #C7E3CE; border-color: var(--dark); box-shadow: 0 6px 18px rgba(61, 90, 71, 0.22); }
+      50% { transform: scale(0.98); }
+      100% { transform: scale(1); background: #E2EFE6; }
+    }
 
     .item-left { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
     .chk-select { cursor: pointer; width: 15px; height: 15px; accent-color: var(--dark); }
     .handle { color: #AAA; font-size: 13px; cursor: grab; padding: 2px; }
     .handle:hover { color: var(--dark); }
-    .rank-badge-container { display: flex; align-items: center; background: var(--dark); border-radius: 12px; padding: 2px 6px; gap: 3px; }
+    
+    /* Rank Badge Oscuro Estilo Crystal Squircle */
+    .rank-badge-container { display: flex; align-items: center; background: var(--dark); border-radius: 12px; padding: 2px 6px; gap: 3px; flex-shrink: 0; transition: background 0.15s ease, transform 0.15s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    .rank-badge-container:hover { background: var(--accent); }
     .rank-symbol { color: #A3C9B2; font-size: 9px; font-weight: 700; }
-    .rank-input { width: 28px; text-align: center; font-size: 10px; font-weight: 700; background: transparent; color: #FFF; border: none; outline: none; }
+    .rank-input { width: 28px; text-align: center; font-size: 10px; font-weight: 700; background: transparent !important; color: #FFFFFF !important; border: none !important; outline: none !important; -moz-appearance: textfield; appearance: textfield; font-family: inherit; cursor: pointer; }
+    .rank-input::-webkit-outer-spin-button, .rank-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .rank-input:focus { background: rgba(255,255,255,0.2) !important; border-radius: 4px; }
+
     .prod-info { min-width: 0; flex: 1; overflow: hidden; }
     .prod-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .prod-cat { font-size: 9px; color: var(--text-muted); text-transform: uppercase; background: #EEE; padding: 1px 4px; border-radius: 3px; display: inline-block; }
-    .item-btns { display: flex; gap: 2px; align-items: center; }
-    .btn-quick { background: #FFF; border: 1px solid #DDD; cursor: pointer; padding: 2px 6px; font-size: 9px; border-radius: 4px; color: var(--dark); font-weight: 700; }
-    .btn-quick:hover { background: var(--dark); color: #FFF; }
+    .item-btns { display: flex; gap: 2px; flex-shrink: 0; align-items: center; }
+    .btn-quick { background: #FFF; border: 1px solid #DDD; cursor: pointer; padding: 2px 5px; font-size: 9px; border-radius: 4px; color: var(--dark); font-weight: 600; transition: all 0.1s ease; }
+    .btn-quick:hover { background: var(--dark); color: #FFF; border-color: var(--dark); }
+    .btn-move { background: #FFF; border: 1px solid #DDD; cursor: pointer; padding: 2px 4px; font-size: 8px; border-radius: 3px; color: #444; }
+    .btn-move:hover { background: var(--dark); color: #FFF; border-color: var(--dark); }
+
+    /* Segmented Control Lista / Categorías */
+    .view-toggle { display: flex; gap: 2px; background: #DCD3C7; padding: 2px; border-radius: 8px; border: 1px solid #C8BFB2; }
+    .toggle-btn { padding: 4px 10px; font-size: 10px; font-weight: 700; border: none; border-radius: 6px; background: transparent; color: #5C5549; cursor: pointer; transition: all 0.15s ease; user-select: none; }
+    .toggle-btn:hover { color: var(--dark); }
+    .toggle-btn.active { background: #FFFFFF; color: var(--dark); box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
 
     /* Categorías Acordeón */
     .cat-group { margin-bottom: 8px; border: 1px solid #E5E0D8; border-radius: 6px; overflow: hidden; background: #FFF; }
-    .cat-header { background: #EAE3D9; padding: 6px 10px; font-size: 11px; font-weight: 700; color: var(--dark); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .cat-header { background: #EAE3D9; padding: 6px 10px; font-size: 11px; font-weight: 700; color: var(--dark); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
     .cat-header:hover { background: #E2D9CC; }
     .cat-body { padding: 4px; }
 
@@ -101,22 +139,24 @@
     .btn-del-row { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; border-radius: 4px; cursor: pointer; padding: 2px 6px; font-weight: 700; }
     .btn-del-row:hover { background: #C62828; color: #FFF; }
 
-    /* Tab 3: Edición Rápida (Grid / Tarjetas) */
-    .edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; padding: 6px; }
-    .edit-card { background: #FFF; border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .edit-card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #EEE; padding-bottom: 4px; }
-    .edit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 10px; }
-    .edit-field label { font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 2px; }
+    /* Switch / Slider Horizontal de Activación en Edición Rápida */
+    .switch-toggle { position: relative; display: inline-block; width: 34px; height: 18px; }
+    .switch-toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #B0BEC5; transition: .3s; border-radius: 18px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    input:checked + .slider { background-color: var(--dark); }
+    input:checked + .slider:before { transform: translateX(16px); }
 
     /* Tab 4: Limpieza de Duplicados */
     .dup-container { flex: 1; overflow-y: auto; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
-    .dup-card { background: #FFF9C4; border: 1px solid #FBC02D; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .dup-card { background: #FFF9C4; border: 1px solid #FBC02D; border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 
     /* Footer Global */
-    footer { flex-shrink: 0; display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--border); padding-top: 8px; }
-    .btn-save { flex: 1; padding: 9px 16px; background: var(--dark); color: #FFF; border: none; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 6px rgba(61,90,71,0.25); }
+    footer { flex-shrink: 0; display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--border); padding-top: 8px; user-select: none; }
+    .btn-save { flex: 1; padding: 9px 16px; background: var(--dark); color: #FFF; border: none; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 6px rgba(61,90,71,0.25); user-select: none; }
     .btn-save:hover { background: var(--accent); }
-    .spinner { border: 2px solid #FFF; border-top: 2px solid transparent; border-radius: 50%; width: 12px; height: 12px; animation: spin 0.8s linear infinite; display: none; }
+    .btn-save:focus { outline: none; }
+    .spinner { border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid #FFFFFF; border-radius: 50%; width: 13px; height: 13px; animation: spin 0.8s linear infinite; display: none; flex-shrink: 0; pointer-events: none; user-select: none; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     /* Overlays & Modals */
@@ -131,23 +171,35 @@
 <body>
   <header>
     <div class="brand-title">
-      <h2>⚡ Mise Powerhouse · Catálogo & Picking</h2>
-      <span id="unsavedBadge" style="display:none; background:#C62828; color:#FFF; font-size:9px; font-weight:700; padding:2px 8px; border-radius:10px;">⚠️ Cambios sin guardar</span>
+      <span class="unsaved-badge" id="unsavedBadge">⚠️ Cambios sin guardar</span>
     </div>
 
     <!-- Navegación por Pestañas -->
     <div class="nav-tabs">
-      <button class="nav-tab active" id="tabBtnPicking" onclick="cambiarTab('picking')">🖐️ Orden Picking</button>
-      <button class="nav-tab" id="tabBtnAlta" onclick="cambiarTab('alta')">➕ Alta en Lote</button>
-      <button class="nav-tab" id="tabBtnEdicion" onclick="cambiarTab('edicion')">📝 Edición Rápida</button>
-      <button class="nav-tab" id="tabBtnDuplicados" onclick="cambiarTab('duplicados')">🧹 Duplicados</button>
+      <button class="nav-tab active" id="tabBtnPicking" onclick="cambiarTab('picking')">
+        <span class="tab-icon">🖐️</span>
+        <span class="tab-text">Orden Picking</span>
+      </button>
+      <button class="nav-tab" id="tabBtnAlta" onclick="cambiarTab('alta')">
+        <span class="tab-icon">➕</span>
+        <span class="tab-text">Alta en Lote</span>
+      </button>
+      <button class="nav-tab" id="tabBtnEdicion" onclick="cambiarTab('edicion')">
+        <span class="tab-icon">📝</span>
+        <span class="tab-text">Edición Rápida</span>
+      </button>
+      <button class="nav-tab" id="tabBtnDuplicados" onclick="cambiarTab('duplicados')">
+        <span class="tab-icon">🧹</span>
+        <span class="tab-text">Duplicados</span>
+      </button>
     </div>
 
     <div class="header-actions">
-      <select class="zoom-select" id="zoomSelect" onchange="cambiarZoom(this.value)">
+      <select class="zoom-select" id="zoomSelect" onchange="cambiarZoom(this.value)" title="Ajustar tamaño de la interfaz">
         <option value="100">🔍 100%</option>
-        <option value="115">🔍 115%</option>
-        <option value="130">🔍 130%</option>
+        <option value="115" selected>🔍 115% (Normal)</option>
+        <option value="130">🔍 130% (Grande)</option>
+        <option value="145">🔍 145% (Ultra)</option>
       </select>
       <button class="btn-help" onclick="abrirAyuda()">❓ Guía</button>
       <button class="btn-close-modal" onclick="interceptarCierreModal()" title="Cerrar Powerhouse">✕</button>
@@ -157,13 +209,13 @@
   <!-- ══════════════ TAB 1: ORDEN DE PICKING ══════════════ -->
   <div class="tab-content active" id="tabContentPicking">
     <div class="controls">
-      <select id="bodegaSelect" onchange="cambiarBodega()">
+      <select id="bodegaSelect" onchange="cambiarBodegaEnMemoria()">
         <option value="BA">🏢 Bodega Andares (PDA)</option>
         <option value="BM">🏢 Bodega Mercado (PDM)</option>
       </select>
-      <div class="view-toggle" style="display:flex; gap:2px; background:#E2D9CC; padding:2px; border-radius:6px;">
-        <button class="toggle-btn active" id="btnViewList" onclick="cambiarModoVista('list')" style="padding:3px 8px; font-size:10px; font-weight:600; border:none; background:none; cursor:pointer;">📄 Lista</button>
-        <button class="toggle-btn" id="btnViewCat" onclick="cambiarModoVista('cat')" style="padding:3px 8px; font-size:10px; font-weight:600; border:none; background:none; cursor:pointer;">📁 Categorías</button>
+      <div class="view-toggle">
+        <button class="toggle-btn active" id="btnViewList" onclick="cambiarModoVista('list')">Lista</button>
+        <button class="toggle-btn" id="btnViewCat" onclick="cambiarModoVista('cat')">Categorías</button>
       </div>
       <div style="position:relative; flex:1; display:flex; align-items:center;">
         <span style="position:absolute; left:8px; color:#888; font-size:11px;">🔍</span>
@@ -175,8 +227,8 @@
     <div class="batch-bar">
       <span><strong id="selectedCount">0</strong> seleccionados</span>
       <div class="batch-actions">
-        <button class="batch-btn" onclick="moverSeleccionadosAlTop()">🔝 Al Top</button>
-        <button class="batch-btn" onclick="moverSeleccionadosAlFondo()">🔻 Al Fondo</button>
+        <button class="batch-btn" onclick="moverSeleccionadosAlTop()">Inicio</button>
+        <button class="batch-btn" onclick="moverSeleccionadosAlFondo()">Fondo</button>
         <button class="batch-btn" onclick="moverSeleccionados(-1)">▲ Subir</button>
         <button class="batch-btn" onclick="moverSeleccionados(1)">▼ Bajar</button>
         <button class="batch-btn batch-btn-secondary" onclick="limpiarSeleccion()">Desmarcar</button>
@@ -202,16 +254,20 @@
       <table class="power-table" id="tablaAltaMasiva">
         <thead>
           <tr>
-            <th style="width:30px;">#</th>
-            <th style="width:160px;">CATEGORÍA *</th>
-            <th style="width:220px;">PRODUCTO (NOMBRE) *</th>
-            <th style="width:130px;">PRESENTACIÓN *</th>
-            <th style="width:90px;">UNIDAD *</th>
-            <th style="width:70px;">MÍN BA</th>
-            <th style="width:70px;">MÁX BA</th>
-            <th style="width:70px;">MÍN BM</th>
-            <th style="width:70px;">MÁX BM</th>
-            <th style="width:40px;"></th>
+            <th style="width:25px;">#</th>
+            <th style="width:130px;">CATEGORÍA *</th>
+            <th style="width:170px;">PRODUCTO (NOMBRE) *</th>
+            <th style="width:100px;">PRESENTACIÓN *</th>
+            <th style="width:70px;">UNIDAD *</th>
+            <th style="width:55px;" title="Mínimo en Bodega Andares">MÍN BDG (BA)</th>
+            <th style="width:55px;" title="Máximo en Bodega Andares">MÁX BDG (BA)</th>
+            <th style="width:55px;" title="Mínimo en Bodega Mercado">MÍN BDG (BM)</th>
+            <th style="width:55px;" title="Máximo en Bodega Mercado">MÁX BDG (BM)</th>
+            <th style="width:55px; background:#2E5D4B;" title="Mínimo Quiosco Andares">MÍN Q (BA)</th>
+            <th style="width:55px; background:#2E5D4B;" title="Máximo Quiosco Andares">MÁX Q (BA)</th>
+            <th style="width:55px; background:#2E5D4B;" title="Mínimo Quiosco Mercado">MÍN Q (BM)</th>
+            <th style="width:55px; background:#2E5D4B;" title="Máximo Quiosco Mercado">MÁX Q (BM)</th>
+            <th style="width:30px;"></th>
           </tr>
         </thead>
         <tbody id="tbodyAltaMasiva">
@@ -234,7 +290,7 @@
     </div>
 
     <div class="table-container" id="gridEdicionContainer">
-      <!-- Grid de edición de insumos -->
+      <!-- Grid de edición de insumos con switch y eliminar -->
     </div>
   </div>
 
@@ -267,7 +323,7 @@
       <ul style="font-size:11px; line-height:1.6; padding-left:18px; margin-bottom:14px; color:#333;">
         <li><strong>🖐️ Orden Picking:</strong> Arrastra, cambia posiciones (#) y organiza rutas.</li>
         <li><strong>➕ Alta en Lote:</strong> Escribe productos nuevos sin crear hojas temporales.</li>
-        <li><strong>📝 Edición Rápida:</strong> Corrige nombres, unidades y mínimos/máximos en caliente.</li>
+        <li><strong>📝 Edición Rápida:</strong> Corrige nombres, unidades, activa/desactiva con el switch o elimina insumos obsoletos.</li>
         <li><strong>🧹 Duplicados:</strong> Detecta y depura productos repetidos al instante.</li>
       </ul>
       <div class="dialog-actions">
@@ -283,6 +339,18 @@
       <div class="dialog-actions">
         <button class="btn-dialog btn-dialog-secondary" onclick="cerrarConfirmacionCierre()">Continuar editando</button>
         <button class="btn-dialog btn-dialog-primary" style="background:#C62828;" onclick="confirmarCierreDefinitivo()">Salir sin guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Diálogo de Confirmación de Desactivación / Eliminación -->
+  <div class="overlay-dialog" id="deleteConfirmDialog">
+    <div class="dialog-card">
+      <h3 id="deleteDialogTitle" style="color:#C62828; margin-bottom:8px;">⚠️ Confirmar Acción</h3>
+      <p id="deleteDialogDesc" style="font-size:11px; line-height:1.5; color:#444; margin-bottom:14px;"></p>
+      <div class="dialog-actions">
+        <button class="btn-dialog btn-dialog-secondary" onclick="cerrarDeleteModal()">Cancelar</button>
+        <button class="btn-dialog btn-dialog-primary" id="btnConfirmDeleteAction" style="background:#C62828;">Confirmar</button>
       </div>
     </div>
   </div>
@@ -306,7 +374,7 @@
     let isModified = false;
 
     let catalogItems = [];      // Insumos maestros completos
-    let rawItems = [];          // Insumos ordenados de picking
+    let rawItems = [];          // Insumos ordenados de picking para la tienda activa
     let rawItemsMap = new Map();
     let initialOrderNames = [];
     let initialCatalogMap = new Map();
@@ -315,6 +383,8 @@
 
     let nuevosItemsAlta = [];   // Buffer de altas en lote
     let itemsEditadosMap = new Map(); // Buffer de ediciones rápidas
+    let itemsEliminados = new Set();  // Buffer de eliminados / desactivados
+    let touchedItems = new Set();     // Insumos que han cambiado de posición
     let selectedNames = new Set();
     let sortableInstances = [];
 
@@ -326,10 +396,12 @@
 
     function cargarPreferenciasZoom() {
       try {
-        const saved = localStorage.getItem("mise_picking_zoom") || "100";
+        const saved = localStorage.getItem("mise_picking_zoom") || "115";
         document.getElementById("zoomSelect").value = saved;
         document.body.style.zoom = `${saved}%`;
-      } catch(e) {}
+      } catch(e) {
+        document.body.style.zoom = "115%";
+      }
     }
 
     // ── GESTIÓN DE TABS ──────────────────────────────────────────────
@@ -361,21 +433,32 @@
       }
     }
 
-    // ── CARGA DE DATOS DESDE APPS SCRIPT ──────────────────────────────
+    // ── CARGA DE DATOS ÚNICA (ZERO LATENCY CACHING) ───────────────────
     function cargarTodo() {
-      currentKey = document.getElementById("bodegaSelect").value;
-      selectedNames.clear();
       document.getElementById("itemsContainer").innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Cargando catálogo unificado...</div>';
 
       google.script.run
         .withSuccessHandler(onDataLoaded)
         .withFailureHandler(onDataError)
-        .obtenerDatosPowerhouse(currentKey);
+        .obtenerDatosPowerhouse();
     }
 
-    function cambiarBodega() {
+    // CAMBIO DE TIENDA EN 0 MILISEGUNDOS (Sin llamadas al servidor)
+    function cambiarBodegaEnMemoria() {
       currentKey = document.getElementById("bodegaSelect").value;
-      cargarTodo();
+      selectedNames.clear();
+      touchedItems.clear();
+
+      // Reordenar en memoria según el ranking de la bodega elegida (rankBA o rankBM)
+      rawItems = [...catalogItems].sort((a, b) => {
+        const rA = currentKey === "BA" ? a.rankBA : a.rankBM;
+        const rB = currentKey === "BA" ? b.rankBA : b.rankBM;
+        return (rA || 0) - (rB || 0);
+      });
+
+      rawItemsMap = new Map(rawItems.map(it => [it.name, { ...it }]));
+      initialOrderNames = rawItems.map(it => it.name);
+      renderPickingHTML();
     }
 
     function onDataLoaded(res) {
@@ -390,20 +473,14 @@
         catSelect.innerHTML += `<option value="${c}">${c}</option>`;
       });
 
-      // Picking List
-      rawItems = [...catalogItems].sort((a, b) => a.rank - b.rank);
-      rawItemsMap = new Map(rawItems.map(it => [it.name, { ...it }]));
-      initialOrderNames = rawItems.map(it => it.name);
-      initialCatalogMap = new Map(catalogItems.map(it => [it.name, JSON.stringify(it)]));
+      cambiarBodegaEnMemoria();
 
-      // Iniciar filas de alta si está vacío
       if (nuevosItemsAlta.length === 0) {
         for (let i = 0; i < 3; i++) agregarFilaAltaMasiva(false);
       }
 
       isModified = false;
       evaluarModificaciones();
-      renderPickingHTML();
     }
 
     function onDataError(err) {
@@ -438,19 +515,115 @@
       if (modoVista === "list") {
         filtered.forEach(item => container.appendChild(crearCardPicking(item, item.originalIdx)));
         const sortable = new Sortable(container, {
-          animation: 200,
+          animation: 250,
+          easing: "cubic-bezier(0.2, 1, 0.3, 1)",
           handle: ".handle, .item-card",
-          filter: ".chk-select, .btn-quick, .rank-input, input, button, select",
+          filter: ".chk-select, .btn-move, .btn-quick, .rank-input, input, button, select",
           preventOnFilter: false,
           ghostClass: "sortable-ghost",
+          chosenClass: "sortable-chosen",
           dragClass: "sortable-drag",
+          forceFallback: false,
+          onStart: function(evt) {
+            container.classList.add("is-dragging");
+            const draggedCard = evt.item;
+            if (selectedNames.size > 1 && selectedNames.has(draggedCard.dataset.name)) {
+              draggedCard.classList.add("multi-drag-stack");
+              let badge = draggedCard.querySelector(".stack-badge");
+              if (!badge) {
+                badge = document.createElement("div");
+                badge.className = "stack-badge";
+                draggedCard.appendChild(badge);
+              }
+              badge.innerText = `📦 Moviendo ${selectedNames.size} insumos juntos`;
+              
+              container.querySelectorAll(".item-card.selected").forEach(card => {
+                if (card !== draggedCard) card.style.display = "none";
+              });
+            }
+          },
+          onMove: function(evt) {
+            const draggedCard = evt.dragged;
+            const ghost = container.querySelector(".sortable-ghost");
+            const isSelectedBatch = selectedNames.has(draggedCard.dataset.name) && selectedNames.size > 1;
+
+            if (ghost && !ghost._rendered) {
+              ghost._rendered = true;
+              ghost.style.height = "auto";
+              if (isSelectedBatch) {
+                const selectedItemsArray = Array.from(selectedNames);
+                let ghostHTML = `<div class="ghost-preview-container">`;
+                selectedItemsArray.forEach((name, i) => {
+                  const itemObj = rawItemsMap.get(name) || { name: name, cat: "INSUMO" };
+                  ghostHTML += `
+                    <div class="ghost-preview-card" style="animation-delay: ${i * 45}ms;">
+                      <div class="item-left">
+                        <input type="checkbox" class="chk-select" checked disabled>
+                        <span class="handle">☰</span>
+                        <div class="rank-badge-container">
+                          <span class="rank-symbol">#</span>
+                          <span style="color:#FFF; font-size:10px; font-weight:700; padding:0 4px;">--</span>
+                        </div>
+                        <div class="prod-info">
+                          <div class="prod-name">${itemObj.name}</div>
+                          <span class="prod-cat">${itemObj.cat}</span>
+                        </div>
+                      </div>
+                      <div class="item-btns">
+                        <span style="font-size:9px; font-weight:700; color:var(--dark); background:rgba(255,255,255,0.6); padding:3px 8px; border-radius:6px; border:1px solid var(--sage);">✦ Caerá aquí</span>
+                      </div>
+                    </div>`;
+                });
+                ghostHTML += `</div>`;
+                ghost.innerHTML = ghostHTML;
+              } else {
+                const itemObj = rawItemsMap.get(draggedCard.dataset.name) || { name: draggedCard.dataset.name, cat: "INSUMO" };
+                ghost.innerHTML = `
+                  <div class="ghost-preview-card">
+                    <div class="item-left">
+                      <input type="checkbox" class="chk-select" disabled>
+                      <span class="handle">☰</span>
+                      <div class="rank-badge-container">
+                        <span class="rank-symbol">#</span>
+                        <span style="color:#FFF; font-size:10px; font-weight:700; padding:0 4px;">--</span>
+                      </div>
+                      <div class="prod-info">
+                        <div class="prod-name">${itemObj.name}</div>
+                        <span class="prod-cat">${itemObj.cat}</span>
+                      </div>
+                    </div>
+                    <div class="item-btns">
+                      <span style="font-size:9px; font-weight:700; color:var(--dark); background:rgba(255,255,255,0.6); padding:3px 8px; border-radius:6px; border:1px solid var(--sage);">✦ Caerá aquí</span>
+                    </div>
+                  </div>`;
+              }
+            }
+          },
           onEnd: function(evt) {
-            if (evt.oldIndex !== evt.newIndex) {
-              const moved = rawItems.splice(evt.oldIndex, 1)[0];
-              rawItems.splice(evt.newIndex, 0, moved);
+            container.classList.remove("is-dragging");
+            const draggedCard = evt.item;
+            draggedCard.classList.remove("multi-drag-stack");
+            const badge = draggedCard.querySelector(".stack-badge");
+            if (badge) badge.remove();
+
+            document.querySelectorAll(".sortable-drag, .sortable-fallback, .sortable-ghost").forEach(el => {
+              if (!container.contains(el)) el.remove();
+            });
+
+            container.querySelectorAll(".item-card").forEach(card => {
+              card.style.display = "";
+              card.style.opacity = "";
+              card.style.transform = "";
+            });
+
+            if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
               isModified = true;
-              evaluarModificaciones();
-              renderPickingHTML();
+              moverEnConjuntoODrag(evt.oldIndex, evt.newIndex);
+
+              container.querySelectorAll(".item-card.selected").forEach((card) => {
+                card.classList.add("pop-drop");
+                setTimeout(() => card.classList.remove("pop-drop"), 400);
+              });
             }
           }
         });
@@ -481,31 +654,85 @@
 
     function crearCardPicking(item, idx) {
       const card = document.createElement("div");
-      card.className = "item-card" + (selectedNames.has(item.name) ? " selected" : "");
+      const isSelected = selectedNames.has(item.name);
+      const isTouched = touchedItems.has(item.name);
+
+      card.className = "item-card" + (isSelected ? " selected" : "") + (isTouched ? " is-item-modified" : "");
       card.dataset.name = item.name;
+      card.dataset.index = idx;
       card.onclick = (e) => {
         if (!e.target.closest("input, button, select, .handle")) toggleSelect(item.name);
       };
 
+      const safeName = item.name.replace(/'/g, "\\'");
       card.innerHTML = `
         <div class="item-left">
-          <input type="checkbox" class="chk-select" ${selectedNames.has(item.name) ? "checked" : ""} onclick="toggleSelect('${item.name.replace(/'/g,"\\'")}', event)">
+          <input type="checkbox" class="chk-select" ${isSelected ? "checked" : ""} onclick="toggleSelect('${safeName}', event)">
           <span class="handle">☰</span>
-          <div class="rank-badge-container">
+          <div class="rank-badge-container" title="Posición actual. Haz clic para tipear un número de salto directo y presiona Enter">
             <span class="rank-symbol">#</span>
-            <input type="number" class="rank-input" value="${idx + 1}" onchange="cambiarPosicionDirecta(${idx}, this.value, event)" onclick="event.stopPropagation()">
+            <input type="number" class="rank-input" value="${idx + 1}" min="1" max="${rawItems.length}" onchange="cambiarPosicionDirecta(${idx}, this.value, event)" onclick="event.stopPropagation()">
           </div>
           <div class="prod-info">
-            <div class="prod-name">${item.name}</div>
+            <div class="prod-name">${item.name} ${isTouched ? `<span style="color:#E65100; font-size:9px; font-weight:800;" title="Este producto cambió de posición">● Editado</span>` : ""}</div>
             <span class="prod-cat">${item.cat}</span>
           </div>
         </div>
         <div class="item-btns">
-          <button class="btn-quick" onclick="moverItemTop(${idx}, event)">🔝 Top</button>
-          <button class="btn-quick" onclick="moverItemBottom(${idx}, event)">🔻 Bot</button>
+          <button class="btn-quick" onclick="moverItemTop(${idx}, event)" title="Mover al Inicio (Posición 1)">Inicio</button>
+          <button class="btn-quick" onclick="moverItemBottom(${idx}, event)" title="Mover al Fondo">Fondo</button>
+          <button class="btn-move" onclick="moverItem(${idx}, -1, event)" title="Subir uno">▲</button>
+          <button class="btn-move" onclick="moverItem(${idx}, 1, event)" title="Bajar uno">▼</button>
         </div>
       `;
       return card;
+    }
+
+    function moverEnConjuntoODrag(fromIdx, toIdx) {
+      isModified = true;
+      const draggedItem = rawItems[fromIdx];
+      if (selectedNames.has(draggedItem.name)) {
+        selectedNames.forEach(n => touchedItems.add(n));
+      } else {
+        touchedItems.add(draggedItem.name);
+      }
+      if (selectedNames.has(draggedItem.name)) {
+        const selectedList = [];
+        const unselectedList = [];
+        rawItems.forEach(item => {
+          if (selectedNames.has(item.name)) {
+            selectedList.push(item);
+          } else {
+            unselectedList.push(item);
+          }
+        });
+
+        let countUnselectedBeforeTo = 0;
+        for (let i = 0; i < toIdx; i++) {
+          if (!selectedNames.has(rawItems[i].name)) countUnselectedBeforeTo++;
+        }
+        unselectedList.splice(countUnselectedBeforeTo, 0, ...selectedList);
+        rawItems = unselectedList;
+      } else {
+        const movedItem = rawItems.splice(fromIdx, 1)[0];
+        rawItems.splice(toIdx, 0, movedItem);
+      }
+      evaluarModificaciones();
+      renderPickingHTML();
+    }
+
+    function moverItem(idx, dir, e) {
+      if (e) e.stopPropagation();
+      isModified = true;
+      touchedItems.add(rawItems[idx].name);
+      const targetIdx = idx + dir;
+      if (targetIdx >= 0 && targetIdx < rawItems.length) {
+        const temp = rawItems[idx];
+        rawItems[idx] = rawItems[targetIdx];
+        rawItems[targetIdx] = temp;
+        evaluarModificaciones();
+        renderPickingHTML();
+      }
     }
 
     function toggleSelect(name, e) {
@@ -523,6 +750,7 @@
     function moverItemTop(idx, e) {
       if (e) e.stopPropagation();
       const moved = rawItems.splice(idx, 1)[0];
+      touchedItems.add(moved.name);
       rawItems.unshift(moved);
       isModified = true;
       evaluarModificaciones();
@@ -532,6 +760,7 @@
     function moverItemBottom(idx, e) {
       if (e) e.stopPropagation();
       const moved = rawItems.splice(idx, 1)[0];
+      touchedItems.add(moved.name);
       rawItems.push(moved);
       isModified = true;
       evaluarModificaciones();
@@ -545,6 +774,7 @@
       let newIdx = Math.max(0, Math.min(rawItems.length - 1, targetRank - 1));
       if (oldIdx !== newIdx) {
         const moved = rawItems.splice(oldIdx, 1)[0];
+        touchedItems.add(moved.name);
         rawItems.splice(newIdx, 0, moved);
         isModified = true;
         evaluarModificaciones();
@@ -554,6 +784,7 @@
 
     function moverSeleccionadosAlTop() {
       if (selectedNames.size === 0) return;
+      selectedNames.forEach(n => touchedItems.add(n));
       const sel = rawItems.filter(it => selectedNames.has(it.name));
       const nosel = rawItems.filter(it => !selectedNames.has(it.name));
       rawItems = [...sel, ...nosel];
@@ -564,6 +795,7 @@
 
     function moverSeleccionadosAlFondo() {
       if (selectedNames.size === 0) return;
+      selectedNames.forEach(n => touchedItems.add(n));
       const sel = rawItems.filter(it => selectedNames.has(it.name));
       const nosel = rawItems.filter(it => !selectedNames.has(it.name));
       rawItems = [...nosel, ...sel];
@@ -574,6 +806,7 @@
 
     function moverSeleccionados(dir) {
       if (selectedNames.size === 0) return;
+      selectedNames.forEach(n => touchedItems.add(n));
       const indices = [];
       rawItems.forEach((it, idx) => { if (selectedNames.has(it.name)) indices.push(idx); });
 
@@ -603,6 +836,7 @@
 
     function resetAlfabetico() {
       rawItems.sort((a, b) => a.name.localeCompare(b.name));
+      rawItems.forEach(it => touchedItems.add(it.name));
       isModified = true;
       evaluarModificaciones();
       renderPickingHTML();
@@ -618,7 +852,11 @@
         minBa: 0,
         maxBa: 0,
         minBm: 0,
-        maxBm: 0
+        maxBm: 0,
+        minQBa: 0,
+        maxQBa: 0,
+        minQBm: 0,
+        maxQBm: 0
       });
       if (render) renderAltaMasivaHTML();
     }
@@ -657,19 +895,24 @@
           <td><input type="number" min="0" step="any" value="${row.maxBa || 0}" oninput="nuevosItemsAlta[${idx}].maxBa = parseFloat(this.value)||0; evaluarModificaciones();"></td>
           <td><input type="number" min="0" step="any" value="${row.minBm || 0}" oninput="nuevosItemsAlta[${idx}].minBm = parseFloat(this.value)||0; evaluarModificaciones();"></td>
           <td><input type="number" min="0" step="any" value="${row.maxBm || 0}" oninput="nuevosItemsAlta[${idx}].maxBm = parseFloat(this.value)||0; evaluarModificaciones();"></td>
+          <td><input type="number" min="0" step="any" value="${row.minQBa || 0}" oninput="nuevosItemsAlta[${idx}].minQBa = parseFloat(this.value)||0; evaluarModificaciones();" style="background:#F0FDF4; font-weight:600;"></td>
+          <td><input type="number" min="0" step="any" value="${row.maxQBa || 0}" oninput="nuevosItemsAlta[${idx}].maxQBa = parseFloat(this.value)||0; evaluarModificaciones();" style="background:#F0FDF4; font-weight:600;"></td>
+          <td><input type="number" min="0" step="any" value="${row.minQBm || 0}" oninput="nuevosItemsAlta[${idx}].minQBm = parseFloat(this.value)||0; evaluarModificaciones();" style="background:#F0FDF4; font-weight:600;"></td>
+          <td><input type="number" min="0" step="any" value="${row.maxQBm || 0}" oninput="nuevosItemsAlta[${idx}].maxQBm = parseFloat(this.value)||0; evaluarModificaciones();" style="background:#F0FDF4; font-weight:600;"></td>
           <td style="text-align:center;"><button class="btn-del-row" onclick="eliminarFilaAlta(${idx})">✕</button></td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // ── MOTOR TAB 3: EDICIÓN RÁPIDA ──────────────────────────────────
+    // ── MOTOR TAB 3: EDICIÓN RÁPIDA (CON SLIDER Y ELIMINACIÓN) ───────
     function renderEdicionHTML() {
       const container = document.getElementById("gridEdicionContainer");
       const search = document.getElementById("searchEdicion").value.toLowerCase().trim();
       const catFiltro = document.getElementById("filtroCatEdicion").value;
 
       const filtered = catalogItems.filter(it => {
+        if (itemsEliminados.has(it.name)) return false;
         const matchSearch = !search || it.name.toLowerCase().includes(search) || it.cat.toLowerCase().includes(search);
         const matchCat = !catFiltro || it.cat === catFiltro;
         return matchSearch && matchCat;
@@ -679,23 +922,36 @@
         <table class="power-table">
           <thead>
             <tr>
-              <th style="width:30px;">#</th>
-              <th style="width:160px;">CATEGORÍA</th>
-              <th style="width:200px;">PRODUCTO</th>
-              <th style="width:120px;">PRESENTACIÓN</th>
-              <th style="width:80px;">UNIDAD</th>
-              <th style="width:65px;">MÍN BA</th>
-              <th style="width:65px;">MÁX BA</th>
-              <th style="width:65px;">MÍN BM</th>
-              <th style="width:65px;">MÁX BM</th>
+              <th style="width:25px;">#</th>
+              <th style="width:50px; text-align:center;">ACTIVO</th>
+              <th style="width:130px;">CATEGORÍA</th>
+              <th style="width:160px;">PRODUCTO</th>
+              <th style="width:100px;">PRESENTACIÓN</th>
+              <th style="width:65px;">UNIDAD</th>
+              <th style="width:50px;" title="Mínimo Bodega Andares">MÍN BA</th>
+              <th style="width:50px;" title="Máximo Bodega Andares">MÁX BA</th>
+              <th style="width:50px;" title="Mínimo Bodega Mercado">MÍN BM</th>
+              <th style="width:50px;" title="Máximo Bodega Mercado">MÁX BM</th>
+              <th style="width:50px; background:#2E5D4B;" title="Mínimo Quiosco Andares">MÍN Q(BA)</th>
+              <th style="width:50px; background:#2E5D4B;" title="Máximo Quiosco Andares">MÁX Q(BA)</th>
+              <th style="width:50px; background:#2E5D4B;" title="Mínimo Quiosco Mercado">MÍN Q(BM)</th>
+              <th style="width:50px; background:#2E5D4B;" title="Máximo Quiosco Mercado">MÁX Q(BM)</th>
+              <th style="width:30px; text-align:center;">🗑️</th>
             </tr>
           </thead>
           <tbody>
             ${filtered.map((item, idx) => {
               const ed = itemsEditadosMap.get(item.name) || item;
+              const isActivo = ed.activo !== undefined ? ed.activo : true;
               return `
-                <tr>
+                <tr style="${!isActivo ? 'opacity:0.6; background:#ECEFF1;' : ''}">
                   <td style="text-align:center; font-weight:600;">${idx + 1}</td>
+                  <td style="text-align:center;">
+                    <label class="switch-toggle" title="${isActivo ? 'Insumo Activo' : 'Insumo Inactivo'}">
+                      <input type="checkbox" ${isActivo ? 'checked' : ''} onchange="solicitarCambioEstado('${item.name.replace(/'/g,"\\'")}', this.checked)">
+                      <span class="slider"></span>
+                    </label>
+                  </td>
                   <td>
                     <select onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'cat', this.value)">
                       ${categoriasLista.map(c => `<option value="${c}" ${c === ed.cat ? "selected" : ""}>${c}</option>`).join("")}
@@ -708,10 +964,17 @@
                       ${unidadesLista.map(u => `<option value="${u}" ${u === ed.unit ? "selected" : ""}>${u}</option>`).join("")}
                     </select>
                   </td>
-                  <td><input type="number" step="any" value="${ed.minBa}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'minBa', this.value)"></td>
-                  <td><input type="number" step="any" value="${ed.maxBa}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'maxBa', this.value)"></td>
-                  <td><input type="number" step="any" value="${ed.minBm}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'minBm', this.value)"></td>
-                  <td><input type="number" step="any" value="${ed.maxBm}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'maxBm', this.value)"></td>
+                  <td><input type="number" step="any" value="${ed.minBa || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'minBa', this.value)"></td>
+                  <td><input type="number" step="any" value="${ed.maxBa || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'maxBa', this.value)"></td>
+                  <td><input type="number" step="any" value="${ed.minBm || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'minBm', this.value)"></td>
+                  <td><input type="number" step="any" value="${ed.maxBm || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'maxBm', this.value)"></td>
+                  <td><input type="number" step="any" value="${ed.minQBa || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'minQBa', this.value)" style="background:#F0FDF4; font-weight:600;"></td>
+                  <td><input type="number" step="any" value="${ed.maxQBa || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'maxQBa', this.value)" style="background:#F0FDF4; font-weight:600;"></td>
+                  <td><input type="number" step="any" value="${ed.minQBm || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'minQBm', this.value)" style="background:#F0FDF4; font-weight:600;"></td>
+                  <td><input type="number" step="any" value="${ed.maxQBm || 0}" onchange="actualizarEdicion('${item.name.replace(/'/g,"\\'")}', 'maxQBm', this.value)" style="background:#F0FDF4; font-weight:600;"></td>
+                  <td style="text-align:center;">
+                    <button class="btn-del-row" title="Desactivar y purgar producto" onclick="solicitarEliminacionProducto('${item.name.replace(/'/g,"\\'")}')">🗑</button>
+                  </td>
                 </tr>
               `;
             }).join("")}
@@ -719,6 +982,42 @@
         </table>
       `;
     }
+
+    function solicitarCambioEstado(pName, nuevoEstado) {
+      document.getElementById("deleteDialogTitle").innerText = nuevoEstado ? "✅ Activar Producto" : "⏸️ Desactivar Producto";
+      document.getElementById("deleteDialogDesc").innerHTML = nuevoEstado
+        ? `¿Deseas reactivar <strong>"${pName}"</strong>? Volverá a estar visible en los pedidos de tiendas.`
+        : `¿Deseas desactivar <strong>"${pName}"</strong>? Se ocultará en las vistas de pedidos diarios de las tiendas.`;
+      
+      document.getElementById("deleteConfirmDialog").style.display = "flex";
+      document.getElementById("btnConfirmDeleteAction").style.background = nuevoEstado ? "var(--dark)" : "#E65100";
+
+      document.getElementById("btnConfirmDeleteAction").onclick = function() {
+        cerrarDeleteModal();
+        actualizarEdicion(pName, "activo", nuevoEstado);
+        renderEdicionHTML();
+        mostrarToast(`Estado de "${pName}" actualizado a: ${nuevoEstado ? "ACTIVO" : "INACTIVO"}.`, "success");
+      };
+    }
+
+    function solicitarEliminacionProducto(pName) {
+      document.getElementById("deleteDialogTitle").innerText = "🗑️ Desactivar y Purgar Producto";
+      document.getElementById("deleteDialogDesc").innerHTML = `¿Estás seguro de retirar <strong>"${pName}"</strong> del catálogo? Se marcará como INACTIVO en MAESTRO y se removerá de la lista de edición.`;
+      document.getElementById("deleteConfirmDialog").style.display = "flex";
+      document.getElementById("btnConfirmDeleteAction").style.background = "#C62828";
+
+      document.getElementById("btnConfirmDeleteAction").onclick = function() {
+        cerrarDeleteModal();
+        itemsEliminados.add(pName);
+        actualizarEdicion(pName, "activo", false);
+        isModified = true;
+        evaluarModificaciones();
+        renderEdicionHTML();
+        mostrarToast(`Insumo "${pName}" retirado. Haz clic en Guardar para aplicar a las hojas.`, "success");
+      };
+    }
+
+    function cerrarDeleteModal() { document.getElementById("deleteConfirmDialog").style.display = "none"; }
 
     function actualizarEdicion(originalName, campo, valor) {
       if (!itemsEditadosMap.has(originalName)) {
@@ -728,6 +1027,8 @@
       const ed = itemsEditadosMap.get(originalName);
       if (campo.startsWith("min") || campo.startsWith("max")) {
         ed[campo] = parseFloat(valor) || 0;
+      } else if (campo === "activo") {
+        ed[campo] = Boolean(valor);
       } else {
         ed[campo] = valor.trim();
       }
@@ -763,8 +1064,11 @@
       duplicados.forEach(dup => {
         container.innerHTML += `
           <div class="dup-card">
-            <strong>⚠️ Insumo Duplicado: ${dup.repetido.name}</strong> (${dup.repetido.cat} - ${dup.repetido.pres})
-            <p style="font-size:10px; color:#555; margin-top:4px;">Se recomienda conservar el registro principal y eliminar las repeticiones.</p>
+            <div>
+              <strong>⚠️ Insumo Duplicado: ${dup.repetido.name}</strong> (${dup.repetido.cat} - ${dup.repetido.pres})
+              <p style="font-size:10px; color:#555; margin-top:4px;">Se recomienda conservar el registro principal y desactivar las repeticiones.</p>
+            </div>
+            <button class="btn-del-row" onclick="solicitarEliminacionProducto('${dup.repetido.name.replace(/'/g,"\\'")}')">Desactivar Repetición</button>
           </div>
         `;
       });
@@ -783,6 +1087,7 @@
       const altasValidas = nuevosItemsAlta.filter(it => it.name.trim() !== "");
       if (altasValidas.length > 0) mod = true;
       if (itemsEditadosMap.size > 0) mod = true;
+      if (itemsEliminados.size > 0) mod = true;
 
       isModified = mod;
       document.getElementById("unsavedBadge").style.display = isModified ? "inline-block" : "none";
@@ -802,6 +1107,7 @@
       const payload = {
         nuevos: altasValidas,
         ediciones: Array.from(itemsEditadosMap.values()),
+        eliminados: Array.from(itemsEliminados),
         picking: rawItems.map((it, idx) => ({ name: it.name, rank: idx + 1, cat: it.cat }))
       };
 
@@ -817,7 +1123,10 @@
       document.getElementById("btnSaveText").innerText = "✦ Guardar y Aplicar Cambios";
 
       nuevosItemsAlta = [];
+      renderAltaMasivaHTML(); // Limpiar y resetear visualmente la tabla de altas
       itemsEditadosMap.clear();
+      itemsEliminados.clear();
+      touchedItems.clear();
       isModified = false;
       evaluarModificaciones();
       cargarTodo();

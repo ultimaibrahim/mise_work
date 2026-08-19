@@ -5,7 +5,41 @@ Este documento contiene el historial de actualizaciones de Suite MISE redactado 
 
 ---
 
-## Versión 1.6.5 Altair - Suite Unificada Powerhouse de Catálogo y Picking (Agosto 2026) [ACTUAL]
+## Versión 1.7.3 Altair - Guardado Multi-Hilo Concurrente (Agosto 2026) [ACTUAL]
+* ⚡ **Procesamiento Multi-Hilo en Paralelo**: El Powerhouse ahora distribuye el guardado entre múltiples procesos independientes de forma simultánea (guardado de catálogo, sincronización de inventarios y actualización de tiendas en paralelo), reduciendo drásticamente el tiempo de espera a solo unos segundos.
+* 🛡️ **Protección y Estabilidad Mejoradas**: Bloqueos de datos ultra-cortos para evitar pantallas congeladas o colisiones cuando varios administradores usan el sistema.
+
+---
+
+## Versión 1.7.2a Altair - Interfaz Despejada y Escala de Zoom Optimizada (Agosto 2026)
+* 🔍 **Selector de Tamaño y Zoom Visible**: La lupa y el selector de zoom ahora son completamente visibles en la barra superior con el tamaño **115% (Normal)** activado por defecto para una lectura mucho más cómoda y clara, ofreciendo opciones hasta 145% para pantallas de alta resolución.
+* 🧹 **Cabecera Limpia y Espaciosa**: Se retiró el título duplicado de la ventana web para darle todo el espacio a las pestañas y controles de trabajo, evitando saturación visual.
+
+---
+
+## Versión 1.7.2 Altair - Guardado Ultrarrápido de Catálogo y Experiencia Visual Mejorada (Agosto 2026)
+* ⚡ **Guardado Instantáneo del Catálogo**: El proceso de guardado y aplicación de cambios en el Powerhouse se optimizó drásticamente, pasando de más de 1 minuto a solo **2 segundos**, actualizando inventarios y tiendas en un abrir y cerrar de ojos.
+* 🧹 **Limpieza Automática de Altas**: Al dar de alta insumos y guardar, la tabla se vacía automáticamente para que tengas un espacio limpio y no re-agregues productos por error.
+* 📁 **Agrupación Inteligente por Categoría**: Los nuevos insumos se ordenan y ubican automáticamente dentro de su familia correspondiente en el catálogo de bodega (ej. lácteos con lácteos, abarrotes con abarrotes) sin alterar su ruta de picking en las tiendas.
+* 🎨 **Detalles Visuales Cristalinos**:
+  * Cajas numéricas más legibles y limpias sin flechas que tapen los dígitos.
+  * Pestañas de navegación con iconos y textos perfectamente alineados de forma horizontal.
+  * Separación clara de avisos para una interfaz más cómoda y espaciosa.
+
+---
+
+## Versión 1.7.1 Altair - Sincronización Integral de Catálogo y Stock de Quiosco (Agosto 2026)
+* ⚡ **Reflejo Inmediato de Nuevos Productos en Tiendas**: Al dar de alta un producto nuevo desde el Powerhouse, la lista de pedidos en las tiendas (Andares y Mercado) se expande automáticamente en tiempo real sin requerir acciones manuales ni reiniciar la hoja.
+* 🎯 **Control de Mínimos y Máximos de Quiosco**: Ahora es posible definir y modificar los límites de stock de quiosco tanto en el Alta en Lote como en la Edición Rápida del Powerhouse.
+* 🎨 **Mejoras Visuales y de Navegación**:
+  * Botones de vista (Lista / Categorías) con sombreado claro para identificar la pestaña seleccionada de un vistazo.
+  * Botones de salto simplificados a **Inicio** y **Fondo** en español neutro y sin emojis.
+  * Animación de guardado limpia y libre de cursores de texto.
+* ⏰ **Programación Nocturna en 1-Clic**: Botón en herramientas experimentales para activar el reseteo automático de medianoche (00:00 AM) y el descuento de inventario (01:00 AM) sin necesidad de configurar activadores técnicos a mano.
+
+---
+
+## Versión 1.7.0 Altair - Suite Unificada Powerhouse de Catálogo y Picking (Agosto 2026)
 * ⚡ **Centro de Mando Powerhouse**: Nueva ventana integral para administrar todos los insumos de bodega en un solo lugar.
   * 🖐️ **Secuencia de Picking**: Reordena rutas de surtido por arrastre o número directo.
   * ➕ **Alta en Lote Sin Hojas Temporales**: Agrega insumos nuevos al catálogo directamente desde una tabla dinámica sin crear pestañas extras que ensucien el archivo.

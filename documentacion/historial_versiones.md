@@ -5,7 +5,66 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 
 ---
 
-## ⚡ v1.6.5 Altair (Mise Powerhouse: Suite Unificada de Catálogo & Picking) — 2026-08-16 [ACTUAL]
+## ⚡ v1.7.3 Altair (Arquitectura Concurrente Multi-Worker & Paralelización con Promise.all) — 2026-08-17 [ACTUAL]
+
+### 🏬 Bodega (BDG) & 📱 Tiendas (PDA / PDM)
+* **Arquitectura de Micro-Workers Paralelos Concurrente**:
+  * Descomposición de la mega-función monolítica en micro-servicios especializados:
+    1. `workerGuardarMaestro`: Transacción atómica de Altas, Ediciones y Picking en `MAESTRO` (~1.2s).
+    2. `workerSyncKardexYVista("BA")` y `workerSyncKardexYVista("BM")`: Sincronización independiente de Kardex y Vistas Móviles en paralelo (~1.5s).
+    3. `workerPushTiendaRemota("BA")` y `workerPushTiendaRemota("BM")`: Push remoto concurrente a tiendas Andares y Mercado (~1.8s).
+* **Orquestación Multi-Hilo desde el Diálogo (`PickingDialog.html`)**:
+  * Envoltorio con `Promise.all([ ... ])` que dispara múltiples llamadas concurrentes en contenedores V8 independientes de Google Cloud, reduciendo el tiempo total de procesamiento de más de 68s a **~3 a 10 segundos**.
+* **Protección Anti-Colisión (`LockService`)**:
+  * Cerrojos granulares de corta duración (<1.5s) que eliminan timeouts y bloqueos por contención.
+
+---
+
+## ⚡ v1.7.2a Altair (Ajustes Visuales de Header & Escala de Zoom de Alta Densidad) — 2026-08-16
+
+### 🏬 Bodega (BDG) — UI Polish en Powerhouse (`PickingDialog.html`)
+* **Remoción de Título Redundante en Header**: Se retiró el título duplicado de la vista HTML para otorgar el 100% del protagonismo a la barra de pestañas y controles de acción, ya que la ventana nativa del modal de Google Sheets ya posee el título de la aplicación.
+* **Escala de Zoom y Densidad Rediseñada**:
+  * Nuevo valor por defecto establecido en **`115% (Normal)`** para una lectura y clicado óptimos en pantallas modernas.
+  * Opciones de escalado calibradas: `100%`, `115% (Normal)`, `130% (Grande)` y `145% (Ultra)`.
+  * Visibilidad y espaciado ampliados en el selector (`.zoom-select` con `min-width: 125px`).
+
+---
+
+## ⚡ v1.7.2 Altair (Optimización Ultrarrápida Batch I/O, Vaciado Automático & UI Polishing) — 2026-08-16
+
+### 🏬 Bodega (BDG) & 📱 Tiendas (PDA / PDM)
+* **Optimización Extrema de Guardado Transaccional (`guardarPowerhouseBatch` & `_ordenarYRenumerarTodo`)**:
+  * **Consolidación Batch I/O de 1 Sola Llamada**: Se eliminaron 28 escrituras redundantes por columnas de días en los Kardex, unificando valores, fórmulas y formatos condicionales en una sola matriz en bloque por hoja (`1 setValues` + `1 setBackgrounds`).
+  * **Reducción de Tiempo**: El tiempo de guardado y reordenamiento de catálogo pasó de **103 segundos a <2.5 segundos**.
+* **Vaciado Automático de Alta en Lote**:
+  * Al completar con éxito el guardado desde el Powerhouse, la lista y tabla dinámica de `➕ Alta en Lote` se vacían y re-renderizan a su estado limpio (`[]`), evitando que el usuario re-agregue accidentalmente los mismos insumos.
+* **Auto-Agrupación por Categoría en `MAESTRO`**:
+  * Los nuevos insumos dados de alta se integran y ordenan alfabéticamente dentro de su respectiva familia/categoría institucional y se re-numeran de forma correlativa (1 a N), preservando de manera intacta sus rankings de picking por sucursal (`PICKING_BA` y `PICKING_BM`).
+* **Correcciones Visuales & Estilo Crystal Squircle (`PickingDialog.html`)**:
+  * **Inputs Numéricos Limpios**: Remoción total de flechas y spinners nativos del navegador (`appearance: textfield`) en todas las tablas de alta y edición para que los números siempre sean 100% legibles.
+  * **Estructura y Alineación de Pestañas**: Navegación multi-tab con separación estructural entre el icono (`.tab-icon`) y el texto (`.tab-text`) en contenedor `inline-flex`.
+  * **Badge de Modificaciones**: Margen y separación visual reforzados para `⚠️ Cambios sin guardar`.
+
+---
+
+## ⚡ v1.7.1 Altair (Sincronización Push Integral de Catálogo & Stock de Quiosco en Powerhouse) — 2026-08-16
+
+### 🏬 Bodega (BDG) & 📱 Tiendas (PDA / PDM)
+* **Auto-Expansión de Catálogo Remoto (`_reordenarPedidoRemotoDirecto`)**:
+  * Al dar de alta nuevos productos en el Powerhouse, el backend no solo actualiza `MAESTRO` y `VISTA_MOVIL`, sino que expande físicamente la tabla `📋 PEDIDO DIARIO` de PDA/PDM agregando las filas faltantes en caliente y recalculando fórmulas sin truncar items.
+* **Mínimos y Máximos de Quiosco (`MÍN_Q_BA`, `MÁX_Q_BA`, `MÍN_Q_BM`, `MÁX_Q_BM`)**:
+  * Integración completa en el backend y en las pestañas `➕ Alta en Lote` y `📝 Edición Rápida` del Powerhouse para editar las metas de stock en quiosco por sucursal.
+* **Micro-Interacciones & UI Polishing en Powerhouse (`PickingDialog.html`)**:
+  * **Segmented Control de Vistas**: Sombreado activo (`#FFFFFF` + elevación) para diferenciar claramente las vistas `Lista` y `Categorías`.
+  * **Botones de Movimiento Directo**: Renombrados a `Inicio` y `Fondo` limpios (sin emojis y sin extranjerismos como Top/Bot).
+  * **Eliminación del Cursor Caret en Spinner**: Adición de `user-select: none` y `pointer-events: none` para evitar la línea de texto parpadeante durante guardados.
+* **Autoconfiguradores de Triggers Nocturnos en 1-Clic**:
+  * Funciones `instalarActivadoresMedianochePDA()`, `instalarActivadoresMedianochePDM()` (00:00 AM - Cierre diario & log) e `instalarActivadoresNocturnosBDG()` (01:00 AM - Descuento automático en Kardex) en el submenú `🧪 Herramientas Experimentales`.
+
+---
+
+## ⚡ v1.7.0 Altair (Mise Powerhouse: Suite Unificada de Catálogo & Picking) — 2026-08-16
 
 ### 🏬 Bodega (BDG) — Unificación Total de Catálogo & Picking
 * **Suite Unificada Powerhouse (`PickingDialog.html`)**:

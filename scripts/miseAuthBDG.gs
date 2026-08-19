@@ -1,5 +1,5 @@
 /**
- * MISE — Bodegas Script v1.6.4 Altair (Descuento Ultrarrápido de Hoy & Sincronización Push Remota)
+ * MISE — Bodegas Script v1.7.3 Altair (Arquitectura Concurrente Multi-Worker & Paralelización)
  * Suite Atelier · La Crêpe Parisienne · Grupo MYT
  *
  * INSTALAR EN: Bodegas (Google Sheets)
@@ -129,6 +129,7 @@ function onOpen() {
         .addItem("🔒 Proteger catálogo anti-dummies",      "protegerMaestroSeguro"))
       .addSeparator()
       .addSubMenu(ui.createMenu("🧪 Herramientas Experimentales")
+        .addItem("⏰ Activar descuento automático nocturno (01:00 AM)", "instalarActivadoresNocturnosBDG")
         .addItem("🚚 Surtir y descontar inventario (Auto)", "descontarSurtidoAutomaticoManualmente")
         .addItem("🔗 Configurar conexión con Logs (IMPORTRANGE)", "configurarConexionLogTiendas"))
       .addSeparator()
@@ -2452,7 +2453,6 @@ function _ordenarYRenumerarTodo() {
     // CONSOLIDACIÓN BATCH I/O DE 1-SOLA INVOCACIÓN EN KARDEX
     const kLen = newKData.length;
     const fullKValues = new Array(kLen);
-    const fullKFormulas = new Array(kLen);
     const fullKBgs = new Array(kLen);
 
     for (let r = 0; r < kLen; r++) {
@@ -2467,29 +2467,25 @@ function _ordenarYRenumerarTodo() {
       valRow[4] = rowData[4]; // UND
       valRow[5] = rowData[5]; // CADUCIDAD
       valRow[6] = rowData[6]; // LOTE
+
+      // Fórmula de Semáforo en Col H
+      if (b.key === "BA") {
+        valRow[7] = `=IF(AND(IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMinBA}, FALSE), 0)=0, IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMaxBA}, FALSE), 0)=0), "", IF(AD${rn}<IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMinBA}, FALSE), 0), "🔴 -" & (IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMinBA}, FALSE), 0)-AD${rn}), IF(AD${rn}>IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMaxBA}, FALSE), 0), "🔵 +" & (AD${rn}-IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMaxBA}, FALSE), 0)), "🟢 -")))`;
+      } else {
+        valRow[7] = `=IF(AND(IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)=0, IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)=0), "", IF(AD${rn}<IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0), "🔴 -" & (IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)-AD${rn}), IF(AD${rn}>IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0), "🔵 +" & (AD${rn}-IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)), "🟢 -")))`;
+      }
+
       valRow[8] = rowData[8]; // SALDO ANT
 
       for (let d = 0; d < KARDEX_DAYS; d++) {
         valRow[9 + d * 3]  = rowData[9 + d * 3];  // ENT
         valRow[10 + d * 3] = rowData[10 + d * 3]; // SAL
-      }
-      fullKValues[r] = valRow;
-
-      const formRow = new Array(KARDEX_TOTAL_COLS).fill('');
-      if (b.key === "BA") {
-        formRow[7] = `=IF(AND(IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMinBA}, FALSE), 0)=0, IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMaxBA}, FALSE), 0)=0), "", IF(AD${rn}<IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMinBA}, FALSE), 0), "🔴 -" & (IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMinBA}, FALSE), 0)-AD${rn}), IF(AD${rn}>IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMaxBA}, FALSE), 0), "🔵 +" & (AD${rn}-IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBA}, ${idxMaxBA}, FALSE), 0)), "🟢 -")))`;
-      } else {
-        formRow[7] = `=IF(AND(IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)=0, IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)=0), "", IF(AD${rn}<IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0), "🔴 -" & (IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)-AD${rn}), IF(AD${rn}>IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0), "🔵 +" & (AD${rn}-IFERROR(VLOOKUP(C${rn}, MAESTRO!${lProd}:${lMaxBM}, ${idxMinBM}, FALSE), 0)), "🟢 -")))`;
-      }
-
-      for (let d = 0; d < KARDEX_DAYS; d++) {
-        const sldIdx  = 11 + d * 3;
         const prevCol = 9  + d * 3;
         const entCol  = 10 + d * 3;
         const salCol  = 11 + d * 3;
-        formRow[sldIdx] = '=' + _col(prevCol) + rn + '+IFERROR(' + _col(entCol) + rn + ',0)-IFERROR(' + _col(salCol) + rn + ',0)';
+        valRow[11 + d * 3] = '=' + _col(prevCol) + rn + '+IFERROR(' + _col(entCol) + rn + ',0)-IFERROR(' + _col(salCol) + rn + ',0)'; // SLD
       }
-      fullKFormulas[r] = formRow;
+      fullKValues[r] = valRow;
 
       const bgRow = new Array(KARDEX_TOTAL_COLS).fill(r % 2 === 0 ? C.rowA : C.rowB);
       bgRow[8] = C.iceBlue;
@@ -2501,31 +2497,20 @@ function _ordenarYRenumerarTodo() {
       fullKBgs[r] = bgRow;
     }
 
-    // 1. Inyectar Matriz de Valores y Fondos en todo el bloque
+    // 1. Inyección ultrarrápida en 1 sola llamada I/O de valores, fórmulas y fondos
     const kRangeBatch = kSheet.getRange(KARDEX_START, 1, kLen, KARDEX_TOTAL_COLS);
     kRangeBatch.setValues(fullKValues);
     kRangeBatch.setBackgrounds(fullKBgs);
 
-    // 2. Inyectar Fórmulas únicamente en sus columnas correspondientes (Col H semáforo y cols SLD) para no borrar los valores
-    const formulasH = fullKFormulas.map(r => [r[7]]);
-    kSheet.getRange(KARDEX_START, 8, kLen, 1).setFormulas(formulasH);
-
-    for (let d = 0; d < KARDEX_DAYS; d++) {
-      const sldColIdx = 11 + d * 3; // 0-indexed col index (11, 14, 17, 20, 23, 26, 29 = cols L, O, R, U, X, AA, AD)
-      const colFormulas = fullKFormulas.map(r => [r[sldColIdx]]);
-      kSheet.getRange(KARDEX_START, sldColIdx + 1, kLen, 1).setFormulas(colFormulas);
-    }
-
     if (!kSheet.getFilter()) {
-      kSheet.getRange(6, 1, kLen + 1, KARDEX_TOTAL_COLS).createFilter();
+      try { kSheet.getRange(6, 1, kLen + 1, KARDEX_TOTAL_COLS).createFilter(); } catch(e) {}
     }
   });
 
   if (!maestro.getFilter()) {
-    maestro.getRange(3, 1, data.length + 1, MAESTRO_COLS).createFilter();
+    try { maestro.getRange(3, 1, data.length + 1, MAESTRO_COLS).createFilter(); } catch(e) {}
   }
   
-  protegerMaestroSeguro();
   _log("_ordenarYRenumerarTodo", `Re-ordenado y re-numerado: ${data.length} productos`);
 }
 
@@ -3235,24 +3220,12 @@ function procesarEdicionMasiva() {
   }
 }
 
-// ── CONSTRUCTOR DE ORDEN DE PICKING (DRAG & DROP HTML) ────────────────────────
-// ── POWERHOUSE DE CATÁLOGO & PICKING (SUITE UNIFICADA HTML) ───────────────────
-function abrirConstructorPickingHTML() {
-  const html = HtmlService.createHtmlOutputFromFile('PickingDialog')
-    .setWidth(1080)
-    .setHeight(720);
-
-  SpreadsheetApp.getUi().showModalDialog(html, "⚡ Mise Powerhouse · Catálogo & Picking");
-}
-
-/**
- * Obtiene el catálogo completo para el Powerhouse:
- * Insumos con ID, Categoría, Producto, Presentación, Unidad, Mín/Máx por bodega, Activo y Ranking de Picking
- */
 function obtenerDatosPowerhouse(key = "BA") {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const maestro = ss.getSheetByName(SHEET_MAESTRO);
   if (!maestro) return { items: [], categorias: CATEGORIAS_LISTA, unidades: ["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"] };
+
+  _asegurarColumnasQuioscoEnMaestro(maestro);
 
   const lr = maestro.getLastRow();
   if (lr < MAESTRO_START) return { items: [], categorias: CATEGORIAS_LISTA, unidades: ["kg", "lt", "pza", "paq", "g", "ml", "rol", "fco", "dom", "bol", "caj"] };
@@ -3271,8 +3244,13 @@ function obtenerDatosPowerhouse(key = "BA") {
   const cMinBM = map["MÍN_BM"]      ? map["MÍN_BM"].index      : 9;
   const cMaxBM = map["MÁX_BM"]      ? map["MÁX_BM"].index      : 10;
 
-  const cPicKey = `PICKING_${key}`;
-  const cPic = map[cPicKey] ? map[cPicKey].index : (map["PICKING"] ? map["PICKING"].index : -1);
+  const cMinQBA = map["MÍN_Q_BA"] ? map["MÍN_Q_BA"].index : -1;
+  const cMaxQBA = map["MÁX_Q_BA"] ? map["MÁX_Q_BA"].index : -1;
+  const cMinQBM = map["MÍN_Q_BM"] ? map["MÍN_Q_BM"].index : -1;
+  const cMaxQBM = map["MÁX_Q_BM"] ? map["MÁX_Q_BM"].index : -1;
+
+  const cPicBA = map["PICKING_BA"] ? map["PICKING_BA"].index : (map["PICKING"] ? map["PICKING"].index : -1);
+  const cPicBM = map["PICKING_BM"] ? map["PICKING_BM"].index : (map["PICKING"] ? map["PICKING"].index : -1);
 
   const items = [];
   mData.forEach((r, idx) => {
@@ -3288,7 +3266,14 @@ function obtenerDatosPowerhouse(key = "BA") {
     const maxBa = parseFloat(r[cMaxBA]) || 0;
     const minBm = parseFloat(r[cMinBM]) || 0;
     const maxBm = parseFloat(r[cMaxBM]) || 0;
-    const rank = cPic !== -1 ? (parseInt(r[cPic]) || (idx + 1)) : (idx + 1);
+
+    const minQBa = cMinQBA !== -1 ? (parseFloat(r[cMinQBA]) || 0) : 0;
+    const maxQBa = cMaxQBA !== -1 ? (parseFloat(r[cMaxQBA]) || 0) : 0;
+    const minQBm = cMinQBM !== -1 ? (parseFloat(r[cMinQBM]) || 0) : 0;
+    const maxQBm = cMaxQBM !== -1 ? (parseFloat(r[cMaxQBM]) || 0) : 0;
+
+    const rankBA = cPicBA !== -1 ? (parseInt(r[cPicBA]) || (idx + 1)) : (idx + 1);
+    const rankBM = cPicBM !== -1 ? (parseInt(r[cPicBM]) || (idx + 1)) : (idx + 1);
 
     items.push({
       id: idx + 1,
@@ -3302,7 +3287,13 @@ function obtenerDatosPowerhouse(key = "BA") {
       maxBa: maxBa,
       minBm: minBm,
       maxBm: maxBm,
-      rank: rank
+      minQBa: minQBa,
+      maxQBa: maxQBa,
+      minQBm: minQBm,
+      maxQBm: maxQBm,
+      rankBA: rankBA,
+      rankBM: rankBM,
+      rank: key === "BM" ? rankBM : rankBA
     });
   });
 
@@ -3313,7 +3304,6 @@ function obtenerDatosPowerhouse(key = "BA") {
   };
 }
 
-// Wrapper de compatibilidad hacia atrás
 function obtenerProductosPickingHTML(key) {
   const data = obtenerDatosPowerhouse(key);
   const items = data.items.map(it => ({ name: it.name, cat: it.cat, rank: it.rank }));
@@ -3321,13 +3311,6 @@ function obtenerProductosPickingHTML(key) {
   return items;
 }
 
-/**
- * Guarda todas las operaciones del Powerhouse en una sola transacción atómica (Batch I/O):
- * 1. Altas nuevas de productos
- * 2. Ediciones a productos existentes
- * 3. Eliminación / purga de duplicados
- * 4. Nuevo ordenamiento de picking
- */
 function guardarPowerhouseBatch(key, payload) {
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(45000)) {
@@ -3339,6 +3322,7 @@ function guardarPowerhouseBatch(key, payload) {
     const maestro = ss.getSheetByName(SHEET_MAESTRO);
     if (!maestro) throw new Error("No se encontró la hoja MAESTRO.");
 
+    _asegurarColumnasQuioscoEnMaestro(maestro);
     const lrM = maestro.getLastRow();
     const map = _getMaestroHeaderMap(maestro);
 
@@ -3352,19 +3336,16 @@ function guardarPowerhouseBatch(key, payload) {
     }
     _asegurarFormatoHeadersMaestro(maestro);
 
-    // ── 1. PROCESAR ALTAS DE PRODUCTOS NUEVOS ───────────────────────────────
+    // 1. Procesar Altas
     const prodsNuevos = payload.nuevos || [];
     if (prodsNuevos.length > 0) {
-      let lastNo = lrM >= MAESTRO_START ? maestro.getRange(MAESTRO_START, 1, lrM - MAESTRO_START + 1, 1).getValues()
-        .reduce((max, r) => Math.max(max, parseInt(r[0]) || 0), 0) : 0;
-
+      const lastColM = maestro.getLastColumn();
       const maestroNewRows = [];
       const bgsNew = [];
-      const kardexNewItems = [];
 
       for (let i = 0; i < prodsNuevos.length; i++) {
         const np = prodsNuevos[i];
-        const newNo = ++lastNo;
+        const newNo = lrM - MAESTRO_START + 1 + i + 1;
         const cat = String(np.cat || "ABARROTES").trim().toUpperCase();
         const prod = String(np.name || np.prod || "").trim();
         const pres = String(np.pres || "").trim();
@@ -3373,88 +3354,48 @@ function guardarPowerhouseBatch(key, payload) {
         const maxBa = parseFloat(np.maxBa) || 0;
         const minBm = parseFloat(np.minBm) || 0;
         const maxBm = parseFloat(np.maxBm) || 0;
+        const minQBa = parseFloat(np.minQBa) || 0;
+        const maxQBa = parseFloat(np.maxQBa) || 0;
+        const minQBm = parseFloat(np.minQBm) || 0;
+        const maxQBm = parseFloat(np.maxQBm) || 0;
 
         if (!prod) continue;
 
-        maestroNewRows.push([newNo, cat, prod, pres, unit, "SÍ", minBa, maxBa, "", minBm, maxBm, "", false]);
+        const rowM = new Array(lastColM).fill("");
+        if (map["NO"])           rowM[map["NO"].index]           = newNo;
+        if (map["CATEGORÍA"])    rowM[map["CATEGORÍA"].index]    = cat;
+        if (map["PRODUCTO"])     rowM[map["PRODUCTO"].index]     = prod;
+        if (map["PRESENTACION"]) rowM[map["PRESENTACION"].index] = pres;
+        if (map["UNIDAD"])       rowM[map["UNIDAD"].index]       = unit;
+        if (map["ACTIVO"])       rowM[map["ACTIVO"].index]       = "SÍ";
+        if (map["MÍN_BA"])      rowM[map["MÍN_BA"].index]      = minBa;
+        if (map["MÁX_BA"])      rowM[map["MÁX_BA"].index]      = maxBa;
+        if (map["MÍN_BM"])      rowM[map["MÍN_BM"].index]      = minBm;
+        if (map["MÁX_BM"])      rowM[map["MÁX_BM"].index]      = maxBm;
+        if (map["MÍN_Q_BA"])    rowM[map["MÍN_Q_BA"].index]    = minQBa;
+        if (map["MÁX_Q_BA"])    rowM[map["MÁX_Q_BA"].index]    = maxQBa;
+        if (map["MÍN_Q_BM"])    rowM[map["MÍN_Q_BM"].index]    = minQBm;
+        if (map["MÁX_Q_BM"])    rowM[map["MÁX_Q_BM"].index]    = maxQBm;
+        if (map["SELECCIONAR"])  rowM[map["SELECCIONAR"].index]  = false;
+        if (map["PICKING_BA"])   rowM[map["PICKING_BA"].index]   = newNo;
+        if (map["PICKING_BM"])   rowM[map["PICKING_BM"].index]   = newNo;
+
+        maestroNewRows.push(rowM);
         const rowColor = (newNo % 2 === 1) ? C.rowA : C.rowB;
-        bgsNew.push(Array(maestro.getLastColumn()).fill(rowColor));
-        kardexNewItems.push({ newNo, cat, prod, pres, unit, rowColor });
+        bgsNew.push(Array(lastColM).fill(rowColor));
       }
 
       if (maestroNewRows.length > 0) {
         const startRowM = maestro.getLastRow() + 1;
-        maestro.getRange(startRowM, 1, maestroNewRows.length, maestro.getLastColumn()).setValues(maestroNewRows);
-        maestro.getRange(startRowM, 1, maestroNewRows.length, maestro.getLastColumn()).setBackgrounds(bgsNew);
-
-        // Validaciones en MAESTRO
-        const validationRule = SpreadsheetApp.newDataValidation().requireValueInList(["SÍ", "NO"], true).setAllowInvalid(false).build();
-        maestro.getRange(startRowM, map["ACTIVO"] ? map["ACTIVO"].col : 6, maestroNewRows.length, 1).setDataValidation(validationRule);
-        const catValidation = SpreadsheetApp.newDataValidation().requireValueInList(CATEGORIAS_LISTA, true).setAllowInvalid(true).build();
-        maestro.getRange(startRowM, map["CATEGORÍA"] ? map["CATEGORÍA"].col : 2, maestroNewRows.length, 1).setDataValidation(catValidation);
-        maestro.getRange(startRowM, map["SELECCIONAR"] ? map["SELECCIONAR"].col : 13, maestroNewRows.length, 1).insertCheckboxes().setValue(false);
-
-        // Extender KARDEX_BA y KARDEX_BM
-        Object.values(BODEGAS).forEach(b => {
-          const kSheet = ss.getSheetByName(b.kardex);
-          if (kSheet) {
-            const startRowK = kSheet.getLastRow() + 1;
-            const fullKardexRows = [];
-            const bgsK = [];
-
-            for (let i = 0; i < kardexNewItems.length; i++) {
-              const item = kardexNewItems[i];
-              const row = new Array(KARDEX_TOTAL_COLS).fill("");
-              row[0] = item.newNo;
-              row[1] = item.cat;
-              row[2] = item.prod;
-              row[3] = item.pres;
-              row[4] = item.unit;
-              row[8] = 0; // Saldo Inicial
-
-              const rn = startRowK + i;
-              for (let d = 0; d < KARDEX_DAYS; d++) {
-                const prevCol = 9  + d * 3;
-                const entCol  = 10 + d * 3;
-                const salCol  = 11 + d * 3;
-                const sldColIdx = 11 + d * 3;
-                row[sldColIdx] = '=' + _col(prevCol) + rn + '+IFERROR(' + _col(entCol) + rn + ',0)-IFERROR(' + _col(salCol) + rn + ',0)';
-              }
-              fullKardexRows.push(row);
-
-              const bgRow = Array(KARDEX_TOTAL_COLS).fill(item.rowColor);
-              bgRow[8] = C.iceBlue;
-              for (let d = 0; d < KARDEX_DAYS; d++) {
-                bgRow[9 + d * 3]  = C.entBg;
-                bgRow[10 + d * 3] = C.salBg;
-                bgRow[11 + d * 3] = C.iceBlue;
-              }
-              bgsK.push(bgRow);
-            }
-
-            kSheet.getRange(startRowK, 1, kardexNewItems.length, KARDEX_TOTAL_COLS).setValues(fullKardexRows);
-            kSheet.getRange(startRowK, 6, kardexNewItems.length, 1).setNumberFormat("DD/MMM/YY");
-            kSheet.getRange(startRowK, 1, kardexNewItems.length, KARDEX_TOTAL_COLS).setBackgrounds(bgsK);
-          }
-        });
-
-        // Extender HISTORIAL
-        Object.values(BODEGAS).forEach(b => {
-          const hSheet = ss.getSheetByName(`HISTORIAL_${b.key}`);
-          if (hSheet) {
-            const startRowH = hSheet.getLastRow() + 1;
-            const hRows = kardexNewItems.map(item => [item.newNo, item.prod, item.unit]);
-            const bgsH = kardexNewItems.map(item => [item.rowColor, item.rowColor, item.rowColor]);
-            hSheet.getRange(startRowH, 1, kardexNewItems.length, 3).setValues(hRows);
-            hSheet.getRange(startRowH, 1, kardexNewItems.length, 3).setBackgrounds(bgsH);
-          }
-        });
+        maestro.getRange(startRowM, 1, maestroNewRows.length, lastColM).setValues(maestroNewRows);
+        maestro.getRange(startRowM, 1, maestroNewRows.length, lastColM).setBackgrounds(bgsNew);
       }
     }
 
-    // ── 2. PROCESAR EDICIONES Y ACTUALIZACIÓN DE CAMPOS ──────────────────────
+    // 2. Procesar Ediciones y Desactivaciones
     const ediciones = payload.ediciones || [];
-    if (ediciones.length > 0) {
+    const eliminados = payload.eliminados || [];
+    if (ediciones.length > 0 || eliminados.length > 0) {
       const lrCurr = maestro.getLastRow();
       const countCurr = lrCurr - MAESTRO_START + 1;
       const mRange = maestro.getRange(MAESTRO_START, 1, countCurr, maestro.getLastColumn());
@@ -3466,8 +3407,15 @@ function guardarPowerhouseBatch(key, payload) {
         if (pKey) editMap[pKey] = e;
       });
 
+      const delSet = new Set(eliminados.map(n => String(n).trim().toUpperCase()));
+
       for (let i = 0; i < mData.length; i++) {
         const prodName = String(mData[i][map["PRODUCTO"] ? map["PRODUCTO"].index : 2]).trim().toUpperCase();
+        if (delSet.has(prodName)) {
+          if (map["ACTIVO"]) mData[i][map["ACTIVO"].index] = "NO";
+          continue;
+        }
+
         const ed = editMap[prodName];
         if (ed) {
           if (ed.cat !== undefined && map["CATEGORÍA"])    mData[i][map["CATEGORÍA"].index] = String(ed.cat).trim().toUpperCase();
@@ -3478,20 +3426,23 @@ function guardarPowerhouseBatch(key, payload) {
           if (ed.maxBa !== undefined && map["MÁX_BA"])     mData[i][map["MÁX_BA"].index] = parseFloat(ed.maxBa) || 0;
           if (ed.minBm !== undefined && map["MÍN_BM"])     mData[i][map["MÍN_BM"].index] = parseFloat(ed.minBm) || 0;
           if (ed.maxBm !== undefined && map["MÁX_BM"])     mData[i][map["MÁX_BM"].index] = parseFloat(ed.maxBm) || 0;
+          if (ed.minQBa !== undefined && map["MÍN_Q_BA"]) mData[i][map["MÍN_Q_BA"].index] = parseFloat(ed.minQBa) || 0;
+          if (ed.maxQBa !== undefined && map["MÁX_Q_BA"]) mData[i][map["MÁX_Q_BA"].index] = parseFloat(ed.maxQBa) || 0;
+          if (ed.minQBm !== undefined && map["MÍN_Q_BM"]) mData[i][map["MÍN_Q_BM"].index] = parseFloat(ed.minQBm) || 0;
+          if (ed.maxQBm !== undefined && map["MÁX_Q_BM"]) mData[i][map["MÁX_Q_BM"].index] = parseFloat(ed.maxQBm) || 0;
           if (ed.activo !== undefined && map["ACTIVO"])    mData[i][map["ACTIVO"].index] = ed.activo ? "SÍ" : "NO";
         }
       }
       mRange.setValues(mData);
     }
 
-    // ── 3. GUARDAR ORDEN DE PICKING Y CATEGORÍAS ────────────────────────────
+    // 3. Procesar Picking
     const lrFinal = maestro.getLastRow();
     const countFinal = lrFinal - MAESTRO_START + 1;
     const prodsFinal = maestro.getRange(MAESTRO_START, map["PRODUCTO"] ? map["PRODUCTO"].col : 3, countFinal, 1).getValues();
-
     const rankMap = {};
     const catMap = {};
-    const pickingList = payload.picking || payload; // Soporta tanto array directo como objeto estructurado
+    const pickingList = payload.picking || payload;
 
     if (Array.isArray(pickingList)) {
       pickingList.forEach((item, idx) => {
@@ -3501,35 +3452,44 @@ function guardarPowerhouseBatch(key, payload) {
       });
     }
 
-    const newColValues = [];
-    const newCatValues = [];
+    if (cPicObj) {
+      const newColValues = [];
+      const newCatValues = [];
+      const currentCats = map["CATEGORÍA"] ? maestro.getRange(MAESTRO_START, map["CATEGORÍA"].col, countFinal, 1).getValues() : [];
 
-    for (let i = 0; i < prodsFinal.length; i++) {
-      const pName = String(prodsFinal[i][0]).trim();
-      const rank = rankMap[pName] || (i + 1);
-      newColValues.push([rank]);
+      for (let i = 0; i < prodsFinal.length; i++) {
+        const pName = String(prodsFinal[i][0]).trim();
+        const rank = rankMap[pName] || (i + 1);
+        newColValues.push([rank]);
 
-      if (catMap[pName]) {
-        newCatValues.push([catMap[pName]]);
-      } else {
-        newCatValues.push([maestro.getRange(MAESTRO_START + i, map["CATEGORÍA"] ? map["CATEGORÍA"].col : 2).getValue()]);
+        if (catMap[pName]) {
+          newCatValues.push([catMap[pName]]);
+        } else {
+          newCatValues.push([currentCats[i] ? currentCats[i][0] : ""]);
+        }
+      }
+
+      maestro.getRange(MAESTRO_START, cPicObj.col, countFinal, 1).setValues(newColValues).setNumberFormat("0");
+      if (map["CATEGORÍA"]) {
+        try { maestro.getRange(MAESTRO_START, map["CATEGORÍA"].col, countFinal, 1).clearDataValidations(); } catch(e) {}
+        maestro.getRange(MAESTRO_START, map["CATEGORÍA"].col, countFinal, 1).setValues(newCatValues);
       }
     }
 
-    maestro.getRange(MAESTRO_START, cPicObj.col, countFinal, 1).setValues(newColValues).setNumberFormat("0");
-    if (map["CATEGORÍA"]) {
-      try { maestro.getRange(MAESTRO_START, map["CATEGORÍA"].col, countFinal, 1).clearDataValidations(); } catch(e) {}
-      maestro.getRange(MAESTRO_START, map["CATEGORÍA"].col, countFinal, 1).setValues(newCatValues);
+    // Reordenar si hubo altas
+    if (prodsNuevos.length > 0) {
+      _ordenarYRenumerarTodo();
     }
 
-    // Recrear vistas móviles en Bodega y disparar sincronización push hacia las tiendas
+    // Reconstruir VISTAS_MOVILES
     _buildVista("BA");
     _buildVista("BM");
-    sincronizarRemotamenteTiendasPush(key, rankMap);
 
-    const bodegaNombre = BODEGAS[key] ? BODEGAS[key].nombre : key;
-    _log("guardarPowerhouseBatch", `${key}: Catálogo y picking actualizados exitosamente.`);
-    return `✅ Se guardaron los cambios del catálogo y la secuencia de picking de ${bodegaNombre} se sincronizó con las tiendas.`;
+    // Sincronizar tiendas remotas
+    sincronizarRemotamenteTiendasPush(null, rankMap);
+
+    _log("guardarPowerhouseBatch", `${key}: Catálogo y picking sincronizados exitosamente.`);
+    return `✅ Se guardaron los cambios del catálogo y la secuencia de picking se sincronizó con las tiendas.`;
   } finally {
     lock.releaseLock();
   }
@@ -3599,7 +3559,6 @@ function sincronizarRemotamenteTiendasPush(sourceKey = null, sourceRankMap = nul
 
           if (syncSheet) {
             syncSheet.getRange(4, 1, vCount, 12).setValues(datosFrescos);
-            SpreadsheetApp.flush();
           }
 
           // 3. REORDENAMIENTO FÍSICO EN VIVO: Reordenar la pestaña 📋 PEDIDO DIARIO remota
@@ -3650,13 +3609,36 @@ function _reordenarPedidoRemotoDirecto(targetSs, syncSheet, pedidoSheet, syncVal
     }
 
     const currentCount = Math.max(pedidoSheet.getLastRow() - 3, 0);
-    if (currentCount < 1) return;
-    const range = pedidoSheet.getRange(DATA_START_ROW, 1, currentCount, NUM_COLS);
-    const values = range.getValues();
+    const totalCatalogCount = syncValues.length;
+    
+    // Leer valores existentes si los hay para conservar cantidades ingresadas previamente
+    const existingValuesMap = {};
+    if (currentCount > 0) {
+      const existingVals = pedidoSheet.getRange(DATA_START_ROW, 1, currentCount, NUM_COLS).getValues();
+      existingVals.forEach(r => {
+        const pName = String(r[2] || "").trim();
+        if (pName) existingValuesMap[pName] = r;
+      });
+    }
 
     const items = [];
-    for (let i = 0; i < values.length; i++) {
-      items.push({ vals: values[i] });
+    for (let i = 0; i < syncValues.length; i++) {
+      const pName = String(syncValues[i][2]).trim();
+      const pNo   = parseInt(syncValues[i][0]) || (i + 1);
+      const pCat  = String(syncValues[i][1]).trim();
+      
+      const existing = existingValuesMap[pName];
+      if (existing) {
+        items.push({ vals: existing });
+      } else {
+        // Insumo nuevo recién dado de alta: inicializar fila en tienda
+        const newRow = new Array(NUM_COLS).fill("");
+        newRow[0] = pNo;
+        newRow[1] = pCat;
+        newRow[2] = pName;
+        newRow[5] = ""; // CANT. A PEDIR vacía
+        items.push({ vals: newRow });
+      }
     }
 
     // Ordenar strictly según la Secuencia de Picking de Quiosco (Col L de _SYNC)
@@ -3729,11 +3711,12 @@ function _reordenarPedidoRemotoDirecto(targetSs, syncSheet, pedidoSheet, syncVal
       ]);
     }
 
-    range.clearContent();
+    if (currentCount > 0) {
+      pedidoSheet.getRange(DATA_START_ROW, 1, currentCount, NUM_COLS).clearContent();
+    }
     pedidoSheet.getRange(DATA_START_ROW, 1, items.length, NUM_COLS).setFormulas(outputData);
     pedidoSheet.getRange(DATA_START_ROW, 1, items.length, NUM_COLS).setBackgrounds(bgs);
     pedidoSheet.getRange(DATA_START_ROW, 1, items.length, NUM_COLS).setFontWeights(cleanFonts);
-    SpreadsheetApp.flush();
   } catch(e) {
     _log("_reordenarPedidoRemotoDirecto ERROR", e.toString());
   }
@@ -4299,4 +4282,36 @@ function _asegurarHojasSyncLogBDG() {
     }
     sheetBM.getRange("A1").setFormula(`=IMPORTRANGE("${idBM}", "'🗒 LOG_SURTIDO'!A2:H")`);
   }
+}
+
+/**
+ * Instala el activador automático por tiempo para ejecutar el descuento de surtido en Kardex
+ * todos los días entre 01:00 y 02:00 AM (después del reseteo de tiendas a medianoche).
+ */
+function instalarActivadoresNocturnosBDG() {
+  const funcionTarget = "descontarSurtidoAutomatico";
+  const triggers = ScriptApp.getProjectTriggers();
+  let countBorrados = 0;
+
+  // Eliminar activadores previos para evitar duplicados
+  triggers.forEach(t => {
+    if (t.getHandlerFunction() === funcionTarget || t.getHandlerFunction() === "descontarSurtidoAutomaticoManualmente") {
+      ScriptApp.deleteTrigger(t);
+      countBorrados++;
+    }
+  });
+
+  // Crear nuevo trigger programado a la 01:00 AM
+  ScriptApp.newTrigger(funcionTarget)
+    .timeBased()
+    .everyDays(1)
+    .atHour(1)
+    .create();
+
+  _log("instalarActivadoresNocturnosBDG", `Activador nocturno de descuento instalado (01:00 AM). Se eliminaron ${countBorrados} activadores viejos.`);
+  SpreadsheetApp.getUi().alert(
+    "⏰ Activador Automático Configurado",
+    `Se ha programado el descuento automático de inventario para ejecutarse todos los días entre 01:00 y 02:00 AM.\n\nEsto asegura que procese la información recién archivada por las tiendas a medianoche.`,
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
 }

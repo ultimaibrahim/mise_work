@@ -65,6 +65,7 @@ function onOpen() {
       .addItem("⚠️ Restablecer sistema (Destructivo)",     "setupCompleto")
       .addSeparator()
       .addSubMenu(ui.createMenu("🧪 Herramientas Experimentales")
+        .addItem("⏰ Activar reseteo automático de medianoche (00:00 AM)", "instalarActivadoresMedianochePDM")
         .addItem("🎲 Generar datos de prueba",             "generarDatosPrueba")
         .addItem("🗒️ Forzar registro en LOG_SURTIDO",     "probadorForzarLogSurtido")
         .addItem("🗑️ Simular Cierre de Día (Reset + Log)", "resetearPedidoManualmente"))
@@ -1609,4 +1610,36 @@ function registrarLog(accion, estado, detalle) {
       logSheet.deleteRows(3, currentRows - maxLogs - 2);
     }
   } catch(e) {}
+}
+
+/**
+ * Instala el activador automático por tiempo para ejecutar el reseteo y registro en LOG
+ * todos los días entre 00:00 y 01:00 AM.
+ */
+function instalarActivadoresMedianochePDM() {
+  const funcionTarget = "_resetearPedidoSilencioso";
+  const triggers = ScriptApp.getProjectTriggers();
+  let countBorrados = 0;
+
+  // Eliminar activadores previos para evitar duplicados
+  triggers.forEach(t => {
+    if (t.getHandlerFunction() === funcionTarget || t.getHandlerFunction() === "resetearPedidoManualmente") {
+      ScriptApp.deleteTrigger(t);
+      countBorrados++;
+    }
+  });
+
+  // Crear nuevo trigger programado a medianoche (00:00 - 01:00 AM)
+  ScriptApp.newTrigger(funcionTarget)
+    .timeBased()
+    .everyDays(1)
+    .atHour(0)
+    .create();
+
+  registrarLog("instalarActivadores", "SUCCESS", `Activador nocturno instalado (00:00 AM). Se eliminaron ${countBorrados} activadores viejos.`);
+  SpreadsheetApp.getUi().alert(
+    "⏰ Activador Automático Configurado",
+    `Se ha programado el reseteo diario y guardado en LOG_SURTIDO para ejecutarse automáticamente todos los días entre 00:00 y 01:00 AM.\n\nNo necesitas dejar ninguna pestaña abierta.`,
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
 }
