@@ -23,6 +23,13 @@ Este documento contiene el historial de actualizaciones y mejoras de la platafor
 
 ---
 
+## Versión 1.7.7p Altair — Conteo Físico desde el Celular (Octubre 2026)
+
+* 🧮 **Nueva hoja "Conteo físico" en Bodega**: se anota lo que hay de cada producto (en kg, litros o piezas, como en el formato de inventario) y con un toque el sistema queda igual a lo contado. Las diferencias se guardan con folio para revisarlas después.
+* 🙈 El conteo es "a ciegas": quien cuenta no ve lo que dice el sistema, para que el número sea el real.
+
+---
+
 ## Versión 1.7.7o Altair — Cambiar Categorías Mucho Más Rápido (Octubre 2026)
 
 * ⚡ **Cambiar la categoría de un producto en Powerhouse tarda unos segundos** en lugar de casi un minuto: solo se mueven las filas necesarias.

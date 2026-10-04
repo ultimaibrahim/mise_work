@@ -5,6 +5,13 @@ Este documento recopila el versionamiento técnico y operativo del sistema de in
 
 ---
 
+## ⚡ v1.7.7p Altair (Conteo físico) — 2026-10-04 [PROD]
+
+### 🏬 Bodega (BDG)
+* Hoja 🧮 Conteo físico (a ciegas, unidad de inventario) que ajusta el saldo a lo contado con bitácora y folio.
+
+---
+
 ## ⚡ v1.7.7o Altair (Categoría en segundos) — 2026-10-03 [PROD]
 
 ### 🏬 Bodega (BDG)

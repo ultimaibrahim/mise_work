@@ -1,5 +1,5 @@
 /**
- * MISE — Bodegas Script v1.7.7o Altair (Configuración en un Clic · Enlace por Producto · Sin Descuento Fantasma · CANT. FINAL en Descuento · Auto-Avance Semanal Confiable · Hoja de Entradas Móvil · Conversión de Unidades, Traspasos Inter-Tiendas & Surtido Numérico)
+ * MISE — Bodegas Script v1.7.7p Altair (Configuración en un Clic · Enlace por Producto · Sin Descuento Fantasma · CANT. FINAL en Descuento · Auto-Avance Semanal Confiable · Hoja de Entradas Móvil · Conversión de Unidades, Traspasos Inter-Tiendas & Surtido Numérico)
  * Suite Atelier · La Crêpe Parisienne · Grupo MYT
  *
  * INSTALAR EN: Bodegas (Google Sheets)
@@ -250,6 +250,7 @@ function onOpen() {
       .addItem("🩺 Diagnosticar y reparar sistema", "repararYSincronizarSistemaManualmente")
       .addItem("🩺 Estado del sistema (resumen)", "mostrarEstadoSistema")
       .addItem("📥 Rehacer la hoja Registrar entradas", "prepararHojaEntradasManualmente")
+      .addItem("🧮 Preparar hoja de Conteo físico", "prepararHojaConteoManualmente")
       .addSeparator()
       .addItem("🩺 Diagnosticar activadores", "diagnosticarActivadores")
       .addItem("⏰ Reiniciar activadores", "instalarActivadoresNocturnosBDG")
@@ -424,6 +425,15 @@ function _onEditBodega(e) {
         e.range.setValue(false); // Reset inmediato preventivo contra dobles ejecuciones
         procesarEdicionMasiva();
       }
+    }
+    return;
+  }
+
+  // 1.5 🧮 Conteo físico: casilla Aplicar (D2)
+  if (name === SHEET_CONTEO) {
+    if (row === 2 && col === 4 && e.range.getValue() === true) {
+      e.range.setValue(false);
+      aplicarConteoFisico();
     }
     return;
   }
@@ -2028,7 +2038,7 @@ function _catalogo() {
   ];
 }
 
-const MISE_VERSION = "1.7.7o";   // debe coincidir con la cabecera (línea 2); lo verifica tests/suites/version.test.js
+const MISE_VERSION = "1.7.7p";   // debe coincidir con la cabecera (línea 2); lo verifica tests/suites/version.test.js
 const MISE_EPOCA   = "Altair";
 const MISE_NOVEDADES = [
   "📥 Entradas en la unidad de cada producto (bolsa, caja…) y la fruta en kg exactos: Mise convierte",
@@ -3231,7 +3241,7 @@ function _simplificarVistaKardex(sheet) {
 // Orden y color de pestañas por uso: captura → consulta → sistema
 function _organizarPestanasBDG() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const orden = [[SHEET_ENTRADAS, "#F9A825"], [SHEET_STOCK, "#7A9E8A"], [BODEGAS.BA.kardex, C.sage], [BODEGAS.BM.kardex, C.sage],
+  const orden = [[SHEET_ENTRADAS, "#F9A825"], [SHEET_STOCK, "#7A9E8A"], [SHEET_CONTEO, "#F9A825"], [BODEGAS.BA.kardex, C.sage], [BODEGAS.BM.kardex, C.sage],
                  [SHEET_MAESTRO, C.mdGreen], [BODEGAS.BA.historial, "#B0BEC5"], [BODEGAS.BM.historial, "#B0BEC5"], [SHEET_TRASPASOS, "#B0BEC5"], [SHEET_LOG, "#B0BEC5"]];
   let pos = 1;
   orden.forEach(([n, color]) => {
@@ -3302,6 +3312,11 @@ function _blindarHojasTecnicasBDG() {
     const filas = Math.max(ent.getMaxRows() - ENTRADAS_START + 1, 1);
     _blindarHoja(ent, "Blindaje — 📥 ENTRADAS", [ent.getRange(ENTRADAS_START, 3, filas, 2), ent.getRange("A2"), ent.getRange("B2:C2"), ent.getRange("D2")]);
   }
+  // 🧮 CONTEO: solo lo contado, el día y la casilla Aplicar
+  const cnt = _hoja(ss, SHEET_CONTEO);
+  if (cnt) _blindarHoja(cnt, "Blindaje — 🧮 Conteo físico", [cnt.getRange(CONTEO_START, 3, Math.max(cnt.getMaxRows() - CONTEO_START + 1, 1), 2), cnt.getRange("A2"), cnt.getRange("D2")]);
+  const aj = _hoja(ss, SHEET_AJUSTES_CONTEO);
+  if (aj) _blindarHoja(aj, "Blindaje técnico — 🧮 Ajustes de conteo");
   // 🔎 STOCK: solo el filtro de proveedor
   const stk = _hoja(ss, SHEET_STOCK);
   if (stk) _blindarHoja(stk, "Blindaje — 🔎 Stock de bodegas", [stk.getRange("A2")]);
@@ -5909,6 +5924,7 @@ function _configurarBDGCore(rep) {
   // que ven las tiendas y cómo se descuenta. Se hace a propósito: al escribir una presentación o desde el menú.
   paso("Hoja 📥 Registrar entradas", () => { _prepararHojaEntradas(true); return "lista"; });
   paso("Hoja 🔎 Stock de bodegas", () => { const n = _prepararHojaStock(); return `${n} productos`; });
+  paso("Hoja 🧮 Conteo físico", () => { _prepararHojaConteo(); return "lista (a ciegas)"; });
   paso("Vistas móviles", () => { _buildVista("BA"); _buildVista("BM"); return "BA y BM reconstruidas"; });
   paso("Tiendas actualizadas", () => { sincronizarRemotamenteTiendasPush(); return "catálogo, picking y activos enviados"; });
   paso("Kardex simplificado", () => { Object.values(BODEGAS).forEach(b => _simplificarVistaKardex(_hoja(SpreadsheetApp.getActiveSpreadsheet(), b.kardex))); return "solo producto, unidad, saldo anterior y días"; });
@@ -6168,5 +6184,200 @@ function _reubicarPorCategoria() {
   } catch (e) {
     MiseLogger.warn("_reubicarPorCategoria", `Se usará la reconstrucción completa: ${e.message}`);
     return false;
+  }
+}
+
+// ── 🧮 CONTEO FÍSICO (1.7.7p) ─────────────────────────────────────────────────────────────────
+// Captura desde el celular de lo que HAY en cada bodega, en la UNIDAD DEL INVENTARIO (kg, lt, pza: igual que el
+// formato de inventario de la empresa) y A CIEGAS (el saldo del sistema va en columnas ocultas E:F para quien revise).
+// Aplicar (D2) deja el saldo de cada producto contado EXACTAMENTE en lo contado: la diferencia contra el sistema entra
+// como ENT (sobrante) o SAL (faltante) del día elegido en B2, y cada ajuste queda en 🧮 Ajustes de conteo con folio.
+//  · Vacío = no se contó (no se toca). 0 = se contó y no hay.
+//  · Idempotente: aplicar dos veces el mismo conteo no cambia nada (la segunda vez la diferencia es 0).
+//  · Contar ANTES de surtir a las tiendas: el cierre de las 23:00 descuenta lo que salga después.
+const SHEET_CONTEO = "🧮 Conteo físico";
+const SHEET_AJUSTES_CONTEO = "🧮 Ajustes de conteo";
+const CONTEO_START = 5;
+
+function prepararHojaConteoManualmente() {
+  const sh = _prepararHojaConteo();
+  SpreadsheetApp.setActiveSheet(sh);
+  try { SpreadsheetApp.getActive().toast("Hoja 🧮 Conteo físico lista para capturar desde el celular ✓", "⚙️ Mise", 5); } catch (e) {}
+}
+
+function _prepararHojaConteo() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const kBA = _hoja(ss, BODEGAS.BA.kardex);
+  if (!kBA) throw new Error(`No existe ${BODEGAS.BA.kardex}.`);
+  let sheet = _hoja(ss, SHEET_CONTEO);
+  if (!sheet) sheet = ss.insertSheet(SHEET_CONTEO, 1);
+
+  // Conserva lo ya capturado (por nombre): se puede contar en varias vueltas
+  const previo = {};
+  if (sheet.getLastRow() >= CONTEO_START) {
+    sheet.getRange(CONTEO_START, 1, sheet.getLastRow() - CONTEO_START + 1, 4).getValues().forEach(r => {
+      const n = String(r[0]).trim().toUpperCase();
+      if (n && (r[2] !== "" || r[3] !== "")) previo[n] = [r[2], r[3]];
+    });
+  }
+
+  // Productos activos en el orden del Inventario (como 📥 Registrar entradas)
+  const maestro = _hoja(ss, SHEET_MAESTRO);
+  const inactivos = new Set();
+  if (maestro && maestro.getLastRow() >= MAESTRO_START) {
+    const map = _getMaestroHeaderMap(maestro);
+    if (map["PRODUCTO"] && map["ACTIVO"]) maestro.getRange(MAESTRO_START, 1, maestro.getLastRow() - MAESTRO_START + 1, maestro.getLastColumn()).getValues()
+      .forEach(r => { if (String(r[map["ACTIVO"].index]).trim().toUpperCase() === "NO") inactivos.add(String(r[map["PRODUCTO"].index]).trim().toUpperCase()); });
+  }
+  const klr = kBA.getLastRow();
+  const kData = klr >= KARDEX_START ? kBA.getRange(KARDEX_START, 1, klr - KARDEX_START + 1, 5).getValues() : [];
+  const prods = kData.filter(r => r[0] !== "" && String(r[2]).trim() && !inactivos.has(String(r[2]).trim().toUpperCase()))
+    .map(r => { const n = String(r[2]).trim(); const q = previo[n.toUpperCase()] || ["", ""]; return [n, String(r[4] || "").trim(), q[0], q[1]]; });
+
+  // Encabezado (como Registrar entradas: cabe en ≈ 390 px)
+  if (sheet.getMaxColumns() < 6) sheet.insertColumnsAfter(sheet.getMaxColumns(), 6 - sheet.getMaxColumns());
+  try { _separarCombinaciones(sheet.getRange(1, 1, 3, 6)); SpreadsheetApp.flush(); } catch (e) {}
+  sheet.getRange("A1:C1").merge().setValue("🧮 CONTEO FÍSICO").setBackground(C.dark).setFontColor("#FFFFFF")
+    .setFontWeight("bold").setFontSize(11).setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sheet.getRange("D1").setValue("Aplicar ⬇").setBackground(C.dark).setFontColor("#FFFFFF").setFontWeight("bold")
+    .setFontSize(9).setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sheet.setRowHeight(1, 32);
+  const opts = _opcionesDiaEntradas(_lunesSemanaActivaKardex(ss));
+  const dia = sheet.getRange("A2");
+  dia.setNumberFormat("@").setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(opts, true).setAllowInvalid(false).build());
+  if (!String(dia.getValue() || "").trim() || !(dia.getValue() instanceof Date) && opts.indexOf(String(dia.getValue())) === -1) dia.setValue(ENTRADAS_HOY);
+  dia.setBackground(C.yellow).setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle");
+  sheet.getRange("B2:C2").merge().setValue("◀ día del conteo · vacío = no se contó · 0 = no hay")
+    .setBackground(C.cream).setFontSize(8).setFontColor("#546E7A").setWrap(true).setVerticalAlignment("middle");
+  const chk = sheet.getRange("D2");
+  if (chk.getValue() !== true && chk.getValue() !== false) chk.insertCheckboxes();
+  chk.setValue(false).setFontSize(22).setBackground(C.yellow).setHorizontalAlignment("center");
+  sheet.setRowHeight(2, 40);
+  if (!String(sheet.getRange("A3").getValue()).trim()) _estadoConteo(sheet, "ℹ️ Cuenta ANTES de surtir a las tiendas. Escribe lo que HAY en la unidad indicada (kg exactos, litros, piezas) y marca Aplicar ⬇.", "info");
+  sheet.setRowHeight(3, 34);
+  sheet.getRange(4, 1, 1, 6).setValues([["PRODUCTO", "UNIDAD", "ANDARES", "MERCADO", "SISTEMA ANDARES", "SISTEMA MERCADO"]])
+    .setBackground(C.sage).setFontColor("#FFFFFF").setFontWeight("bold").setHorizontalAlignment("center").setFontSize(9).setWrap(true);
+  sheet.setFrozenRows(4);
+  [[1, 190], [2, 50], [3, 75], [4, 75], [5, 80], [6, 80]].forEach(([c, w]) => sheet.setColumnWidth(c, w));
+
+  // Datos
+  const maxRows = sheet.getMaxRows();
+  if (maxRows >= CONTEO_START) sheet.getRange(CONTEO_START, 1, maxRows - CONTEO_START + 1, 6).clearContent().setBackground(null);
+  const needed = CONTEO_START + prods.length;
+  if (maxRows < needed) sheet.insertRowsAfter(maxRows, needed - maxRows);
+  if (prods.length) {
+    const sis = (b, r) => `=IFERROR(ROUND(INDEX(${_refHoja(BODEGAS[b].kardex)}!$AD$${KARDEX_START}:$AD, MATCH($A${r}, ${_refHoja(BODEGAS[b].kardex)}!$C$${KARDEX_START}:$C, 0)), 3), "—")`;
+    const filas = prods.map((p, i) => [...p, sis("BA", CONTEO_START + i), sis("BM", CONTEO_START + i)]);
+    const rng = sheet.getRange(CONTEO_START, 1, filas.length, 6);
+    rng.setValues(filas);
+    rng.setBackgrounds(filas.map((_, i) => { const b = i % 2 === 0 ? C.rowA : C.rowB; return [b, b, C.entBg, C.entBg, "#ECEFF1", "#ECEFF1"]; }));
+    sheet.getRange(CONTEO_START, 1, filas.length, 1).setWrap(true).setFontSize(11).setVerticalAlignment("middle");
+    sheet.getRange(CONTEO_START, 2, filas.length, 1).setHorizontalAlignment("center").setFontColor("#757575").setFontSize(9);
+    sheet.getRange(CONTEO_START, 3, filas.length, 4).setFontSize(12).setNumberFormat("0.###").setHorizontalAlignment("center").setVerticalAlignment("middle");
+    sheet.setRowHeights(CONTEO_START, filas.length, 38);
+  }
+  try { sheet.hideColumns(5, 2); } catch (e) {} // a ciegas: el sistema solo para quien revisa (mostrar columnas E:F)
+  return sheet;
+}
+
+function _estadoConteo(sheet, msg, tipo) {
+  const colores = { ok: ["#E8F5E9", "#1B5E20"], error: ["#FFEBEE", "#B71C1C"], info: ["#FFFFFF", "#546E7A"] };
+  const c = colores[tipo] || colores.info;
+  try { _separarCombinaciones(sheet.getRange("A3:D3")); } catch (e) {}
+  sheet.getRange("A3:D3").merge().setValue(msg).setBackground(c[0]).setFontColor(c[1]).setFontSize(9).setWrap(true)
+    .setHorizontalAlignment("center").setVerticalAlignment("middle");
+}
+
+function _asegurarHojaAjustesConteo(ss) {
+  let h = _hoja(ss, SHEET_AJUSTES_CONTEO);
+  if (!h) {
+    h = ss.insertSheet(SHEET_AJUSTES_CONTEO);
+    h.getRange(1, 1, 1, 10).setValues([["FECHA", "FOLIO", "BODEGA", "DÍA", "PRODUCTO", "UNIDAD", "SISTEMA", "CONTADO", "DIFERENCIA", "USUARIO"]])
+      .setBackground(C.sage).setFontColor("#FFFFFF").setFontWeight("bold");
+    h.setFrozenRows(1);
+  }
+  return h;
+}
+
+function aplicarConteoFisico() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = _hoja(ss, SHEET_CONTEO);
+  if (!sheet) return;
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) { _estadoConteo(sheet, "⏳ Bodega ocupada por otro proceso. Vuelve a marcar Aplicar en unos segundos.", "error"); return; }
+  try {
+    const lr = sheet.getLastRow();
+    if (lr < CONTEO_START) { _estadoConteo(sheet, "No hay productos en la lista.", "error"); return; }
+    const rows = sheet.getRange(CONTEO_START, 1, lr - CONTEO_START + 1, 4).getValues();
+    const contados = { BA: {}, BM: {} };
+    const invalidas = [];
+    rows.forEach((r, i) => {
+      const n = String(r[0]).trim();
+      if (!n) return;
+      [["BA", r[2], 3], ["BM", r[3], 4]].forEach(([key, raw, col]) => {
+        const q = _numEntrada(raw);
+        if (q === null) return;
+        if (isNaN(q)) { invalidas.push([CONTEO_START + i, col]); return; }
+        contados[key][n.toUpperCase()] = { nombre: n, q, unidad: String(r[1] || "") };
+      });
+    });
+    if (invalidas.length) {
+      invalidas.forEach(([row, col]) => sheet.getRange(row, col).setBackground("#FFCDD2"));
+      _estadoConteo(sheet, `❌ ${invalidas.length} celda(s) en rojo no son números ≥ 0. Corrige y vuelve a aplicar. No se aplicó nada.`, "error");
+      return;
+    }
+    const llaves = Object.keys(contados).filter(k => Object.keys(contados[k]).length);
+    if (!llaves.length) { _estadoConteo(sheet, "No hay cantidades contadas para aplicar.", "info"); return; }
+
+    const seleccion = sheet.getRange("A2").getValue();
+    const planes = {};
+    const faltantes = [];
+    llaves.forEach(key => {
+      const dia = _resolverDiaEntradas(ss, seleccion, key);
+      const k = _hoja(ss, BODEGAS[key].kardex);
+      if (!k) throw new Error(`No existe ${BODEGAS[key].kardex}.`);
+      const count = k.getLastRow() - KARDEX_START + 1;
+      const idx = {};
+      k.getRange(KARDEX_START, 3, count, 1).getValues().forEach((p, i) => { const n = String(p[0]).trim().toUpperCase(); if (n) idx[n] = i; });
+      Object.keys(contados[key]).forEach(n => { if (idx[n] === undefined) faltantes.push(`${contados[key][n].nombre} (${BODEGAS[key].nombre})`); });
+      planes[key] = { k, count, idx, dia };
+    });
+    if (faltantes.length) { _estadoConteo(sheet, `❌ No están en el Inventario: ${faltantes.slice(0, 3).join(", ")}. No se aplicó nada.`, "error"); return; }
+
+    // Escritura en bloque por bodega: lee saldo vigente (AD) y ENT/SAL del día; deja el saldo en lo contado
+    const ahora = new Date();
+    const folio = "CNT-" + Utilities.formatDate(ahora, Session.getScriptTimeZone(), "yyyyMMdd-HHmmss");
+    const usuario = (() => { try { return Session.getActiveUser().getEmail() || "—"; } catch (e) { return "—"; } })();
+    const bitacora = [];
+    const resumen = [];
+    llaves.forEach(key => {
+      const { k, count, idx, dia } = planes[key];
+      const entCol = 10 + dia * 3, salCol = entCol + 1;
+      const saldos = k.getRange(KARDEX_START, 30, count, 1).getValues();
+      const rngES = k.getRange(KARDEX_START, entCol, count, 2);
+      const es = rngES.getValues();
+      let ajustes = 0, sobr = 0, falt = 0;
+      Object.keys(contados[key]).forEach(n => {
+        const i = idx[n];
+        const sistema = Math.round((parseFloat(saldos[i][0]) || 0) * 10000) / 10000;
+        const c = contados[key][n];
+        const dif = Math.round((c.q - sistema) * 10000) / 10000;
+        if (dif > 0) { es[i][0] = Math.round(((parseFloat(es[i][0]) || 0) + dif) * 10000) / 10000; sobr++; ajustes++; }
+        if (dif < 0) { es[i][1] = Math.round(((parseFloat(es[i][1]) || 0) - dif) * 10000) / 10000; falt++; ajustes++; }
+        bitacora.push([ahora, folio, BODEGAS[key].nombre, DIAS[dia], c.nombre, c.unidad, sistema, c.q, dif, usuario]);
+      });
+      rngES.setValues(es);
+      resumen.push(`${BODEGAS[key].nombre}: ${Object.keys(contados[key]).length} contados, ${ajustes} ajustados (+${sobr} / −${falt})`);
+    });
+    const hAj = _asegurarHojaAjustesConteo(ss);
+    hAj.getRange(Math.max(hAj.getLastRow() + 1, 2), 1, bitacora.length, 10).setValues(bitacora);
+    MiseLogger.info("aplicarConteoFisico", `${folio} · ${resumen.join(" · ")}`);
+    sheet.getRange(CONTEO_START, 3, lr - CONTEO_START + 1, 2).clearContent().setBackground(C.entBg);
+    _estadoConteo(sheet, `✅ ${folio} · ${resumen.join(" · ")}. Detalle en ${SHEET_AJUSTES_CONTEO}.`, "ok");
+  } catch (err) {
+    _estadoConteo(sheet, `❌ ${err.message}`, "error");
+    MiseLogger.error("aplicarConteoFisico", err.message, err);
+  } finally {
+    lock.releaseLock();
   }
 }

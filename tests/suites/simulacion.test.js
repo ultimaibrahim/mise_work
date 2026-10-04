@@ -247,6 +247,46 @@ function runSimulacionTests() {
     B._onEditBodega({ range: stk.getRange("A2"), value: "FRUTA", source: bdg });
     assert.deepStrictEqual(ocultas.sort(), ["Agua Epura", "Agua Perrier", "Guantes", "Leche", "Nutella"], "Filtro FRUTA deja solo las fresas y el plátano");
     console.log("  ✓ Encargada: 🔎 Stock de bodegas en dos lecturas (presentación e inventario), TOTAL, 🔴 bajo mínimo y filtro por proveedor");
+
+  // ── Conteo físico (1.7.7p): a ciegas, en unidad de inventario; el saldo queda EXACTO en lo contado ──
+  {
+    B._prepararHojaConteo();
+    const cnt = bdg.getSheetByName("🧮 Conteo físico");
+    assert.ok(cnt, "Se crea la hoja 🧮 Conteo físico");
+    const filaCnt = (x) => cnt.getRange(5, 1, cnt.getLastRow() - 4, 1).getValues().findIndex(r => r[0] === x) + 5;
+    assert.strictEqual(cnt.getRange(filaCnt("Fresa"), 2).getValue(), "kg", "Se cuenta en la unidad del inventario (kg), no en domos");
+    const sld = (b, x) => Number(inv(b).getRange(filaInv(b, x), 30).getValue()) || 0;
+    const antesLecheBA = sld("BA", "Leche");
+    const dia = B._opcionesDiaEntradas(B._lunesSemanaActivaKardex(bdg, "BA"))[1];   // LUN de la semana activa
+    cnt.getRange("A2").setValue(dia);
+    cnt.getRange(filaCnt("Fresa"), 3).setValue(2.5);       // Andares: hay 2.5 kg
+    cnt.getRange(filaCnt("Guantes"), 4).setValue(0);       // Mercado: se contó y no hay
+    cnt.getRange(filaCnt("Leche"), 4).setValue(7);         // Mercado: 7 lt
+    B.aplicarConteoFisico();
+    assert.ok(/^✅ CNT-/.test(String(cnt.getRange("A3").getValue())), `Aplicado con folio: ${cnt.getRange("A3").getValue()}`);
+    cerca(sld("BA", "Fresa"), 2.5, "Saldo de Fresa en Andares = lo contado");
+    cerca(sld("BM", "Guantes"), 0, "Guantes en Mercado = 0 (contado en cero)");
+    cerca(sld("BM", "Leche"), 7, "Leche en Mercado = lo contado");
+    cerca(sld("BA", "Leche"), antesLecheBA, "Lo que no se contó (vacío) no se toca");
+    const aj = bdg.getSheetByName("🧮 Ajustes de conteo");
+    assert.strictEqual(aj.getLastRow() - 1, 3, "Bitácora: un renglón por producto contado");
+    assert.deepStrictEqual(cnt.getRange(filaCnt("Fresa"), 3, 1, 2).getValues()[0], ["", ""], "Capturas limpias tras aplicar");
+    // Idempotente: el mismo conteo otra vez no mueve nada
+    const entSal = () => JSON.stringify(inv("BA").getRange(filaInv("BA", "Fresa"), 10, 1, 21).getValues());
+    const antes = entSal();
+    cnt.getRange(filaCnt("Fresa"), 3).setValue(2.5);
+    B._onEditBodega({ range: (() => { const r = cnt.getRange("D2"); r.setValue(true); return r; })(), value: true, source: bdg });
+    assert.strictEqual(entSal(), antes, "Aplicar el mismo conteo dos veces no cambia ENT/SAL (diferencia 0)");
+    cerca(sld("BA", "Fresa"), 2.5, "Sigue en 2.5");
+    // Todo o nada ante un valor inválido
+    cnt.getRange(filaCnt("Leche"), 3).setValue("abc");
+    cnt.getRange(filaCnt("Fresa"), 3).setValue(99);
+    B.aplicarConteoFisico();
+    assert.ok(/^❌/.test(String(cnt.getRange("A3").getValue())), "Un valor inválido bloquea todo");
+    cerca(sld("BA", "Fresa"), 2.5, "Nada se aplicó");
+    cnt.getRange(filaCnt("Leche"), 3).clearContent(); cnt.getRange(filaCnt("Fresa"), 3).clearContent();
+    console.log("  ✓ Conteo físico: a ciegas, en unidad de inventario; saldo = contado (sobrante/faltante del día), bitácora con folio, idempotente y todo o nada");
+  }
   }
 }
 
